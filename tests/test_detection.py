@@ -23,10 +23,11 @@ def test_risk_selector_rejects_all_unsafe():
 
 
 def test_risk_selector_picks_safe_best():
-    selector = RiskSensitiveSelector(epsilon=0.05, alpha=0.1)
+    # Wilson UCB for 0 violations needs ~20 trials to clear epsilon=0.09.
+    selector = RiskSensitiveSelector(epsilon=0.09, alpha=0.1)
     candidates = [
-        CandidateEvaluation(policy="A", task_scores=[0.7, 0.7], safety_violations=[False, False], generation=1),
-        CandidateEvaluation(policy="B", task_scores=[0.9, 0.9], safety_violations=[False, False], generation=1),
+        CandidateEvaluation(policy="A", task_scores=[0.7] * 20, safety_violations=[False] * 20, generation=1),
+        CandidateEvaluation(policy="B", task_scores=[0.9] * 20, safety_violations=[False] * 20, generation=1),
     ]
     result = selector.select(candidates)
     assert result is not None
