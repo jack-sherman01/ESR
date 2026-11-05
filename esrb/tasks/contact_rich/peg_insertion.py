@@ -112,6 +112,7 @@ class PegInsertionTask(BaseTask):
             "contact_torques": [],
             "ee_positions":    [],
             "tip_z":           [],
+            "tip_velocities":  [],
         }
         return self._observe()
 
@@ -131,11 +132,13 @@ class PegInsertionTask(BaseTask):
         force  = self._data.sensordata[_S_FORCE].copy()
         torque = self._data.sensordata[_S_TORQUE].copy()
         tip    = self._data.sensordata[_S_TIP_POS].copy()
+        vel    = self._data.sensordata[_S_TIP_VEL].copy()
 
         self._episode_log["contact_forces"].append(force.tolist())
         self._episode_log["contact_torques"].append(torque.tolist())
         self._episode_log["ee_positions"].append(tip.tolist())
         self._episode_log["tip_z"].append(float(tip[2]))
+        self._episode_log["tip_velocities"].append(vel.tolist())
 
         self._step_count += 1
         done = self._step_count >= _MAX_STEPS

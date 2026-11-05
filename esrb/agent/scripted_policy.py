@@ -33,11 +33,20 @@ class ScriptedInsertionPolicy(BaseAgent):
     max_force: float = 50.0       # N — not enforced here; read by the oracle
     force_penalty_weight: float = 0.1
     collision_penalty_weight: float = 0.1
+    # Stop descending the moment contact force exceeds this threshold.
+    # Set below baseline first-floor-contact (~13 N) so the policy halts
+    # after exactly one ramp step past the socket bottom, keeping peak
+    # force seed-stable and speed-proportional.
+    force_stop_n: float = 10.0
 
     def __init__(self, xy_tol: float = 0.0015) -> None:
         self.xy_tol = xy_tol  # alignment tolerance (m)
 
     def act(self, observation: TaskObservation) -> np.ndarray:
+        force_mag = float(np.linalg.norm(observation.state[6:9]))
+        if force_mag > self.force_stop_n:
+            return np.zeros(3, dtype=np.float32)
+
         tip_rel: np.ndarray = observation.state[_TIP_REL]
         xy_err = tip_rel[:2]
         xy_dist = float(np.linalg.norm(xy_err))
@@ -62,14 +71,16 @@ class ScriptedInsertionPolicy(BaseAgent):
             "max_speed": self.max_speed,
             "max_force": self.max_force,
             "xy_tol": self.xy_tol,
+            "force_stop_n": self.force_stop_n,
             "force_penalty_weight": self.force_penalty_weight,
             "collision_penalty_weight": self.collision_penalty_weight,
         }
 
     def load_state_dict(self, state: dict) -> None:
-        self.max_speed = state.get("max_speed", self.max_speed)
-        self.max_force = state.get("max_force", self.max_force)
-        self.xy_tol    = state.get("xy_tol", self.xy_tol)
+        self.max_speed    = state.get("max_speed", self.max_speed)
+        self.max_force    = state.get("max_force", self.max_force)
+        self.xy_tol       = state.get("xy_tol", self.xy_tol)
+        self.force_stop_n = state.get("force_stop_n", self.force_stop_n)
         self.force_penalty_weight = state.get("force_penalty_weight", self.force_penalty_weight)
         self.collision_penalty_weight = state.get("collision_penalty_weight",
                                                     self.collision_penalty_weight)
