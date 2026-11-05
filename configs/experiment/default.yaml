@@ -1,0 +1,22 @@
+benchmark:
+  name: peg_insertion_force_speed
+  num_generations: 10
+  rollouts_per_generation: 20
+  seed: 42
+
+oracle:
+  type: force_torque
+  max_force_n: 50.0
+  max_torque_nm: 10.0
+
+update_operator:
+  type: force_speed_injection
+  severity: 0.5
+
+selector:
+  epsilon: 0.05
+  alpha: 0.10
+
+logging:
+  wandb: false
+  log_dir: private/runs
