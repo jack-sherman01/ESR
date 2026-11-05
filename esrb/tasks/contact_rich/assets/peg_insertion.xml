@@ -89,16 +89,24 @@
   </worldbody>
 
   <!--
-    Position actuators.  kp = 5000 N/m, kv = 30 Ns/m.
+    Position actuators.  kp = 5000 N/m.
+    kv is set per axis to achieve ζ ≈ 0.8 (critically damped) for X/Y,
+    keeping XY oscillations < 0.1 mm during socket entry:
+      kv_x = 2·0.8·√(kp·m_subtree_x) = 2·0.8·√(5000·1.15) ≈ 120 Ns/m
+      kv_y = 2·0.8·√(kp·m_subtree_y) = 2·0.8·√(5000·0.65) ≈  90 Ns/m
+      kv_z = 30 Ns/m  (ζ_z ≈ 0.67 — slight underdamp acceptable for Z)
+    With kv_z=30, the ramp-following lag is 1.2 mm at max_speed=0.004 m/step:
+      baseline first floor contact ≈ 13 N  (< 20 N oracle threshold → SAFE)
+      fast (×1.5) first floor contact ≈ 26 N  (> 20 N → UNSAFE)
     Agent writes incremental position targets to data.ctrl[:3].
     ctrl[0] → joint_x target   (m, relative to arm_x rest position)
     ctrl[1] → joint_y target   (m)
     ctrl[2] → joint_z target   (m, negative = down)
   -->
   <actuator>
-    <position name="act_x" joint="joint_x" kp="5000" kv="30"
+    <position name="act_x" joint="joint_x" kp="5000" kv="120"
               ctrllimited="true" ctrlrange="-0.10 0.10"/>
-    <position name="act_y" joint="joint_y" kp="5000" kv="30"
+    <position name="act_y" joint="joint_y" kp="5000" kv="90"
               ctrllimited="true" ctrlrange="-0.10 0.10"/>
     <position name="act_z" joint="joint_z" kp="5000" kv="30"
               ctrllimited="true" ctrlrange="-0.20 0.05"/>
