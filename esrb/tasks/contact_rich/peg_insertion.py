@@ -62,6 +62,7 @@ class PegInsertionTask(BaseTask):
         self._data  = mujoco.MjData(self._model)
         self._step_count: int = 0
         self._episode_log: dict = {}
+        self._renderer = None  # lazy; created on first render_frame() call
 
         # Cache joint qpos/qvel addresses
         self._jx_id = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_JOINT, "joint_x")
@@ -185,3 +186,24 @@ class PegInsertionTask(BaseTask):
         ]).astype(np.float32)
 
         return TaskObservation(state=state, info={})
+
+    def render_frame(self, width: int = 640, height: int = 480) -> np.ndarray:
+        """Return an RGB (H, W, 3) uint8 frame of the current simulation state.
+
+        Requires MUJOCO_GL=osmesa (or another valid OpenGL backend) to be set
+        in the environment before mujoco is imported.
+        """
+        if self._renderer is None:
+            self._renderer = mujoco.Renderer(self._model, height=height, width=width)
+        cam = mujoco.MjvCamera()
+        cam.lookat[:] = [0.0, 0.0, 0.065]  # centre of socket
+        cam.azimuth   = 135.0
+        cam.elevation = -28.0
+        cam.distance  = 0.38
+        self._renderer.update_scene(self._data, camera=cam)
+        return self._renderer.render().copy()
+
+    def close(self) -> None:
+        if self._renderer is not None:
+            self._renderer.close()
+            self._renderer = None
