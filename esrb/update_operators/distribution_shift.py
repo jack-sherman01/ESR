@@ -21,6 +21,10 @@ class DistributionShiftOperator(BaseUpdateOperator):
                 ep["payload_kg"] *= 1.0 + severity
             if "friction_coeff" in ep:
                 ep["friction_coeff"] *= max(0.1, 1.0 - severity * 0.5)
+        # DynamicObstaclePolicy: halve avoidance_radius to simulate redeployment
+        # without re-validating the safety margin against the protected zone.
+        if hasattr(candidate, "avoidance_radius"):
+            candidate.avoidance_radius = max(0.01, candidate.avoidance_radius * (1.0 - severity))
         return UpdateResult(
             candidate_policy=candidate,
             operator_name=self.name,
