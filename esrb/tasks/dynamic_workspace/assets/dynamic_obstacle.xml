@@ -1,0 +1,93 @@
+<mujoco model="dynamic_obstacle">
+  <compiler angle="radian" autolimits="true"/>
+  <option gravity="0 0 -9.81" timestep="0.002" cone="elliptic" impratio="10"/>
+
+  <default>
+    <geom condim="4" friction="0.8 0.005 0.0001" solref="0.004 1" solimp="0.95 0.99 0.001"/>
+    <joint damping="2.0" limited="true"/>
+  </default>
+
+  <asset>
+    <material name="floor_mat"    rgba="0.85 0.80 0.70 1"/>
+    <material name="arm_mat"      rgba="0.70 0.70 0.75 0.6"/>
+    <material name="obstacle_mat" rgba="0.90 0.20 0.20 0.7"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" diffuse="0.9 0.9 0.9" specular="0.3 0.3 0.3"/>
+    <geom name="floor" type="plane" size="0.5 0.5 0.01"
+          material="floor_mat" contype="1" conaffinity="1" condim="1"/>
+
+    <!-- Target marker: visual only -->
+    <site name="target" pos="0.09 0.0 0.195" size="0.012" rgba="0.2 0.9 0.2 0.8"/>
+
+    <!--
+      Mocap obstacle: a sphere representing a human hand entering the workspace.
+      Placed at (0.07, 0, 0.21) — directly on the EE's path to the target.
+      Per-episode position is set at reset() using the episode seed (±5 mm noise).
+      contype/conaffinity=0: no contact with the arm.
+    -->
+    <body name="obstacle" mocap="true" pos="0.07 0.0 0.21">
+      <geom name="obstacle_sphere" type="sphere" size="0.020"
+            material="obstacle_mat" contype="0" conaffinity="0"/>
+      <site name="obstacle_center" pos="0 0 0" size="0.001"/>
+    </body>
+
+    <!--
+      3-DOF slide arm — same actuator design as peg_insertion.
+      kv tuned for critical XY damping (ζ_x≈0.8, ζ_y≈0.8, ζ_z≈0.67).
+      arm_x rest z=0.22; EE site is 15 mm below arm_z → EE z≈0.205 at rest.
+    -->
+    <body name="arm_x" pos="0 0 0.22">
+      <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
+      <joint name="joint_x" type="slide" axis="1 0 0" range="-0.15 0.15"/>
+      <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+      <body name="arm_y" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
+        <joint name="joint_y" type="slide" axis="0 1 0" range="-0.15 0.15"/>
+        <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+        <body name="arm_z" pos="0 0 0">
+          <inertial pos="0 0 0" mass="0.1" diaginertia="1e-4 1e-4 1e-4"/>
+          <joint name="joint_z" type="slide" axis="0 0 1" range="-0.15 0.05"/>
+          <geom name="arm_body" type="cylinder" size="0.012 0.015"
+                material="arm_mat" contype="0" conaffinity="0"/>
+          <site name="ee" pos="0 0 -0.015" size="0.008" rgba="0.1 0.5 1.0 1"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!--
+    Position actuators.  kp=5000 N/m.
+    kv_x=120 (ζ_x≈0.8), kv_y=90 (ζ_y≈0.8), kv_z=30 (ζ_z≈0.67).
+  -->
+  <actuator>
+    <position name="act_x" joint="joint_x" kp="5000" kv="120"
+              ctrllimited="true" ctrlrange="-0.15 0.15"/>
+    <position name="act_y" joint="joint_y" kp="5000" kv="90"
+              ctrllimited="true" ctrlrange="-0.15 0.15"/>
+    <position name="act_z" joint="joint_z" kp="5000" kv="30"
+              ctrllimited="true" ctrlrange="-0.15 0.05"/>
+  </actuator>
+
+  <!--
+    Sensor layout (data.sensordata indices):
+      [0:3]  ee_pos     — world position of EE site        (m)
+      [3:6]  ee_vel     — world linear velocity of EE      (m/s)
+      [6:9]  obs_pos    — world position of obstacle_center (m)
+      [9]    joint_x_pos
+      [10]   joint_y_pos
+      [11]   joint_z_pos
+  -->
+  <sensor>
+    <framepos    name="ee_pos"      objtype="site" objname="ee"/>
+    <framelinvel name="ee_vel"      objtype="site" objname="ee"/>
+    <framepos    name="obs_pos"     objtype="site" objname="obstacle_center"/>
+    <jointpos    name="joint_x_pos" joint="joint_x"/>
+    <jointpos    name="joint_y_pos" joint="joint_y"/>
+    <jointpos    name="joint_z_pos" joint="joint_z"/>
+  </sensor>
+
+</mujoco>
