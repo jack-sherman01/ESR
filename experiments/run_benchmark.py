@@ -54,7 +54,15 @@ from esrb.benchmark.lineage import GenerationRecord
 from esrb.detection.change_impact import ComponentType
 from esrb.detection.counterexample import Counterexample
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
-from esrb.metrics import safety_regression_rate
+from esrb.metrics import (
+    capability_safety_pareto,
+    detection_recall_precision,
+    evaluator_integrity_failure_rate,
+    regression_discovery_cost,
+    safety_margin_degradation,
+    safety_regression_rate,
+    unsafe_false_acceptance_rate,
+)
 from esrb.oracles import HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.tasks.contact_rich import PegInsertionTask
 from esrb.tasks.dynamic_workspace import DynamicObstacleTask
@@ -251,6 +259,17 @@ def run_loop(instance, agent, selector, severity, n_rollouts):
             "candidate_safe": all(r.oracle_verdict.safe for r in cand_results),
             "candidate_sigs": cand_results[-1].oracle_verdict.signal_values,
             "accepted":       selected is not None,
+            # per-rollout data for multi-metric computation
+            "baseline_rollout_safe":    [r.oracle_verdict.safe for r in results],
+            "baseline_rollout_success": [
+                bool(r.episode_data.get("success", r.task_score > 0.5))
+                for r in results
+            ],
+            "candidate_rollout_safe":    [r.oracle_verdict.safe for r in cand_results],
+            "candidate_rollout_success": [
+                bool(r.episode_data.get("success", r.task_score > 0.5))
+                for r in cand_results
+            ],
         })
 
     return loop, gen_rows
@@ -370,6 +389,66 @@ def _record(task_cls, baseline_policy, candidate_policy, out_dir, max_steps,
     return b, c
 
 
+# ── Metrics ───────────────────────────────────────────────────────────────────
+
+def _compute_metrics(
+    gen_rows: list[dict],
+    records: list[GenerationRecord],
+    signal_key: str,
+    n_rollouts: int,
+    elapsed_s: float,
+) -> dict:
+    """Compute all 7 ESRB metrics from loop data."""
+    # 1. Safety Regression Rate
+    srr = safety_regression_rate(records)
+
+    # 2. Unsafe False Acceptance Rate
+    oracle_unsafe = [not r["candidate_safe"] for r in gen_rows]
+    gate_accepted = [r["accepted"] for r in gen_rows]
+    ufar = unsafe_false_acceptance_rate(oracle_unsafe, gate_accepted)
+
+    # 3. Evaluator Integrity Failure Rate (baseline rollouts: task success vs oracle safe)
+    eval_succ = [s for row in gen_rows for s in row["baseline_rollout_success"]]
+    orc_safe  = [s for row in gen_rows for s in row["baseline_rollout_safe"]]
+    eifr = evaluator_integrity_failure_rate(eval_succ, orc_safe)
+
+    # 4. Detection Recall / Precision over all rollouts (baseline=safe, candidate=unsafe)
+    true_unsafe: list[bool] = []
+    detected:    list[bool] = []
+    for row in gen_rows:
+        true_unsafe.extend([False] * len(row["baseline_rollout_safe"]))
+        detected.extend([not s for s in row["baseline_rollout_safe"]])
+        true_unsafe.extend([True] * len(row["candidate_rollout_safe"]))
+        detected.extend([not s for s in row["candidate_rollout_safe"]])
+    det = detection_recall_precision(true_unsafe, detected)
+
+    # 5. Safety Margin Degradation (baseline gen-0 vs latest)
+    smd = safety_margin_degradation(signal_key, records)
+
+    # 6. Regression Discovery Cost
+    s_per_gen = elapsed_s / max(len(records), 1)
+    rdc = regression_discovery_cost(records, n_rollouts, s_per_gen)
+
+    # 7. Capability–Safety Pareto
+    pareto = capability_safety_pareto(records)
+
+    return {
+        "srr":          srr,
+        "ufar":         ufar,
+        "eifr":         eifr,
+        "recall":       det.recall,
+        "precision":    det.precision,
+        "f1":           det.f1,
+        "smd":          smd,
+        "rdc_rollouts": rdc.n_rollouts,
+        "rdc_wall_s":   round(rdc.wall_clock_s, 2),
+        "pareto":       [
+            {"gen": p.generation, "score": p.task_score, "violated": p.safety_violated}
+            for p in pareto
+        ],
+    }
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -466,10 +545,26 @@ def main() -> None:
                   f"{safe_s:>6}  {len(loop.cx_library):>4}  "
                   f"{bsig:>10.4f} {sig_unit}  {csig:>10.4f} {sig_unit}  {dec_s}")
 
+        elapsed_loop = time.time() - t0
         records = loop.lineage.all()
-        srr     = safety_regression_rate(records)
+        metrics = _compute_metrics(gen_rows, records, sig_key, args.rollouts, elapsed_loop)
+        srr     = metrics["srr"]
         print(f"\n  SRR={srr:.3f}  |  Counterexamples={len(loop.cx_library)}"
               f"  |  Lineage={loop.lineage.digest()[:12]}…")
+        print(f"\n  ── All 7 metrics ──────────────────────────────────")
+        print(f"  1. SRR   (safety regression rate)      : {metrics['srr']:.3f}")
+        print(f"  2. UFAR  (unsafe false acceptance)     : {metrics['ufar']:.3f}")
+        print(f"  3. EIFR  (evaluator integrity failure) : {metrics['eifr']:.3f}")
+        print(f"  4. Detection  recall={metrics['recall']:.3f}  "
+              f"precision={metrics['precision']:.3f}  F1={metrics['f1']:.3f}")
+        print(f"  5. Safety margin Δ ({sig_key}): {metrics['smd']:+.4f} {sig_unit.strip()}")
+        print(f"  6. Discovery cost  : {metrics['rdc_rollouts']} rollouts  "
+              f"{metrics['rdc_wall_s']:.1f} s")
+        pareto_str = "  ".join(
+            f"g{p['gen']}:{p['score']:.3f}{'✗' if p['violated'] else '✓'}"
+            for p in metrics["pareto"]
+        )
+        print(f"  7. Pareto          : {pareto_str}")
 
         # ── 12-seed sweep ─────────────────────────────────────────────────
         print(f"\n  Running 12-seed sweep …")
@@ -498,6 +593,7 @@ def main() -> None:
             "scenario": scenario, "args": vars(args),
             "srr": srr, "cx_count": len(loop.cx_library),
             "signal_key": sig_key, "threshold": threshold,
+            "metrics": metrics,
             "generations": gen_rows,
         }
         (sc_dir / "demo_results.json").write_text(json.dumps(demo_js, indent=2))
@@ -559,6 +655,7 @@ def main() -> None:
             "threshold":   threshold,
             "sig_unit":    sig_unit.strip(),
             "elapsed_s":   round(elapsed, 1),
+            "metrics":     metrics,
         })
         print(f"\n  Elapsed: {elapsed:.1f} s")
 
