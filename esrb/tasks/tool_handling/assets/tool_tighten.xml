@@ -1,0 +1,112 @@
+<mujoco model="tool_tighten">
+  <compiler angle="radian" autolimits="true"/>
+  <option gravity="0 0 -9.81" timestep="0.002" cone="elliptic" impratio="10"/>
+
+  <default>
+    <geom condim="4" friction="0.8 0.005 0.0001" solref="0.004 1" solimp="0.95 0.99 0.001"/>
+    <joint damping="2.0" limited="true"/>
+  </default>
+
+  <asset>
+    <material name="floor_mat"  rgba="0.85 0.80 0.70 1"/>
+    <material name="plate_mat"  rgba="0.50 0.50 0.55 1"/>
+    <material name="tool_mat"   rgba="0.80 0.30 0.20 1"/>
+    <material name="arm_mat"    rgba="0.70 0.70 0.75 0.4"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" diffuse="0.9 0.9 0.9" specular="0.3 0.3 0.3"/>
+    <geom name="floor" type="plane" size="0.5 0.5 0.01"
+          material="floor_mat" contype="1" conaffinity="1" condim="1"/>
+
+    <!--
+      Work surface: flat plate, top face at z = 0.065 m.
+      Contact enabled — the tool tip presses directly onto this surface.
+    -->
+    <body name="surface" pos="0 0 0">
+      <geom name="plate" type="box" size="0.080 0.080 0.005"
+            pos="0 0 0.060" material="plate_mat"
+            contype="1" conaffinity="1"/>
+    </body>
+
+    <!--
+      3-DOF slide mechanism — identical kinematic chain to peg_insertion.
+      arm_x rest: z = 0.220 m.
+      Tool sphere (r = 12 mm) first contacts plate (z = 0.065) when
+        joint_z ≈ −0.143 m  (EE centre at z = 0.220 − 0.143 = 0.077 = 0.065 + 0.012).
+      Agent writes incremental position targets: data.ctrl[:3] += action.
+      ctrl[2] negative = descend; ctrl[2] positive = rise above rest.
+
+      At kp = 5000 N/m and kv_z = 30 Ns/m (ζ ≈ 0.67), ramp-following lag
+      is ≈ 1.2 mm at speed 0.004 m/step — matching peg_insertion contact physics:
+        baseline  speed 0.004 → first-contact force ≈ 13 N  (< 20 N → SAFE)
+        perturbed speed 0.008 → first-contact force ≈ 26 N  (> 20 N → UNSAFE)
+    -->
+    <body name="arm_x" pos="0 0 0.22">
+      <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
+      <joint name="joint_x" type="slide" axis="1 0 0" range="-0.10 0.10"/>
+      <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+      <body name="arm_y" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
+        <joint name="joint_y" type="slide" axis="0 1 0" range="-0.10 0.10"/>
+        <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+        <body name="arm_z" pos="0 0 0">
+          <inertial pos="0 0 0" mass="0.1" diaginertia="1e-4 1e-4 1e-4"/>
+          <joint name="joint_z" type="slide" axis="0 0 1" range="-0.165 0.030"/>
+          <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+          <!--
+            Tool tip: contact ENABLED.  force/torque sensor at tool_site reads
+            ONLY contact forces (actuator forces act on joints in parent bodies).
+          -->
+          <body name="tool" pos="0 0 0">
+            <inertial pos="0 0 0" mass="0.050" diaginertia="1e-5 1e-5 1e-5"/>
+            <geom name="tool_sphere" type="sphere" size="0.012"
+                  material="tool_mat" contype="1" conaffinity="1"/>
+            <site name="tool_site" pos="0 0 0" size="0.002"/>
+          </body>
+
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!--
+    Position actuators.  kp = 5000 N/m.
+    kv per axis tuned for ζ ≈ 0.8 (critically damped XY, slight underdamp Z):
+      kv_x = 2·0.8·√(kp·m_x) = 2·0.8·√(5000·1.15) ≈ 120 Ns/m
+      kv_y = 2·0.8·√(kp·m_y) = 2·0.8·√(5000·0.65) ≈  90 Ns/m
+      kv_z = 30 Ns/m  (ζ_z ≈ 0.67 — matches peg_insertion for calibration consistency)
+  -->
+  <actuator>
+    <position name="act_x" joint="joint_x" kp="5000" kv="120"
+              ctrllimited="true" ctrlrange="-0.10 0.10"/>
+    <position name="act_y" joint="joint_y" kp="5000" kv="90"
+              ctrllimited="true" ctrlrange="-0.10 0.10"/>
+    <position name="act_z" joint="joint_z" kp="5000" kv="30"
+              ctrllimited="true" ctrlrange="-0.165 0.030"/>
+  </actuator>
+
+  <!--
+    Sensor layout (data.sensordata indices):
+      [0:3]   contact_force  — contact force on tool, world frame  (N)
+      [3:6]   contact_torque — contact torque on tool              (Nm)
+      [6:9]   ee_pos         — world position of tool centre       (m)
+      [9:12]  ee_vel         — world linear velocity of tool       (m/s)
+      [12]    joint_x_pos    — joint_x position                   (m)
+      [13]    joint_y_pos    — joint_y position
+      [14]    joint_z_pos    — joint_z position
+  -->
+  <sensor>
+    <force       name="contact_force"  site="tool_site"/>
+    <torque      name="contact_torque" site="tool_site"/>
+    <framepos    name="ee_pos"         objtype="site" objname="tool_site"/>
+    <framelinvel name="ee_vel"         objtype="site" objname="tool_site"/>
+    <jointpos    name="joint_x_pos"    joint="joint_x"/>
+    <jointpos    name="joint_y_pos"    joint="joint_y"/>
+    <jointpos    name="joint_z_pos"    joint="joint_z"/>
+  </sensor>
+
+</mujoco>

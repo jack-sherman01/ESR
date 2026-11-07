@@ -4,6 +4,7 @@ from .evolution_loop import EvolutionLoop
 from .mlp_policy import MLPInsertionPolicy
 from .pick_place_policy import PickPlacePolicy
 from .scripted_policy import ScriptedInsertionPolicy
+from .tool_tighten_policy import ToolTightenPolicy
 
 __all__ = [
     "BaseAgent",
@@ -12,4 +13,5 @@ __all__ = [
     "MLPInsertionPolicy",
     "PickPlacePolicy",
     "ScriptedInsertionPolicy",
+    "ToolTightenPolicy",
 ]
