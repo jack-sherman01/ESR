@@ -1,0 +1,103 @@
+<mujoco model="pick_place">
+  <compiler angle="radian" autolimits="true"/>
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <default>
+    <geom condim="1" friction="0.8 0.005 0.0001"/>
+    <joint damping="2.0" limited="true"/>
+  </default>
+
+  <asset>
+    <material name="floor_mat"  rgba="0.85 0.80 0.70 1"/>
+    <material name="arm_mat"    rgba="0.70 0.70 0.75 0.4"/>
+    <material name="pick_mat"   rgba="0.20 0.70 0.20 0.6"/>
+    <material name="place_mat"  rgba="0.20 0.20 0.90 0.6"/>
+    <material name="ee_mat"     rgba="0.80 0.30 0.20 1"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" diffuse="0.9 0.9 0.9" specular="0.3 0.3 0.3"/>
+    <geom name="floor" type="plane" size="0.5 0.5 0.01" material="floor_mat" condim="1"/>
+
+    <!-- Pick zone marker — green disc at left station -->
+    <body name="pick_zone" pos="-0.08 0 0">
+      <geom type="cylinder" size="0.016 0.002" pos="0 0 0.067"
+            material="pick_mat" contype="0" conaffinity="0"/>
+    </body>
+
+    <!-- Place zone marker — blue disc at right station -->
+    <body name="place_zone" pos="0.08 0 0">
+      <geom type="cylinder" size="0.016 0.002" pos="0 0 0.067"
+            material="place_mat" contype="0" conaffinity="0"/>
+    </body>
+
+    <!--
+      3-DOF slide mechanism — identical pattern to PegInsertionTask.
+      arm_x rest position: (0, 0, 0.22) in world frame.
+      EE world z = 0.22 + joint_z.
+
+      Useful z landmarks:
+        joint_z =  0.000  →  EE z = 0.220  (rest / clearance)
+        joint_z = -0.100  →  EE z = 0.120  (safe clearance height)
+        joint_z = -0.130  →  EE z = 0.090  (unsafe clearance height)
+        joint_z = -0.155  →  EE z = 0.065  (workspace / pick-place height)
+
+      Actuator gains (same as PegInsertionTask):
+        kv_x = 120  (ζ_x ≈ 0.8 for m_subtree_x ≈ 1.13 kg)
+        kv_y =  90  (ζ_y ≈ 0.8 for m_subtree_y ≈ 0.63 kg)
+        kv_z =  30  (ζ_z ≈ 0.67)
+    -->
+    <body name="arm_x" pos="0 0 0.22">
+      <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
+      <joint name="joint_x" type="slide" axis="1 0 0" range="-0.14 0.14"/>
+      <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+      <body name="arm_y" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
+        <joint name="joint_y" type="slide" axis="0 1 0" range="-0.08 0.08"/>
+        <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+        <body name="arm_z" pos="0 0 0">
+          <inertial pos="0 0 0" mass="0.1" diaginertia="1e-4 1e-4 1e-4"/>
+          <joint name="joint_z" type="slide" axis="0 0 1" range="-0.165 0.03"/>
+          <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+
+          <!-- EE sphere — represents the gripper tip; no collision geometry -->
+          <body name="ee_body" pos="0 0 0">
+            <inertial pos="0 0 0" mass="0.030" diaginertia="1e-5 1e-5 1e-5"/>
+            <geom name="ee_sphere" type="sphere" size="0.012"
+                  material="ee_mat" contype="0" conaffinity="0"/>
+            <site name="ee_site" pos="0 0 0" size="0.002"/>
+          </body>
+
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="act_x" joint="joint_x" kp="5000" kv="120"
+              ctrllimited="true" ctrlrange="-0.14 0.14"/>
+    <position name="act_y" joint="joint_y" kp="5000" kv="90"
+              ctrllimited="true" ctrlrange="-0.08 0.08"/>
+    <position name="act_z" joint="joint_z" kp="5000" kv="30"
+              ctrllimited="true" ctrlrange="-0.165 0.03"/>
+  </actuator>
+
+  <!--
+    Sensor layout (data.sensordata indices):
+      [0:3]  ee_pos  — EE world position  (m)
+      [3:6]  ee_vel  — EE world velocity  (m/s)
+      [6]    jpos_x  — joint_x position   (m)
+      [7]    jpos_y  — joint_y position   (m)
+      [8]    jpos_z  — joint_z position   (m)
+  -->
+  <sensor>
+    <framepos    name="ee_pos" objtype="site" objname="ee_site"/>
+    <framelinvel name="ee_vel" objtype="site" objname="ee_site"/>
+    <jointpos    name="jpos_x" joint="joint_x"/>
+    <jointpos    name="jpos_y" joint="joint_y"/>
+    <jointpos    name="jpos_z" joint="joint_z"/>
+  </sensor>
+
+</mujoco>

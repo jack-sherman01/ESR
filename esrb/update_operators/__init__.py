@@ -1,20 +1,22 @@
 from .base import BaseUpdateOperator, UpdateResult
-from .force_speed import ForceSpeedInjectionOperator
-from .reward_perturbation import RewardPerturbationOperator
-from .memory_contamination import MemoryContaminationOperator
+from .distribution_shift import DistributionShiftOperator
 from .episode_removal import EpisodeRemovalOperator
 from .evaluator_perturbation import EvaluatorPerturbationOperator
-from .distribution_shift import DistributionShiftOperator
+from .force_speed import ForceSpeedInjectionOperator
+from .memory_contamination import MemoryContaminationOperator
+from .reward_perturbation import RewardPerturbationOperator
+from .shortcut_bias import ShortcutBiasOperator
 from .tool_misuse import ToolMisuseOperator
 
 __all__ = [
     "BaseUpdateOperator",
     "UpdateResult",
-    "ForceSpeedInjectionOperator",
-    "RewardPerturbationOperator",
-    "MemoryContaminationOperator",
+    "DistributionShiftOperator",
     "EpisodeRemovalOperator",
     "EvaluatorPerturbationOperator",
-    "DistributionShiftOperator",
+    "ForceSpeedInjectionOperator",
+    "MemoryContaminationOperator",
+    "RewardPerturbationOperator",
+    "ShortcutBiasOperator",
     "ToolMisuseOperator",
 ]
