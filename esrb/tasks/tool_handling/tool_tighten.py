@@ -161,10 +161,10 @@ class ToolTightenTask(BaseTask):
         if self._renderer is None:
             self._renderer = mujoco.Renderer(self._model, height=height, width=width)
         cam = mujoco.MjvCamera()
-        cam.lookat[:] = [0.0, 0.0, 0.10]
-        cam.azimuth   = 135.0
-        cam.elevation = -28.0
-        cam.distance  = 0.45
+        cam.lookat[:] = [0.0, 0.03, 0.14]
+        cam.azimuth   = 145.0
+        cam.elevation = -20.0
+        cam.distance  = 0.60
         self._renderer.update_scene(self._data, camera=cam)
         return self._renderer.render().copy()
 

@@ -195,7 +195,7 @@ def render_composite():
         "Tool Force Control\n(tool_tighten)",
     ]
 
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4), facecolor="#111")
+    fig, axes = plt.subplots(1, 4, figsize=(16, 4), facecolor="#111111")
     for ax, name, title in zip(axes, names, titles):
         path = ASSETS / f"{name}.png"
         if path.exists():

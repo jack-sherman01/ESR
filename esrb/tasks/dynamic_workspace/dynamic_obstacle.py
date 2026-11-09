@@ -151,10 +151,10 @@ class DynamicObstacleTask(BaseTask):
         if self._renderer is None:
             self._renderer = mujoco.Renderer(self._model, height=height, width=width)
         cam = mujoco.MjvCamera()
-        cam.lookat[:] = [0.045, 0.0, 0.205]
-        cam.azimuth   = 135.0
-        cam.elevation = -28.0
-        cam.distance  = 0.45
+        cam.lookat[:] = [0.04, 0.03, 0.14]
+        cam.azimuth   = 145.0
+        cam.elevation = -20.0
+        cam.distance  = 0.65
         self._renderer.update_scene(self._data, camera=cam)
         return self._renderer.render().copy()
 

@@ -11,12 +11,31 @@
     <material name="floor_mat"    rgba="0.85 0.80 0.70 1"/>
     <material name="arm_mat"      rgba="0.70 0.70 0.75 0.6"/>
     <material name="obstacle_mat" rgba="0.90 0.20 0.20 0.7"/>
+    <material name="bot_frame"    rgba="0.30 0.32 0.38 1"/>
+    <material name="bot_link"     rgba="0.55 0.57 0.63 1"/>
   </asset>
 
   <worldbody>
     <light pos="0 0 1.5" dir="0 0 -1" diffuse="0.9 0.9 0.9" specular="0.3 0.3 0.3"/>
     <geom name="floor" type="plane" size="0.5 0.5 0.01"
           material="floor_mat" contype="1" conaffinity="1" condim="1"/>
+
+    <!-- Cartesian gantry robot frame (visual only, no collision) -->
+    <body name="robot_gantry" pos="0 0 0">
+      <inertial pos="0 0 0.13" mass="0.001" diaginertia="1e-6 1e-6 1e-6"/>
+      <!-- Left rear column -->
+      <geom type="cylinder" size="0.012 0.132" pos="-0.17 0.14 0.132"
+            material="bot_frame" contype="0" conaffinity="0" mass="0"/>
+      <!-- Right rear column -->
+      <geom type="cylinder" size="0.012 0.132" pos=" 0.17 0.14 0.132"
+            material="bot_frame" contype="0" conaffinity="0" mass="0"/>
+      <!-- Top X-beam -->
+      <geom type="box" size="0.173 0.014 0.012" pos="0 0.14 0.266"
+            material="bot_frame" contype="0" conaffinity="0" mass="0"/>
+      <!-- Base foot plate -->
+      <geom type="box" size="0.180 0.075 0.006" pos="0 0.065 0.006"
+            material="bot_frame" contype="0" conaffinity="0" mass="0"/>
+    </body>
 
     <!-- Target marker: visual only -->
     <site name="target" pos="0.09 0.0 0.195" size="0.012" rgba="0.2 0.9 0.2 0.8"/>
@@ -41,16 +60,27 @@
     <body name="arm_x" pos="0 0 0.22">
       <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
       <joint name="joint_x" type="slide" axis="1 0 0" range="-0.15 0.15"/>
-      <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+      <!-- X-carriage block -->
+      <geom type="box" size="0.023 0.014 0.012" mass="0"
+            material="bot_link" contype="0" conaffinity="0"/>
 
       <body name="arm_y" pos="0 0 0">
         <inertial pos="0 0 0" mass="0.5" diaginertia="1e-3 1e-3 1e-3"/>
         <joint name="joint_y" type="slide" axis="0 1 0" range="-0.15 0.15"/>
-        <geom type="sphere" size="0.001" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0"/>
+        <!-- Y-carriage block -->
+        <geom type="box" size="0.015 0.023 0.010" mass="0"
+              material="bot_link" contype="0" conaffinity="0"/>
 
         <body name="arm_z" pos="0 0 0">
           <inertial pos="0 0 0" mass="0.1" diaginertia="1e-4 1e-4 1e-4"/>
           <joint name="joint_z" type="slide" axis="0 0 1" range="-0.15 0.05"/>
+          <!-- Z-carriage hub -->
+          <geom type="box" size="0.013 0.013 0.013" mass="0"
+                material="bot_link" contype="0" conaffinity="0"/>
+          <!-- Upward telescoping rod -->
+          <geom type="cylinder" size="0.007 0.115" pos="0 0 0.115" mass="0"
+                material="bot_link" contype="0" conaffinity="0"/>
+          <!-- EE arm body and tip -->
           <geom name="arm_body" type="cylinder" size="0.012 0.015"
                 material="arm_mat" contype="0" conaffinity="0"/>
           <site name="ee" pos="0 0 -0.015" size="0.008" rgba="0.1 0.5 1.0 1"/>

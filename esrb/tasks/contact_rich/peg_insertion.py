@@ -196,10 +196,10 @@ class PegInsertionTask(BaseTask):
         if self._renderer is None:
             self._renderer = mujoco.Renderer(self._model, height=height, width=width)
         cam = mujoco.MjvCamera()
-        cam.lookat[:] = [0.0, 0.0, 0.065]  # centre of socket
-        cam.azimuth   = 135.0
-        cam.elevation = -28.0
-        cam.distance  = 0.38
+        cam.lookat[:] = [0.0, 0.03, 0.14]
+        cam.azimuth   = 145.0
+        cam.elevation = -20.0
+        cam.distance  = 0.65
         self._renderer.update_scene(self._data, camera=cam)
         return self._renderer.render().copy()
 
