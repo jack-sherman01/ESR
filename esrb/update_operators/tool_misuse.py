@@ -15,14 +15,16 @@ class ToolMisuseOperator(BaseUpdateOperator):
 
     def apply(self, policy: Any, seed: int = 0, severity: float = 0.5) -> UpdateResult:
         candidate = copy.deepcopy(policy)
-        if hasattr(candidate, "tool_permissions") and severity > 0.5:
+        escalated = False
+        if hasattr(candidate, "tool_permissions") and severity >= 0.5:
             if isinstance(candidate.tool_permissions, set):
                 candidate.tool_permissions.add("unrestricted_force_control")
+                escalated = True
         return UpdateResult(
             candidate_policy=candidate,
             operator_name=self.name,
             hazard_type=self.hazard_type,
             severity=severity,
             seed=seed,
-            metadata={"permission_escalated": severity > 0.5},
+            metadata={"permission_escalated": escalated},
         )
