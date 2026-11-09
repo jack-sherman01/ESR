@@ -68,8 +68,10 @@ from esrb.benchmark import (
 from esrb.benchmark.lineage import GenerationRecord
 from esrb.detection.change_impact import ComponentType
 from esrb.detection.counterexample import Counterexample, CounterexampleSource
-from esrb.detection.gate_checks import available_checks, execute_gate_checks
+from esrb.detection.gate_checks import available_checks, execute_gate_checks, has_oracle_evidence
 from esrb.detection.gate_planner import plan_gate
+from esrb.detection.minimize import minimize
+from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
 from esrb.metrics import (
     capability_safety_pareto,
@@ -91,7 +93,7 @@ from esrb.update_operators import (
     ForceSpeedInjectionOperator, MemoryContaminationOperator,
     RewardPerturbationOperator, SensorDriftOperator, ShortcutBiasOperator, ToolMisuseOperator,
 )
-from esrb.utils.hashing import hash_object
+from esrb.utils.hashing import hash_dict, hash_object
 
 ALL_SCENARIOS = [
     "scripted_peg", "mlp_peg", "dynamic_obs", "pick_place",
@@ -372,7 +374,6 @@ def _build_tool_misuse(gens, rollouts, severity, seed):
 
 # ── Loop runner ───────────────────────────────────────────────────────────────
 
-_FIXED_RESET_TASKS = (GraspForceTask, SensorDriftTask)
 _ORACLE_TEST = {
     VelocityOracle: "dynamics_safety",
     ProximityOracle: "dynamics_safety",
@@ -380,13 +381,6 @@ _ORACLE_TEST = {
     ForceTorqueOracle: "force_safety",
 }
 _SENSOR_BASELINE = {"true_force": 10.0, "sensor_bias": 0.0}
-
-
-def _reset_key(task, seed):
-    """Identify the reset separately from any fault injected by the candidate."""
-    if isinstance(task, _FIXED_RESET_TASKS):
-        return f"{task.name}/default"
-    return f"{task.name}/seed/{seed}"
 
 
 def _changed_components(parent, candidate, parent_state, candidate_state):
@@ -411,7 +405,7 @@ def _changed_components(parent, candidate, parent_state, candidate_state):
     return changed
 
 
-def _record_gate_violation(loop, result, seed, gen, phase, policy_digest, task_config=None):
+def _record_gate_violation(loop, result, case, gen, policy_digest, task_config=None):
     """Keep each unsafe physical-oracle result with its reset and applied task config."""
     if result.oracle_verdict.safe:
         return None
@@ -422,18 +416,86 @@ def _record_gate_violation(loop, result, seed, gen, phase, policy_digest, task_c
         violated_constraints=result.oracle_verdict.violated_constraints,
         trigger_component=ComponentType.ROBOT_INTERFACE.value,
         source=CounterexampleSource(
-            scenario=loop.instance.name, reset_key=_reset_key(loop.instance.task, seed),
-            seed=seed, phase=phase, policy_digest=policy_digest, task_config=task_config,
+            scenario=loop.instance.name,
+            reset_key=case["reset_key"], seed=case["seed"], phase=case["phase"],
+            policy_digest=policy_digest, task_config=task_config, disturbance=case["disturbance"],
         ),
     )
     loop.cx_library.add(cx)
     return cx.id
 
 
+def _run_structured_case(loop, policy, case, generation):
+    point = case["disturbance"]
+    result = loop._run_rollout(
+        policy, case["seed"], generation, reset_options={"disturbance": point},
+    )
+    if result.episode_data["reset_readback"] != point:
+        raise ValueError("task did not restore the requested reset disturbance")
+    return result
+
+
+class _ReductionStopped(Exception):
+    """The probe series cannot retain a newly verified violation."""
+
+
+def _reduce_panel(task, plan, executed, results, execute_case):
+    """Spend reserved slots on measured reduction probes, then fill with fresh cases."""
+    initial = next((
+        row for row, result in zip(executed, results, strict=True)
+        if not result.oracle_verdict.safe and has_oracle_evidence(result)
+        and any(abs(value - task.reset_reference[field]) > 1e-6
+                for field, value in row["disturbance"].items())
+    ), None)
+    next_seed = 1 + max(case["seed"] for case in plan["cases"] if case["phase"] != "replay")
+
+    def run_extra(case):
+        plan["cases"].append(case)
+        return execute_case(case)
+
+    reduction = {"status": "no_off_reference_unsafe_case", "evaluations": 0}
+    if initial is not None:
+        history = []
+
+        def probe(point):
+            result = run_extra(gate_case(
+                task, initial["seed"], "reduction", point, origin_evidence_id=initial["evidence_id"],
+            ))
+            unsafe = not result.oracle_verdict.safe if has_oracle_evidence(result) else None
+            evidence = {"unsafe": unsafe, "evidence_id": executed[-1]["evidence_id"]}
+            history.append({"environment": point, "result": evidence})
+            if unsafe is None:
+                raise _ReductionStopped("missing_probe_evidence")
+            if len(history) == 1 and not unsafe:
+                raise _ReductionStopped("witness_not_reproduced")
+            return evidence
+
+        try:
+            reduction = minimize(
+                initial["disturbance"], task.reset_reference, probe,
+                budget=plan["reduction_reserved"],
+            )
+            reduction["status"] = "verified"
+        except _ReductionStopped as exc:
+            reduction = {
+                "status": str(exc), "evaluations": len(history), "history": history,
+                "original": initial["disturbance"],
+            }
+        reduction["origin_evidence_id"] = initial["evidence_id"]
+    for index in range(plan["reduction_reserved"] - reduction["evaluations"]):
+        run_extra(gate_case(task, next_seed + index, "fresh"))
+    return reduction
+
+
 def run_loop(instance, agent, selector, severity, n_rollouts, *,
-             gate_planner="fixed", fresh_min=1, training_seed_stop=0, replay_all=False):
+             gate_planner="fixed", fresh_min=1, training_seed_stop=0, replay_all=False,
+             peg_boundary_cases=0, peg_reduction_budget=0, boundary_cases=0, reduction_budget=0):
     """Run the CE-EST loop, returning (EvolutionLoop, list[gen_dict])."""
     use_impact = gate_planner == "impact"
+    task = instance.task
+    if instance.name == "scripted_peg_speed_injection":
+        boundary_cases = boundary_cases or peg_boundary_cases
+        reduction_budget = reduction_budget or peg_reduction_budget
     sensor_impact = use_impact and isinstance(instance.task, SensorDriftTask)
     parent_config = _SENSOR_BASELINE if sensor_impact else None
     if sensor_impact:
@@ -448,10 +510,12 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
 
     for gen in range(proto.num_generations):
         parent_seed = proto.seed + gen * 1000
-        results = [
-            loop._run_rollout(loop.agent, parent_seed + r, gen)
-            for r in range(proto.rollouts_per_generation)
-        ]
+        parent_seeds = range(parent_seed, parent_seed + proto.rollouts_per_generation)
+        if use_impact:
+            parent_cases = [gate_case(task, seed, "parent") for seed in parent_seeds]
+            results = [_run_structured_case(loop, loop.agent, case, gen) for case in parent_cases]
+        else:
+            results = [loop._run_rollout(loop.agent, seed, gen) for seed in parent_seeds]
         mean_score = sum(r.task_score for r in results) / len(results)
         any_unsafe = any(not r.oracle_verdict.safe for r in results)
         last_sigs  = results[-1].oracle_verdict.signal_values
@@ -460,8 +524,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
         parent_digest = hash_object(parent_state)
         for offset, r in enumerate(results):
             if use_impact:
-                _record_gate_violation(loop, r, parent_seed + offset, gen, "parent",
-                                       parent_digest, parent_config)
+                _record_gate_violation(loop, r, parent_cases[offset], gen, parent_digest, parent_config)
             elif not r.oracle_verdict.safe:
                 cx = Counterexample.from_episode(
                     episode_data=r.episode_data,
@@ -480,6 +543,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
         plan = None
         executed = []
         check_results, check_blockers = {}, []
+        reduction = None
         if use_impact:
             candidate_state = candidate.state_dict()
             candidate_digest = hash_object(candidate_state)
@@ -503,23 +567,37 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 supported_tests=set(checks),
                 replay_all=replay_all,
                 replay_seed=proto.seed,
+                boundary_catalog=boundary_catalog(task, primary_test) if boundary_cases else (),
+                boundary_limit=boundary_cases, reduction_budget=reduction_budget,
             )
             cand_results = []
+
+            def execute_case(case):
+                case.update(gate_case(task, case["seed"], case["phase"], case.get("disturbance")))
+                result = _run_structured_case(loop, candidate, case, gen)
+                cx_id = _record_gate_violation(
+                    loop, result, case, gen, candidate_digest, candidate_config,
+                )
+                cand_results.append(result)
+                raw = {
+                    "policy_digest": candidate_digest, "case": case,
+                    "episode_data": result.episode_data, "oracle": asdict(result.oracle_verdict),
+                    "task_score": result.task_score, "task_success": result.task_success,
+                }
+                executed.append({
+                    **case, "safe": result.oracle_verdict.safe, "signal_values": result.oracle_verdict.signal_values,
+                    "new_counterexample_id": cx_id, "raw_result": raw, "evidence_id": hash_dict(raw),
+                    "control_steps": control_steps(result.episode_data),
+                })
+                return result
+
             try:
                 if candidate_config is not None:
                     instance.task.configure(**candidate_config)
                 for case in plan["cases"]:
-                    seed = case["seed"]
-                    r = loop._run_rollout(candidate, seed, gen)
-                    cx_id = _record_gate_violation(
-                        loop, r, seed, gen, case["phase"], candidate_digest, candidate_config,
-                    )
-                    cand_results.append(r)
-                    executed.append({
-                        **case, "reset_key": _reset_key(instance.task, seed),
-                        "safe": r.oracle_verdict.safe, "signal_values": r.oracle_verdict.signal_values,
-                        "new_counterexample_id": cx_id,
-                    })
+                    execute_case(case)
+                if plan["reduction_reserved"]:
+                    reduction = _reduce_panel(task, plan, executed, cand_results, execute_case)
             finally:
                 if parent_config is not None:
                     instance.task.configure(**parent_config)
@@ -532,10 +610,14 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
 
         selected = None
         if cand_results and not check_blockers:
+            risk_results = [
+                result for case, result in zip(plan["cases"], cand_results, strict=True)
+                if case["phase"] != "reduction"
+            ] if use_impact else cand_results
             cand_eval = CandidateEvaluation(
                 policy=candidate,
-                task_scores=[r.task_score for r in cand_results],
-                safety_violations=[not r.oracle_verdict.safe for r in cand_results],
+                task_scores=[r.task_score for r in risk_results],
+                safety_violations=[not r.oracle_verdict.safe for r in risk_results],
                 generation=gen,
             )
             selected = selector.select([cand_eval])
@@ -587,6 +669,8 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             }
             if candidate_config is not None:
                 row["gate_plan"]["candidate_task_config"] = candidate_config
+            row["gate_plan"]["reduction"] = reduction
+            row["gate_plan"]["used_control_steps"] = sum(case["control_steps"] for case in executed)
         gen_rows.append(row)
 
     return loop, gen_rows
@@ -985,6 +1069,14 @@ def main() -> None:
                         help="Minimum fresh slots inside the impact candidate budget.")
     parser.add_argument("--replay-all", action="store_true",
                         help="Require all historical resets in each scenario (impact only).")
+    parser.add_argument("--boundary-cases", type=int, default=0, metavar="N",
+                        help="Maximum impact-matched boundary cases per scenario.")
+    parser.add_argument("--reduction-budget", type=int, default=0, metavar="N",
+                        help="Maximum counterexample reduction probes per candidate.")
+    parser.add_argument("--peg-boundary-cases", type=int, default=0, metavar="N",
+                        help="Reserve up to N impact-driven scripted_peg boundary cases (0–4).")
+    parser.add_argument("--peg-reduction-budget", type=int, default=0, metavar="N",
+                        help="Reserve up to N scripted_peg counterexample reduction probes.")
     parser.add_argument("--severity",      type=float, default=0.5)
     parser.add_argument("--epsilon",       type=float, default=0.09)
     parser.add_argument("--train-episodes",type=int,   default=100,
@@ -1001,6 +1093,26 @@ def main() -> None:
         parser.error("--rollouts must be positive")
     if args.replay_all and args.gate_planner != "impact":
         parser.error("--replay-all requires --gate-planner impact")
+    if args.boundary_cases < 0:
+        parser.error("--boundary-cases must be nonnegative")
+    if args.reduction_budget < 0 or args.reduction_budget == 1:
+        parser.error("--reduction-budget must be 0 or at least 2")
+    if args.boundary_cases or args.reduction_budget:
+        if args.gate_planner != "impact":
+            parser.error("boundary and reduction options require --gate-planner impact")
+        if args.peg_boundary_cases or args.peg_reduction_budget:
+            parser.error("use either general or peg-specific boundary and reduction options")
+        if args.boundary_cases + args.reduction_budget > args.rollouts - args.fresh_min:
+            parser.error("boundary cases and reduction probes must fit after --fresh-min")
+    if not 0 <= args.peg_boundary_cases <= 4:
+        parser.error("--peg-boundary-cases must be between 0 and 4")
+    if args.peg_reduction_budget < 0 or args.peg_reduction_budget == 1:
+        parser.error("--peg-reduction-budget must be 0 or at least 2")
+    if args.peg_boundary_cases or args.peg_reduction_budget:
+        if args.gate_planner != "impact" or "scripted_peg" not in args.scenarios:
+            parser.error("peg boundary and reduction options require scripted_peg in impact mode")
+        if args.peg_boundary_cases + args.peg_reduction_budget > args.rollouts - args.fresh_min:
+            parser.error("peg boundary cases and reduction probes must fit after --fresh-min")
     if args.gate_planner == "impact":
         if len(set(args.scenarios)) != len(args.scenarios):
             parser.error("--scenarios must not repeat names in impact mode")
@@ -1128,6 +1240,9 @@ def main() -> None:
                 instance, agent, selector, args.severity, args.rollouts,
                 gate_planner=args.gate_planner, fresh_min=args.fresh_min,
                 training_seed_stop=training_seed_stop, replay_all=args.replay_all,
+                peg_boundary_cases=args.peg_boundary_cases,
+                peg_reduction_budget=args.peg_reduction_budget,
+                boundary_cases=args.boundary_cases, reduction_budget=args.reduction_budget,
             )
             agent = loop.agent
 
@@ -1213,13 +1328,10 @@ def main() -> None:
         (sc_dir / "seed_sweep.json").write_text(json.dumps(sweep, indent=2))
         if args.gate_planner == "impact":
             archive = {
-                "scenario": instance.name,
-                "reset_mode": "fixed" if isinstance(instance.task, _FIXED_RESET_TASKS) else "seeded",
-                "fresh_is_independent": False,
+                "scenario": instance.name, "task": instance.task.name,
+                "reset_mode": "structured", "fresh_is_independent": False,
                 "counterexamples": [asdict(cx) for cx in loop.cx_library.all()],
             }
-            if archive["reset_mode"] == "fixed":
-                archive["reset_key"] = _reset_key(instance.task, args.seed)
             (sc_dir / "counterexamples.json").write_text(json.dumps(archive, indent=2))
         print(f"\n  Artifacts → {sc_dir}")
 

@@ -14,7 +14,7 @@ def _result(status, **evidence):
     return {"status": status, **evidence}
 
 
-def _oracle_evidence(rollout):
+def has_oracle_evidence(rollout):
     """Reject empty or nonfinite telemetry before relying on an oracle verdict."""
     verdict = rollout.oracle_verdict
     episode = rollout.episode_data
@@ -47,7 +47,7 @@ def _check_cases(samples, predicate):
 
 
 def _physical_safe(rollout):
-    return rollout.oracle_verdict.safe if _oracle_evidence(rollout) else None
+    return rollout.oracle_verdict.safe if has_oracle_evidence(rollout) else None
 
 
 def _success_consistent(rollout):

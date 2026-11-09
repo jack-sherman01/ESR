@@ -19,6 +19,9 @@ def plan_gate(
     supported_tests: set[str],
     replay_all: bool = False,
     replay_seed: int = 0,
+    boundary_catalog=(),
+    boundary_limit: int = 0,
+    reduction_budget: int = 0,
 ) -> dict:
     """Reserve fresh slots and select at most one historical replay per reset.
 
@@ -30,6 +33,11 @@ def plan_gate(
 
     impacted = graph.impacted_components(changed)
     required_tests = set(graph.required_tests(changed))
+    scheduled_tests = required_tests & supported_tests
+    boundaries = sorted(
+        (case for case in boundary_catalog if scheduled_tests.intersection(case["tests"])),
+        key=lambda case: -len(scheduled_tests.intersection(case["tests"])),
+    )
     if replay_all or not changed:
         eligible = library.all()
     else:
@@ -41,6 +49,8 @@ def plan_gate(
             witnesses.setdefault(source.reset_key, []).append(cx)
 
     replay_capacity = budget - fresh_min
+    if not replay_all:
+        replay_capacity = max(0, replay_capacity - min(len(boundaries), boundary_limit) - reduction_budget)
     replay_count = len(witnesses) if replay_all else min(replay_capacity, len(witnesses))
     required_budget = replay_count + fresh_min
     blocked = required_budget > budget
@@ -55,23 +65,41 @@ def plan_gate(
         entries = witnesses[reset_key]
         source = entries[0].source
         assert source is not None
-        replays.append({
+        case = {
             "phase": "replay", "seed": source.seed, "reset_key": reset_key,
             "counterexample_ids": [cx.id for cx in entries],
-        })
+        }
+        if source.disturbance is not None:
+            case["disturbance"] = source.disturbance
+        replays.append(case)
     cases = []
+    reserved_reduction = 0
     if not blocked:
+        spare = budget - required_budget
+        boundaries = [
+            case for case in boundaries
+            if all(case["disturbance"] != replay.get("disturbance") for replay in replays)
+        ][:min(spare, boundary_limit)]
+        reserved_reduction = min(reduction_budget, spare - len(boundaries))
+        if reserved_reduction < 2:
+            reserved_reduction = 0
         cases.extend(replays)
         cases.extend(
-            {"phase": "fresh", "seed": fresh_seed + slot}
-            for slot in range(budget - len(cases))
+            {"phase": "boundary", "seed": fresh_seed + slot, "boundary_id": case["id"],
+             "test_ids": sorted(scheduled_tests.intersection(case["tests"])),
+             "disturbance": case["disturbance"]}
+            for slot, case in enumerate(boundaries)
+        )
+        cases.extend(
+            {"phase": "fresh", "seed": fresh_seed + len(boundaries) + slot}
+            for slot in range(budget - len(cases) - reserved_reduction)
         )
 
     return {
         "changed_components": sorted(component.value for component in changed),
         "impacted_components": sorted(component.value for component in impacted),
         "required_tests": sorted(required_tests),
-        "scheduled_tests": sorted(required_tests & supported_tests) if not blocked else [],
+        "scheduled_tests": sorted(scheduled_tests) if not blocked else [],
         "unmapped_required_tests": sorted(required_tests - supported_tests),
         "supported_tests": sorted(supported_tests),
         "budget": budget, "fresh_min": fresh_min, "required_budget": required_budget,
@@ -81,6 +109,7 @@ def plan_gate(
         "eligible_replay_count": len(witnesses),
         "skipped_replay_count": len(witnesses) - replay_count,
         "mandatory_replays": replays if replay_all else [],
+        "reduction_reserved": reserved_reduction,
         "blocked_reason": "gate_budget_shortfall" if blocked else None,
         "cases": cases,
     }

@@ -52,9 +52,9 @@ def test_runner_replays_rejected_candidate_violation_under_same_budget(monkeypat
     original_reset = instance.task.reset
     resets = []
 
-    def record_reset(seed):
+    def record_reset(seed, **options):
         resets.append(seed)
-        return original_reset(seed=seed)
+        return original_reset(seed=seed, **options)
 
     monkeypatch.setattr(instance.task, "reset", record_reset)
     loop, rows = run_loop(
