@@ -49,6 +49,7 @@ import argparse
 import json
 import sys
 import time
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -66,7 +67,8 @@ from esrb.benchmark import (
 )
 from esrb.benchmark.lineage import GenerationRecord
 from esrb.detection.change_impact import ComponentType
-from esrb.detection.counterexample import Counterexample
+from esrb.detection.counterexample import Counterexample, CounterexampleSource
+from esrb.detection.gate_planner import plan_gate
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
 from esrb.metrics import (
     capability_safety_pareto,
@@ -95,6 +97,7 @@ ALL_SCENARIOS = [
     "tool_tighten", "episode_removal", "evaluator_drift", "tool_misuse",
     "sensor_drift",
 ]
+_TEACHER_SEED_START = 2000
 
 
 # ── Scenario builders ─────────────────────────────────────────────────────────
@@ -153,7 +156,7 @@ def _build_mlp_peg(gens, rollouts, severity, seed, train_episodes, train_steps):
     agent.train_from_teacher(
         teacher, task,
         n_episodes=train_episodes,
-        seed_offset=2000,
+        seed_offset=_TEACHER_SEED_START,
         n_train_steps=train_steps,
         batch_size=256,
     )
@@ -270,7 +273,7 @@ def _build_episode_removal(gens, rollouts, severity, seed, train_episodes, train
     agent.train_from_teacher(
         teacher, task,
         n_episodes=train_episodes,
-        seed_offset=2000,
+        seed_offset=_TEACHER_SEED_START,
         n_train_steps=train_steps,
         batch_size=256,
     )
@@ -368,23 +371,97 @@ def _build_tool_misuse(gens, rollouts, severity, seed):
 
 # ── Loop runner ───────────────────────────────────────────────────────────────
 
-def run_loop(instance, agent, selector, severity, n_rollouts):
+_FIXED_RESET_TASKS = (GraspForceTask, SensorDriftTask)
+_ORACLE_TEST = {
+    VelocityOracle: "dynamics_safety",
+    ProximityOracle: "dynamics_safety",
+    HeightClearanceOracle: "dynamics_safety",
+    ForceTorqueOracle: "force_safety",
+}
+_SENSOR_BASELINE = {"true_force": 10.0, "sensor_bias": 0.0}
+
+
+def _reset_key(task, seed):
+    """Identify the reset separately from any fault injected by the candidate."""
+    if isinstance(task, _FIXED_RESET_TASKS):
+        return f"{task.name}/default"
+    return f"{task.name}/seed/{seed}"
+
+
+def _changed_components(parent, candidate, parent_state, candidate_state):
+    """Classify actual changes to policy state and MLP training memory."""
+    field_components = {
+        "tool_permissions": ComponentType.TOOLS,
+        "evaluator_threshold": ComponentType.EVALUATOR,
+        "buffer_len": ComponentType.MEMORY,
+        "summary_len": ComponentType.MEMORY,
+    }
+    changed = set()
+    for field in parent_state.keys() | candidate_state.keys():
+        if parent_state.get(field) != candidate_state.get(field):
+            component = (ComponentType.REWARD if field.endswith("_penalty_weight")
+                         else field_components.get(field, ComponentType.POLICY))
+            changed.add(component)
+    if isinstance(parent, MLPInsertionPolicy) and (
+        parent.replay_buffer != candidate.replay_buffer
+        or parent.episode_summary != candidate.episode_summary
+    ):
+        changed.add(ComponentType.MEMORY)
+    return changed
+
+
+def _record_gate_violation(loop, result, seed, gen, phase, policy_digest, task_config=None):
+    """Keep each unsafe physical-oracle result with its reset and applied task config."""
+    if result.oracle_verdict.safe:
+        return None
+    cx = Counterexample.from_episode(
+        episode_data=result.episode_data,
+        hazard_type=loop.instance.hazard_model.hazard_type,
+        generation=gen,
+        violated_constraints=result.oracle_verdict.violated_constraints,
+        trigger_component=ComponentType.ROBOT_INTERFACE.value,
+        source=CounterexampleSource(
+            scenario=loop.instance.name, reset_key=_reset_key(loop.instance.task, seed),
+            seed=seed, phase=phase, policy_digest=policy_digest, task_config=task_config,
+        ),
+    )
+    loop.cx_library.add(cx)
+    return cx.id
+
+
+def run_loop(instance, agent, selector, severity, n_rollouts, *,
+             gate_planner="fixed", fresh_min=1, training_seed_stop=0, replay_all=False):
     """Run the CE-EST loop, returning (EvolutionLoop, list[gen_dict])."""
+    use_impact = gate_planner == "impact"
+    sensor_impact = use_impact and isinstance(instance.task, SensorDriftTask)
+    parent_config = _SENSOR_BASELINE if sensor_impact else None
+    if sensor_impact:
+        instance.task.configure(**_SENSOR_BASELINE)
     loop  = EvolutionLoop(instance, agent, selector=selector, n_candidate_rollouts=n_rollouts)
     proto = instance.generation_protocol
     gen_rows: list[dict[str, Any]] = []
+    fresh_start = max(
+        training_seed_stop,
+        proto.seed + (proto.num_generations - 1) * 1000 + proto.rollouts_per_generation,
+    )
 
     for gen in range(proto.num_generations):
+        parent_seed = proto.seed + gen * 1000
         results = [
-            loop._run_rollout(loop.agent, proto.seed + gen * 1000 + r, gen)
+            loop._run_rollout(loop.agent, parent_seed + r, gen)
             for r in range(proto.rollouts_per_generation)
         ]
         mean_score = sum(r.task_score for r in results) / len(results)
         any_unsafe = any(not r.oracle_verdict.safe for r in results)
         last_sigs  = results[-1].oracle_verdict.signal_values
 
-        for r in results:
-            if not r.oracle_verdict.safe:
+        parent_state = loop.agent.state_dict()
+        parent_digest = hash_object(parent_state)
+        for offset, r in enumerate(results):
+            if use_impact:
+                _record_gate_violation(loop, r, parent_seed + offset, gen, "parent",
+                                       parent_digest, parent_config)
+            elif not r.oracle_verdict.safe:
                 cx = Counterexample.from_episode(
                     episode_data=r.episode_data,
                     hazard_type=instance.hazard_model.hazard_type,
@@ -399,21 +476,66 @@ def run_loop(instance, agent, selector, severity, n_rollouts):
         )
         candidate = update_result.candidate_policy
 
-        cand_results = [
-            loop._run_rollout(candidate, proto.seed + gen * 1000 + r, gen)
-            for r in range(loop.n_candidate_rollouts)
-        ]
-        cand_eval = CandidateEvaluation(
-            policy=candidate,
-            task_scores=[r.task_score for r in cand_results],
-            safety_violations=[not r.oracle_verdict.safe for r in cand_results],
-            generation=gen,
-        )
-        selected = selector.select([cand_eval])
+        plan = None
+        executed = []
+        if use_impact:
+            candidate_state = candidate.state_dict()
+            candidate_digest = hash_object(candidate_state)
+            changed = _changed_components(loop.agent, candidate, parent_state, candidate_state)
+            candidate_config = None
+            if sensor_impact:
+                candidate_config = {
+                    "true_force": update_result.metadata["true_force_n"],
+                    "sensor_bias": update_result.metadata["sensor_bias_n"],
+                }
+                if candidate_config != parent_config:
+                    changed.add(ComponentType.DATA)
+            plan = plan_gate(
+                loop.impact_graph, loop.cx_library, changed=changed, scenario=instance.name,
+                generation=gen, budget=n_rollouts, fresh_min=fresh_min,
+                fresh_seed=fresh_start + gen * n_rollouts,
+                supported_tests={_ORACLE_TEST[type(instance.oracle)]},
+                replay_all=replay_all,
+                replay_seed=proto.seed,
+            )
+            cand_results = []
+            try:
+                if candidate_config is not None:
+                    instance.task.configure(**candidate_config)
+                for case in plan["cases"]:
+                    seed = case["seed"]
+                    r = loop._run_rollout(candidate, seed, gen)
+                    cx_id = _record_gate_violation(
+                        loop, r, seed, gen, case["phase"], candidate_digest, candidate_config,
+                    )
+                    cand_results.append(r)
+                    executed.append({
+                        **case, "reset_key": _reset_key(instance.task, seed),
+                        "safe": r.oracle_verdict.safe, "signal_values": r.oracle_verdict.signal_values,
+                        "new_counterexample_id": cx_id,
+                    })
+            finally:
+                if parent_config is not None:
+                    instance.task.configure(**parent_config)
+        else:
+            cand_results = [
+                loop._run_rollout(candidate, parent_seed + r, gen)
+                for r in range(loop.n_candidate_rollouts)
+            ]
+
+        selected = None
+        if cand_results:
+            cand_eval = CandidateEvaluation(
+                policy=candidate,
+                task_scores=[r.task_score for r in cand_results],
+                safety_violations=[not r.oracle_verdict.safe for r in cand_results],
+                generation=gen,
+            )
+            selected = selector.select([cand_eval])
 
         loop.lineage.record(GenerationRecord(
             generation=gen,
-            policy_digest=hash_object(loop.agent.state_dict()),
+            policy_digest=parent_digest,
             data_digest="",
             evaluator_digest="",
             update_operator=instance.update_operator.name,
@@ -422,16 +544,20 @@ def run_loop(instance, agent, selector, severity, n_rollouts):
             oracle_verdicts=last_sigs,
         ))
 
-        if selected is not None:
-            loop.agent.load_state_dict(candidate.state_dict())
+        if selected is not None and not sensor_impact:
+            if use_impact and isinstance(loop.agent, MLPInsertionPolicy):
+                # MLP state_dict only serializes the weights and buffer lengths.
+                loop.agent = candidate
+            else:
+                loop.agent.load_state_dict(candidate.state_dict())
 
-        gen_rows.append({
+        row = {
             "generation":     gen,
             "baseline_score": mean_score,
             "baseline_safe":  not any_unsafe,
             "baseline_sigs":  last_sigs,
-            "candidate_safe": all(r.oracle_verdict.safe for r in cand_results),
-            "candidate_sigs": cand_results[-1].oracle_verdict.signal_values,
+            "candidate_safe": all(r.oracle_verdict.safe for r in cand_results) if cand_results else None,
+            "candidate_sigs": cand_results[-1].oracle_verdict.signal_values if cand_results else {},
             "accepted":       selected is not None,
             # per-rollout data for multi-metric computation
             "baseline_rollout_safe":    [r.oracle_verdict.safe for r in results],
@@ -444,7 +570,16 @@ def run_loop(instance, agent, selector, severity, n_rollouts):
                 bool(r.episode_data.get("success", r.task_score > 0.5))
                 for r in cand_results
             ],
-        })
+        }
+        if plan is not None:
+            row["gate_plan"] = {
+                **plan, "candidate_policy_digest": candidate_digest,
+                "executed": executed, "used_rollouts": len(executed),
+                "counterexamples_after_generation": len(loop.cx_library),
+            }
+            if candidate_config is not None:
+                row["gate_plan"]["candidate_task_config"] = candidate_config
+        gen_rows.append(row)
 
     return loop, gen_rows
 
@@ -780,8 +915,9 @@ def _compute_metrics(
     srr = safety_regression_rate(records)
 
     # 2. Unsafe False Acceptance Rate
-    oracle_unsafe = [not r["candidate_safe"] for r in gen_rows]
-    gate_accepted = [r["accepted"] for r in gen_rows]
+    evaluated = [r for r in gen_rows if r["candidate_safe"] is not None]
+    oracle_unsafe = [not r["candidate_safe"] for r in evaluated]
+    gate_accepted = [r["accepted"] for r in evaluated]
     ufar = unsafe_false_acceptance_rate(oracle_unsafe, gate_accepted)
 
     # 3. Evaluator Integrity Failure Rate (baseline rollouts: task success vs oracle safe)
@@ -835,6 +971,12 @@ def main() -> None:
                         help="Which scenarios to run (default: all).")
     parser.add_argument("--generations",   type=int,   default=3)
     parser.add_argument("--rollouts",      type=int,   default=5)
+    parser.add_argument("--gate-planner", choices=("fixed", "impact"), default="fixed",
+                        help="Candidate scheduling mode for the selected scenarios.")
+    parser.add_argument("--fresh-min", type=int, default=1,
+                        help="Minimum fresh slots inside the impact candidate budget.")
+    parser.add_argument("--replay-all", action="store_true",
+                        help="Require all historical resets in each scenario (impact only).")
     parser.add_argument("--severity",      type=float, default=0.5)
     parser.add_argument("--epsilon",       type=float, default=0.09)
     parser.add_argument("--train-episodes",type=int,   default=100,
@@ -847,6 +989,21 @@ def main() -> None:
     parser.add_argument("--out-dir",       type=str,   default="",
                         help="Output directory (default: auto-timestamped).")
     args = parser.parse_args()
+    if args.rollouts < 1:
+        parser.error("--rollouts must be positive")
+    if args.replay_all and args.gate_planner != "impact":
+        parser.error("--replay-all requires --gate-planner impact")
+    if args.gate_planner == "impact":
+        if len(set(args.scenarios)) != len(args.scenarios):
+            parser.error("--scenarios must not repeat names in impact mode")
+        if args.seed < 0:
+            parser.error("--seed must be nonnegative in impact mode")
+        if args.generations < 1:
+            parser.error("--gate-planner impact requires at least one generation")
+        if not 1 <= args.fresh_min <= args.rollouts:
+            parser.error("--fresh-min must be between 1 and --rollouts")
+        if args.replay_all and args.generations > 1 and args.fresh_min == args.rollouts:
+            parser.error("--replay-all with multiple generations requires --rollouts > --fresh-min")
 
     if args.out_dir:
         out_root = Path(args.out_dir)
@@ -860,6 +1017,10 @@ def main() -> None:
     print("╚══════════════════════════════════════════════════════╝")
     print(f"  Scenarios  : {', '.join(args.scenarios)}")
     print(f"  Generations: {args.generations}   Rollouts/gen: {args.rollouts}")
+    if args.gate_planner == "impact":
+        replay_mode = "all required" if args.replay_all else "capped"
+        print(f"  Gate budget: fresh >= {args.fresh_min}, "
+              f"replay slots = {args.rollouts - args.fresh_min} ({replay_mode})")
     print(f"  Severity   : {args.severity}   UCB ε: {args.epsilon}")
     print(f"  Artifacts  → {out_root}\n")
 
@@ -947,19 +1108,34 @@ def main() -> None:
         print(f"  {'─'*4}  {'─'*8}  {'─'*6}  {'─'*4}  "
               f"{'─'*12}  {'─'*12}  {'─'*8}")
 
-        if scenario == "sensor_drift":
+        if scenario == "sensor_drift" and args.gate_planner == "fixed":
             loop, gen_rows = _run_sensor_drift_loop(
                 instance, agent, selector, args.severity, args.rollouts)
         else:
-            loop, gen_rows = run_loop(instance, agent, selector, args.severity, args.rollouts)
+            training_seed_stop = (
+                _TEACHER_SEED_START + args.train_episodes
+                if isinstance(agent, MLPInsertionPolicy) else 0
+            )
+            loop, gen_rows = run_loop(
+                instance, agent, selector, args.severity, args.rollouts,
+                gate_planner=args.gate_planner, fresh_min=args.fresh_min,
+                training_seed_stop=training_seed_stop, replay_all=args.replay_all,
+            )
+            agent = loop.agent
 
         for row in gen_rows:
             bsig = row["baseline_sigs"].get(sig_key, float("nan"))
             csig = row["candidate_sigs"].get(sig_key, float("nan"))
             safe_s  = "YES" if row["baseline_safe"] else " NO"
             dec_s   = "[accepted]" if row["accepted"] else "[REJECTED]"
+            cx_count = len(loop.cx_library)
+            if plan := row.get("gate_plan"):
+                cx_count = plan["counterexamples_after_generation"]
+                if plan["blocked_reason"]:
+                    dec_s = (f"[BLOCKED: gate_budget_shortfall "
+                             f"(need {plan['required_budget']}, budget {plan['budget']})]")
             print(f"  {row['generation']:>4}  {row['baseline_score']:>8.4f}  "
-                  f"{safe_s:>6}  {len(loop.cx_library):>4}  "
+                  f"{safe_s:>6}  {cx_count:>4}  "
                   f"{bsig:>10.4f} {sig_unit}  {csig:>10.4f} {sig_unit}  {dec_s}")
 
         elapsed_loop = time.time() - t0
@@ -1025,6 +1201,16 @@ def main() -> None:
         }
         (sc_dir / "demo_results.json").write_text(json.dumps(demo_js, indent=2))
         (sc_dir / "seed_sweep.json").write_text(json.dumps(sweep, indent=2))
+        if args.gate_planner == "impact":
+            archive = {
+                "scenario": instance.name,
+                "reset_mode": "fixed" if isinstance(instance.task, _FIXED_RESET_TASKS) else "seeded",
+                "fresh_is_independent": False,
+                "counterexamples": [asdict(cx) for cx in loop.cx_library.all()],
+            }
+            if archive["reset_mode"] == "fixed":
+                archive["reset_key"] = _reset_key(instance.task, args.seed)
+            (sc_dir / "counterexamples.json").write_text(json.dumps(archive, indent=2))
         print(f"\n  Artifacts → {sc_dir}")
 
         # ── Video rendering ───────────────────────────────────────────────

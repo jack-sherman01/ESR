@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from esrb.benchmark.hazard import HazardType
@@ -9,15 +9,27 @@ from esrb.utils.hashing import hash_object
 
 
 @dataclass(frozen=True)
+class CounterexampleSource:
+    """Identify the reset and policy that produced an observed violation."""
+    scenario: str
+    reset_key: str
+    seed: int
+    phase: str
+    policy_digest: str
+    task_config: dict[str, float] | None = None
+
+
+@dataclass(frozen=True)
 class Counterexample:
     """Minimised witness of a safety violation. Immutable; content-addressed."""
-    id: str                     # SHA-256 of the episode_data
+    id: str                     # SHA-256 of episode data and, when provided, provenance
     hazard_type: HazardType
     generation_found: int
     violated_constraints: list[str]
     episode_data: Any           # minimal reproducing state
     trigger_component: str
     timestamp: float = field(default_factory=time.time)
+    source: CounterexampleSource | None = None
 
     @classmethod
     def from_episode(
@@ -27,14 +39,23 @@ class Counterexample:
         generation: int,
         violated_constraints: list[str],
         trigger_component: str,
+        *,
+        source: CounterexampleSource | None = None,
     ) -> "Counterexample":
+        identity = episode_data if source is None else {
+            "episode_data": episode_data,
+            "source": {key: value for key, value in asdict(source).items() if value is not None},
+            "generation": generation, "hazard": hazard_type.value,
+            "component": trigger_component, "violations": violated_constraints,
+        }
         return cls(
-            id=hash_object(episode_data),
+            id=hash_object(identity),
             hazard_type=hazard_type,
             generation_found=generation,
             violated_constraints=violated_constraints,
             episode_data=episode_data,
             trigger_component=trigger_component,
+            source=source,
         )
 
 
