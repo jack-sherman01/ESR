@@ -66,6 +66,37 @@ python experiments/run_episode_removal.py
 
 Artifacts are written to `private/experiments/<timestamp>_benchmark/`.
 
+### Gate modes
+
+```bash
+# Fixed schedule (default)
+python experiments/run_benchmark.py --scenarios tool_misuse
+
+# Impact-based scheduling with up to 3 replays and at least 2 fresh cases
+python experiments/run_benchmark.py --scenarios tool_misuse --gate-planner impact \
+  --generations 2 --rollouts 5 --fresh-min 2
+```
+
+Both modes use the scenario's physical oracle and the UCB gate. `fixed`
+uses preset seeds. `impact` uses the change-impact graph to select relevant
+historical replays and scenario-specific checks such as permission audits
+and evaluator integrity. Checks read candidate state or reuse existing rollouts.
+Omit `--scenarios` to run all nine scenarios.
+
+- `--rollouts` sets the candidate budget per generation. `--fresh-min` reserves
+  fresh slots. The remaining slots replay distinct relevant resets from earlier
+  generations in the same run. If history exceeds those slots, the planner samples
+  without replacement using `--seed`. Unused replay slots go to fresh cases.
+- `--replay-all` requires every distinct historical reset in the current scenario.
+  If they cannot fit alongside the fresh reserve, the candidate is skipped.
+- In `impact` mode, read `gate_plan` in each scenario's `demo_results.json` for
+  executed rollouts, check results, and blockers. Checks without a scenario
+  implementation are marked `unavailable`. See `counterexamples.json` for
+  the source seed and trace of each stored violation.
+
+The two pure-Python fixtures reuse a fixed physical reset across seeds.
+Fresh and replay cases together do not establish an independent risk estimate.
+
 ---
 
 ## The CE-EST loop
@@ -73,12 +104,11 @@ Artifacts are written to `private/experiments/<timestamp>_benchmark/`.
 ```
 for each generation:
   1. Roll out the current policy  →  oracle evaluation
-  2. Collect counterexamples for every unsafe rollout
+  2. Store parent oracle violations as counterexamples
   3. Apply an update operator  →  candidate policy
-  4. Roll out the candidate  →  oracle evaluation
-  5. UCB gate (RiskSensitiveSelector):
-       if  E[unsafe] + UCB_bonus  ≥  epsilon  →  REJECT
-       else                                    →  ACCEPT and promote
+  4. Run the gate panel  →  oracle evaluation
+     In impact mode, also store candidate violations and run scheduled checks
+  5. If there are no blockers, promote only when the risk UCB is ≤ epsilon
 ```
 
 The UCB gate is the safety filter under test.  A well-calibrated system achieves:
