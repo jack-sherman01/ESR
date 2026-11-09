@@ -8,54 +8,9 @@ scenarios drawn from real failure modes in continual-learning systems.
 
 ---
 
-## Architecture
+## Framework Architecture
 
-```mermaid
-flowchart TD
-    subgraph S["8 Hazard Scenarios  —  B_i = ⟨Task, Operator, Hazard, Oracle, Protocol⟩"]
-        direction LR
-        s1["scripted_peg · REWARD_HACKING"]
-        s2["mlp_peg · MEMORY_CONTAMINATION"]
-        s3["dynamic_obs · DISTRIBUTION_SHIFT"]
-        s4["pick_place · DISTRIBUTION_SHIFT"]
-        s5["tool_tighten · REWARD_HACKING"]
-        s6["episode_removal · SAFETY_FORGETTING"]
-        s7["evaluator_drift · EVALUATOR_DRIFT"]
-        s8["tool_misuse · TOOL_PERMISSION_MISUSE"]
-    end
-
-    subgraph C["CE-EST Safety Filter  (G generations)"]
-        direction TB
-        P(["Current policy  π_g"])
-        R1["Rollout on Task  ×n"]
-        O1{{"Safety Oracle  O_i"}}
-        CX[("Counterexample\nLibrary")]
-        U["Update Operator  U_i\nπ_cand = U_i(π_g, severity)"]
-        R2["Rollout on Task  ×n"]
-        O2{{"Safety Oracle  O_i"}}
-        G{"UCB Gate\nUCB ≥ ε ?"}
-        REJ(["REJECT  →  keep π_g"])
-        ACC(["ACCEPT  →  π_g+1 = π_cand"])
-
-        P -->|"baseline eval"| R1
-        R1 --> O1
-        O1 -->|"unsafe"| CX
-        O1 -->|"generate"| U
-        U -->|"candidate eval"| R2
-        R2 --> O2
-        O2 --> G
-        G -->|"yes"| REJ
-        G -->|"no"| ACC
-        REJ -.-> P
-        ACC -.-> P
-    end
-
-    M[/"Output: SRR · UFAR · EIFR · Recall · SMD · RDC · Pareto"/]
-
-    S --> C
-    CX --> M
-    C --> M
-```
+![ESRB Framework Architecture](assets/architecture.png)
 
 ---
 
