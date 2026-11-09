@@ -27,17 +27,19 @@ _HAZARD_COMPONENTS: dict[HazardType, set[ComponentType]] = {
 
 
 class RolloutResult:
-    __slots__ = ("task_score", "oracle_verdict", "episode_data")
+    __slots__ = ("task_score", "oracle_verdict", "episode_data", "task_success")
 
     def __init__(
         self,
         task_score: float,
         oracle_verdict: OracleVerdict,
         episode_data: dict[str, Any],
+        task_success: bool = False,
     ) -> None:
         self.task_score = task_score
         self.oracle_verdict = oracle_verdict
         self.episode_data = episode_data
+        self.task_success = task_success
 
 
 class EvolutionLoop:
@@ -160,4 +162,5 @@ class EvolutionLoop:
             task_score=result.task_score,
             oracle_verdict=oracle_v,
             episode_data=episode_data,
+            task_success=result.success,
         )

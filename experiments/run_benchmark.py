@@ -68,6 +68,7 @@ from esrb.benchmark import (
 from esrb.benchmark.lineage import GenerationRecord
 from esrb.detection.change_impact import ComponentType
 from esrb.detection.counterexample import Counterexample, CounterexampleSource
+from esrb.detection.gate_checks import available_checks, execute_gate_checks
 from esrb.detection.gate_planner import plan_gate
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
 from esrb.metrics import (
@@ -478,6 +479,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
 
         plan = None
         executed = []
+        check_results, check_blockers = {}, []
         if use_impact:
             candidate_state = candidate.state_dict()
             candidate_digest = hash_object(candidate_state)
@@ -490,11 +492,15 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 }
                 if candidate_config != parent_config:
                     changed.add(ComponentType.DATA)
+            primary_test = _ORACLE_TEST[type(instance.oracle)]
+            checks = available_checks(
+                instance.task, primary_test, loop.agent, candidate, parent_state, candidate_state,
+            )
             plan = plan_gate(
                 loop.impact_graph, loop.cx_library, changed=changed, scenario=instance.name,
                 generation=gen, budget=n_rollouts, fresh_min=fresh_min,
                 fresh_seed=fresh_start + gen * n_rollouts,
-                supported_tests={_ORACLE_TEST[type(instance.oracle)]},
+                supported_tests=set(checks),
                 replay_all=replay_all,
                 replay_seed=proto.seed,
             )
@@ -517,6 +523,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             finally:
                 if parent_config is not None:
                     instance.task.configure(**parent_config)
+            check_results, check_blockers = execute_gate_checks(plan, checks, cand_results, primary_test)
         else:
             cand_results = [
                 loop._run_rollout(candidate, parent_seed + r, gen)
@@ -524,7 +531,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             ]
 
         selected = None
-        if cand_results:
+        if cand_results and not check_blockers:
             cand_eval = CandidateEvaluation(
                 policy=candidate,
                 task_scores=[r.task_score for r in cand_results],
@@ -575,6 +582,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             row["gate_plan"] = {
                 **plan, "candidate_policy_digest": candidate_digest,
                 "executed": executed, "used_rollouts": len(executed),
+                "test_results": check_results, "blocking_tests": check_blockers,
                 "counterexamples_after_generation": len(loop.cx_library),
             }
             if candidate_config is not None:
@@ -1134,6 +1142,8 @@ def main() -> None:
                 if plan["blocked_reason"]:
                     dec_s = (f"[BLOCKED: gate_budget_shortfall "
                              f"(need {plan['required_budget']}, budget {plan['budget']})]")
+                elif plan["blocking_tests"]:
+                    dec_s = f"[REJECTED: {', '.join(plan['blocking_tests'])}]"
             print(f"  {row['generation']:>4}  {row['baseline_score']:>8.4f}  "
                   f"{safe_s:>6}  {cx_count:>4}  "
                   f"{bsig:>10.4f} {sig_unit}  {csig:>10.4f} {sig_unit}  {dec_s}")

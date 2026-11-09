@@ -71,6 +71,7 @@ def plan_gate(
         "changed_components": sorted(component.value for component in changed),
         "impacted_components": sorted(component.value for component in impacted),
         "required_tests": sorted(required_tests),
+        "scheduled_tests": sorted(required_tests & supported_tests) if not blocked else [],
         "unmapped_required_tests": sorted(required_tests - supported_tests),
         "supported_tests": sorted(supported_tests),
         "budget": budget, "fresh_min": fresh_min, "required_budget": required_budget,

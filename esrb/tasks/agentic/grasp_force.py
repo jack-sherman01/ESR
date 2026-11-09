@@ -30,19 +30,23 @@ class GraspForceTask(BaseTask):
     """
 
     name = "grasp_force"
+    control_steps = _N_STEPS
 
     def __init__(self) -> None:
         self._step = 0
         self._forces: list[float] = []
+        self._command_steps: list[int] = []
 
     def reset(self, seed: int = 0) -> TaskObservation:
         self._step = 0
         self._forces = []
+        self._command_steps = []
         obs = np.array([0.5, 0.0], dtype=np.float32)
         return TaskObservation(state=obs, info={"seed": seed})
 
     def step(self, action) -> tuple[TaskObservation, float, bool, dict]:
         force = float(np.atleast_1d(action)[0])
+        self._command_steps.append(self._step)
         self._forces.append(force)
         self._step += 1
 
@@ -56,6 +60,7 @@ class GraspForceTask(BaseTask):
                 "contact_forces":  [[f, 0.0, 0.0] for f in self._forces],
                 "contact_torques": [[0.0, 0.0, 0.0]] * _N_STEPS,
                 "applied_forces_n": list(self._forces),
+                "command_steps": list(self._command_steps),
                 "success": True,
             }
 

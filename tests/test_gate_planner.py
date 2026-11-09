@@ -7,7 +7,10 @@ from esrb.detection.change_impact import ChangeImpactGraph, ComponentType
 from esrb.detection.counterexample import Counterexample, CounterexampleLibrary, CounterexampleSource
 from esrb.detection.gate_planner import plan_gate
 from esrb.detection.risk_selection import RiskSensitiveSelector
-from experiments.run_benchmark import _build_scripted_peg, _build_sensor_drift, _build_tool_misuse, main, run_loop
+from experiments.run_benchmark import (
+    _build_evaluator_drift, _build_scripted_peg, _build_sensor_drift, _build_tool_misuse,
+    main, run_loop,
+)
 
 
 def test_impact_selects_only_relevant_history_from_earlier_generations():
@@ -72,6 +75,45 @@ def test_runner_replays_rejected_candidate_violation_under_same_budget(monkeypat
     assert len(sources) == 6
     assert replay["safe"] is False
     assert all(row["accepted"] is False for row in rows)
+    assert second["test_results"]["permission_audit"] == {
+        "status": "fail", "unauthorized_permissions": ["unrestricted_force_control"],
+    }
+    assert second["test_results"]["tool_timing_check"]["status"] == "pass"
+    assert second["test_results"]["force_safety"]["status"] == "fail"
+    assert second["test_results"]["dynamics_safety"]["status"] == "unavailable"
+
+
+def test_scheduled_checks_can_reject_without_changing_the_physical_selector(monkeypatch):
+    instance, agent = _build_tool_misuse(1, 2, 0.5, 42)
+    original_step = instance.task.step
+
+    def corrupt_timing(action):
+        obs, reward, done, episode = original_step(action)
+        if done:
+            episode.pop("command_steps")
+        return obs, reward, done, episode
+
+    monkeypatch.setattr(instance.task, "step", corrupt_timing)
+    _, rows = run_loop(
+        instance, agent, RiskSensitiveSelector(epsilon=1.0), 0.5, 2, gate_planner="impact",
+    )
+    gate = rows[0]["gate_plan"]
+    assert gate["test_results"]["tool_timing_check"]["status"] == "missing_evidence"
+    assert set(gate["blocking_tests"]) == {"tool_timing_check", "permission_audit"}
+    assert rows[0]["accepted"] is False
+    assert gate["used_rollouts"] == 2
+
+
+def test_evaluator_change_dispatches_integrity_and_cross_view_checks():
+    instance, agent = _build_evaluator_drift(1, 2, 0.5, 42)
+    _, rows = run_loop(
+        instance, agent, RiskSensitiveSelector(), 0.5, 2, gate_planner="impact",
+    )
+    gate = rows[0]["gate_plan"]
+    assert gate["test_results"]["evaluator_integrity"]["status"] == "fail"
+    assert gate["test_results"]["cross_view_agreement"]["status"] == "fail"
+    assert gate["test_results"]["regression_suite"]["status"] == "not_run"
+    assert gate["test_results"]["permission_audit"]["status"] == "unavailable"
 
 
 def test_capped_replay_sampling_is_reproducible_and_uses_distinct_resets():
@@ -126,7 +168,7 @@ def test_seeded_task_respects_budget_with_distinct_historical_resets(replay_all)
     )
 
     first, second = [row["gate_plan"] for row in rows]
-    assert first["supported_tests"] == ["dynamics_safety"]
+    assert first["test_results"]["dynamics_safety"]["status"] == "fail"
     assert [case["seed"] for case in first["executed"]] == [2100, 2101]
     assert first["executed"][0]["reset_key"] != first["executed"][1]["reset_key"]
     assert second["eligible_replay_count"] == 2
@@ -141,6 +183,7 @@ def test_seeded_task_respects_budget_with_distinct_historical_resets(replay_all)
         assert replay["phase"] == "replay" and replay["seed"] in {2100, 2101}
         assert fresh["phase"] == "fresh" and fresh["seed"] == 2102
         assert second["replay_sampling_seed"] == "42:scripted_peg_speed_injection:1"
+        assert second["test_results"]["regression_suite"]["failed_seeds"] == [replay["seed"]]
 
 
 def test_sensor_drift_replay_restores_candidate_fault_and_calibrated_parent():
@@ -156,6 +199,7 @@ def test_sensor_drift_replay_restores_candidate_fault_and_calibrated_parent():
     assert replay["signal_values"]["peak_force_n"] == 30.0
     assert all(row["baseline_sigs"]["peak_force_n"] == 10.0 for row in rows)
     assert second["candidate_task_config"] == {"true_force": 30.0, "sensor_bias": -20.0}
+    assert second["test_results"]["distribution_check"]["status"] == "fail"
     assert all(cx.source.task_config == second["candidate_task_config"] for cx in loop.cx_library.all())
 
 @pytest.mark.parametrize(("options", "message"), [
