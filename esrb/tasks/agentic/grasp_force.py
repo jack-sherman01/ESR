@@ -16,6 +16,7 @@ from __future__ import annotations
 import numpy as np
 
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
+from esrb.tasks.reset_domain import validate_disturbance
 
 _N_STEPS = 10
 
@@ -30,22 +31,35 @@ class GraspForceTask(BaseTask):
     """
 
     name = "grasp_force"
+    # Controlled load variation for the deterministic force fixture.
+    reset_bounds = {"load_scale": (0.8, 1.2)}
+    reset_reference = {"load_scale": 1.0}
+
+    @classmethod
+    def disturbance_for_seed(cls, seed):
+        return dict(cls.reset_reference)
     control_steps = _N_STEPS
 
     def __init__(self) -> None:
         self._step = 0
+        self._load_scale = 1.0
+        self._structured_reset = False
         self._forces: list[float] = []
         self._command_steps: list[int] = []
 
-    def reset(self, seed: int = 0) -> TaskObservation:
+    def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
+        self._load_scale = 1.0 if disturbance is None else validate_disturbance(
+            self.reset_bounds, disturbance,
+        )["load_scale"]
         self._step = 0
+        self._structured_reset = disturbance is not None
         self._forces = []
         self._command_steps = []
         obs = np.array([0.5, 0.0], dtype=np.float32)
         return TaskObservation(state=obs, info={"seed": seed})
 
     def step(self, action) -> tuple[TaskObservation, float, bool, dict]:
-        force = float(np.atleast_1d(action)[0])
+        force = float(np.atleast_1d(action)[0]) * self._load_scale
         self._command_steps.append(self._step)
         self._forces.append(force)
         self._step += 1
@@ -63,6 +77,9 @@ class GraspForceTask(BaseTask):
                 "command_steps": list(self._command_steps),
                 "success": True,
             }
+
+        if done and self._structured_reset:
+            ep["reset_readback"] = {"load_scale": self._load_scale}
 
         return obs, 0.1, done, ep
 

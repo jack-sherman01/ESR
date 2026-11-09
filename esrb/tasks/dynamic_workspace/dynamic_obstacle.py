@@ -6,6 +6,7 @@ import mujoco
 import numpy as np
 
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
+from esrb.tasks.reset_domain import validate_disturbance
 
 # ── Scene constants ───────────────────────────────────────────────────────────
 _ARM_REST_Z: float = 0.22
@@ -52,6 +53,14 @@ class DynamicObstacleTask(BaseTask):
     """
 
     name = "dynamic_obstacle"
+    reset_reference = {"arm_x_m": 0.0, "arm_y_m": 0.0,
+                       "obstacle_x_m": float(_OBS_BASE[0]), "obstacle_y_m": float(_OBS_BASE[1])}
+    reset_bounds = {
+        "arm_x_m": (-0.03, 0.03), "arm_y_m": (-0.03, 0.03),
+        "obstacle_x_m": (float(_OBS_BASE[0] - _OBS_NOISE), float(_OBS_BASE[0] + _OBS_NOISE)),
+        "obstacle_y_m": (float(_OBS_BASE[1] - _OBS_NOISE), float(_OBS_BASE[1] + _OBS_NOISE)),
+    }
+    boundary_fields = ("obstacle_y_m", "obstacle_x_m", "arm_x_m", "arm_y_m")
     _ACTION_LIMIT: float = 0.006
 
     def __init__(self) -> None:
@@ -84,19 +93,26 @@ class DynamicObstacleTask(BaseTask):
 
     # ── Core interface ────────────────────────────────────────────────────────
 
-    def reset(self, seed: int = 0) -> TaskObservation:
+    @classmethod
+    def disturbance_for_seed(cls, seed):
         rng = np.random.default_rng(seed)
-        mujoco.mj_resetData(self._model, self._data)
-
-        # Randomise arm start position (±3 cm XY)
         xy = rng.uniform(-0.03, 0.03, size=2)
+        obs_xy = _OBS_BASE[:2] + rng.uniform(-_OBS_NOISE, _OBS_NOISE, size=2)
+        return dict(zip(cls.reset_bounds, (*xy, *obs_xy), strict=True))
+
+    def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
+        point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(
+            self.reset_bounds, disturbance,
+        )
+        mujoco.mj_resetData(self._model, self._data)
+        xy = [point["arm_x_m"], point["arm_y_m"]]
         self._data.qpos[self._qx] = xy[0]
         self._data.qpos[self._qy] = xy[1]
         self._data.qpos[self._qz] = 0.0
         self._data.ctrl[:3] = [xy[0], xy[1], 0.0]
 
         # Randomise obstacle position (±5 mm XY — dynamic workspace)
-        obs_xy = _OBS_BASE[:2] + rng.uniform(-_OBS_NOISE, _OBS_NOISE, size=2)
+        obs_xy = [point["obstacle_x_m"], point["obstacle_y_m"]]
         self._data.mocap_pos[self._mocap_id] = [obs_xy[0], obs_xy[1], _OBS_BASE[2]]
 
         mujoco.mj_forward(self._model, self._data)
@@ -106,6 +122,10 @@ class DynamicObstacleTask(BaseTask):
             "obstacle_positions": [],
             "ee_to_obs_dists":    [],
         }
+        if disturbance is not None:
+            values = [self._data.qpos[self._qx], self._data.qpos[self._qy],
+                      *self._data.mocap_pos[self._mocap_id, :2]]
+            self._episode_log["reset_readback"] = dict(zip(self.reset_bounds, map(float, values), strict=True))
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:

@@ -148,8 +148,10 @@ class EvolutionLoop:
         agent: BaseAgent,
         seed: int,
         generation: int,
+        *,
+        reset_options: dict | None = None,
     ) -> RolloutResult:
-        obs = self.instance.task.reset(seed=seed)
+        obs = self.instance.task.reset(seed=seed, **(reset_options or {}))
         episode_data: dict[str, Any] = {}
         done = False
         while not done:

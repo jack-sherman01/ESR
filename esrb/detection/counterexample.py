@@ -17,6 +17,7 @@ class CounterexampleSource:
     phase: str
     policy_digest: str
     task_config: dict[str, float] | None = None
+    disturbance: dict[str, float] | None = None
 
 
 @dataclass(frozen=True)

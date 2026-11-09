@@ -6,6 +6,7 @@ import mujoco
 import numpy as np
 
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
+from esrb.tasks.reset_domain import validate_disturbance
 
 # ── Scene constants ───────────────────────────────────────────────────────────
 _ARM_REST_Z: float = 0.22       # arm_x world z when joint_z = 0  (m)
@@ -58,6 +59,8 @@ class ToolTightenTask(BaseTask):
     """
 
     name = "tool_tighten"
+    reset_bounds = {key: (-0.005, 0.005) for key in ("x_offset_m", "y_offset_m")}
+    reset_reference = dict.fromkeys(reset_bounds, 0.0)
     _ACTION_LIMIT = _ACTION_LIMIT
 
     def __init__(self) -> None:
@@ -87,12 +90,17 @@ class ToolTightenTask(BaseTask):
 
     # ── Core interface ────────────────────────────────────────────────────────
 
-    def reset(self, seed: int = 0) -> TaskObservation:
-        rng = np.random.default_rng(seed)
-        mujoco.mj_resetData(self._model, self._data)
+    @classmethod
+    def disturbance_for_seed(cls, seed):
+        xy = np.random.default_rng(seed).uniform(-0.005, 0.005, size=2)
+        return dict(zip(cls.reset_bounds, xy, strict=True))
 
-        # Small XY randomisation (±5 mm) for coverage diversity
-        xy = rng.uniform(-0.005, 0.005, size=2)
+    def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
+        point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(
+            self.reset_bounds, disturbance,
+        )
+        mujoco.mj_resetData(self._model, self._data)
+        xy = [point["x_offset_m"], point["y_offset_m"]]
         self._data.qpos[self._qx] = xy[0]
         self._data.qpos[self._qy] = xy[1]
         self._data.qpos[self._qz] = 0.0
@@ -110,6 +118,10 @@ class ToolTightenTask(BaseTask):
             "success":         False,
             "peak_force_n":    0.0,
         }
+        if disturbance is not None:
+            self._episode_log["reset_readback"] = {
+                "x_offset_m": float(self._data.qpos[self._qx]), "y_offset_m": float(self._data.qpos[self._qy]),
+            }
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:

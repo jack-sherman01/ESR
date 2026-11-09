@@ -6,6 +6,7 @@ import mujoco
 import numpy as np
 
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
+from esrb.tasks.reset_domain import validate_disturbance
 
 # ── Scene constants ───────────────────────────────────────────────────────────
 _ARM_REST_Z: float = 0.22       # arm_x world z when joint_z = 0  (m)
@@ -71,6 +72,16 @@ class PickPlaceTask(BaseTask):
     """
 
     name = "pick_place"
+    reset_reference = {
+        "pick_x_m": float(_PICK_XY_NOM[0]), "pick_y_m": float(_PICK_XY_NOM[1]),
+        "place_x_m": float(_PLACE_XY_NOM[0]), "place_y_m": float(_PLACE_XY_NOM[1]),
+    }
+    reset_bounds = dict(zip(reset_reference, (
+        (float(_PICK_XY_NOM[0] - _XY_NOISE), float(_PICK_XY_NOM[0] + _XY_NOISE)),
+        (-_XY_NOISE, _XY_NOISE),
+        (float(_PLACE_XY_NOM[0] - _XY_NOISE), float(_PLACE_XY_NOM[0] + _XY_NOISE)),
+        (-_XY_NOISE, _XY_NOISE),
+    ), strict=True))
     _ACTION_LIMIT = _ACTION_LIMIT
 
     def __init__(self) -> None:
@@ -105,18 +116,19 @@ class PickPlaceTask(BaseTask):
 
     # ── Core interface ────────────────────────────────────────────────────────
 
-    def reset(self, seed: int = 0) -> TaskObservation:
-        rng = np.random.default_rng(seed)
-        mujoco.mj_resetData(self._model, self._data)
+    @classmethod
+    def disturbance_for_seed(cls, seed):
+        noise = np.random.default_rng(seed).uniform(-_XY_NOISE, _XY_NOISE, size=(2, 2))
+        xy = (*(_PICK_XY_NOM + noise[0]), *(_PLACE_XY_NOM + noise[1]))
+        return dict(zip(cls.reset_bounds, xy, strict=True))
 
-        # Randomise station XY (±10 mm)
-        noise = rng.uniform(-_XY_NOISE, _XY_NOISE, size=(2, 2))
-        self._pick_pos  = np.array([_PICK_XY_NOM[0]  + noise[0, 0],
-                                    _PICK_XY_NOM[1]  + noise[0, 1],
-                                    _STATION_Z])
-        self._place_pos = np.array([_PLACE_XY_NOM[0] + noise[1, 0],
-                                    _PLACE_XY_NOM[1] + noise[1, 1],
-                                    _STATION_Z])
+    def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
+        point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(
+            self.reset_bounds, disturbance,
+        )
+        mujoco.mj_resetData(self._model, self._data)
+        self._pick_pos = np.array([point["pick_x_m"], point["pick_y_m"], _STATION_Z])
+        self._place_pos = np.array([point["place_x_m"], point["place_y_m"], _STATION_Z])
 
         # EE starts above centre at clearance height
         self._data.qpos[self._qx] = 0.0
@@ -136,6 +148,9 @@ class PickPlaceTask(BaseTask):
             "reached_place":      False,
             "success":            False,
         }
+        if disturbance is not None:
+            values = (*self._pick_pos[:2], *self._place_pos[:2])
+            self._episode_log["reset_readback"] = dict(zip(self.reset_bounds, map(float, values), strict=True))
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:

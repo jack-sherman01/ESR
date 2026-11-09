@@ -6,6 +6,7 @@ import mujoco
 import numpy as np
 
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
+from esrb.tasks.reset_domain import validate_disturbance
 
 # ── Geometry constants (must match the XML) ───────────────────────────────────
 _HOLE_TOP_Z: float = 0.085      # z-coordinate of the socket opening (m)
@@ -51,6 +52,9 @@ class PegInsertionTask(BaseTask):
     """
 
     name = "peg_insertion"
+    MAX_INITIAL_OFFSET_M = 0.03
+    reset_bounds = {key: (-0.03, 0.03) for key in ("x_offset_m", "y_offset_m")}
+    reset_reference = dict.fromkeys(reset_bounds, 0.0)
     _ACTION_LIMIT: float = 0.005   # max delta per control step (m)
 
     # Joint z lower bound: keeps peg tip above floor (tip = arm_z_world - 0.025)
@@ -89,12 +93,26 @@ class PegInsertionTask(BaseTask):
 
     # ── Core interface ────────────────────────────────────────────────────────
 
-    def reset(self, seed: int = 0) -> TaskObservation:
-        rng = np.random.default_rng(seed)
-        mujoco.mj_resetData(self._model, self._data)
+    @classmethod
+    def offset_for_seed(cls, seed: int) -> np.ndarray:
+        return np.random.default_rng(seed).uniform(
+            -cls.MAX_INITIAL_OFFSET_M, cls.MAX_INITIAL_OFFSET_M, size=2,
+        )
 
-        # Random XY offset: uniform ±3 cm from hole centre
-        xy_offset = rng.uniform(-0.03, 0.03, size=2)
+    @classmethod
+    def disturbance_for_seed(cls, seed):
+        return dict(zip(cls.reset_bounds, cls.offset_for_seed(seed), strict=True))
+
+    def reset(self, seed: int = 0, *, xy_offset_m=None, disturbance=None) -> TaskObservation:
+        if disturbance is not None:
+            if xy_offset_m is not None:
+                raise ValueError("provide either xy_offset_m or disturbance")
+            xy_offset_m = list(validate_disturbance(self.reset_bounds, disturbance).values())
+        xy_offset = self.offset_for_seed(seed) if xy_offset_m is None else np.asarray(xy_offset_m, dtype=float)
+        if (xy_offset.shape != (2,) or not np.isfinite(xy_offset).all()
+                or np.any(np.abs(xy_offset) > self.MAX_INITIAL_OFFSET_M)):
+            raise ValueError("peg initial XY offset must be within ±0.03 m per axis")
+        mujoco.mj_resetData(self._model, self._data)
 
         # Set joint positions (ctrl = qpos for position actuators)
         self._data.qpos[self._qx] = xy_offset[0]
@@ -115,6 +133,14 @@ class PegInsertionTask(BaseTask):
             "tip_z":           [],
             "tip_velocities":  [],
         }
+        if xy_offset_m is not None:
+            self._episode_log["initial_xy_offset_m"] = [
+                float(self._data.qpos[self._qx]), float(self._data.qpos[self._qy]),
+            ]
+        if disturbance is not None:
+            self._episode_log["reset_readback"] = dict(zip(
+                self.reset_bounds, self._episode_log["initial_xy_offset_m"], strict=True,
+            ))
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:
