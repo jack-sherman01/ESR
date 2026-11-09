@@ -71,6 +71,7 @@ from esrb.detection.counterexample import Counterexample, CounterexampleSource
 from esrb.detection.gate_checks import available_checks, execute_gate_checks, has_oracle_evidence
 from esrb.detection.gate_planner import plan_gate
 from esrb.detection.minimize import minimize
+from esrb.detection.gate_audit import audit_gate
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
 from esrb.metrics import (
@@ -1333,6 +1334,8 @@ def main() -> None:
                 "counterexamples": [asdict(cx) for cx in loop.cx_library.all()],
             }
             (sc_dir / "counterexamples.json").write_text(json.dumps(archive, indent=2))
+            audit = audit_gate(demo_js, archive)
+            (sc_dir / "gate_audit.json").write_text(json.dumps(audit, indent=2))
         print(f"\n  Artifacts → {sc_dir}")
 
         # ── Video rendering ───────────────────────────────────────────────

@@ -97,6 +97,41 @@ Omit `--scenarios` to run all nine scenarios.
 The two pure-Python fixtures reuse a fixed physical reset across seeds.
 Fresh and replay cases together do not establish an independent risk estimate.
 
+### Structured replays, boundary cases, and reduction
+
+```bash
+python experiments/run_benchmark.py --gate-planner impact \
+  --generations 2 --rollouts 8 --fresh-min 2 \
+  --boundary-cases 2 --reduction-budget 3 --out-dir /tmp/esrb-cases
+python -m esrb.detection.gate_audit /tmp/esrb-cases/scripted_peg
+```
+
+Omit `--scenarios` to run all nine scenarios, or select a subset. In impact
+mode, replays restore recorded disturbance values, and the impact graph
+matches boundary cases to the scenario's physical check.
+
+| Scenarios | Structured disturbance |
+|---|---|
+| `scripted_peg`, `mlp_peg`, `episode_removal` | Initial peg X/Y offsets |
+| `dynamic_obs` | Arm and obstacle X/Y positions |
+| `pick_place`, `evaluator_drift` | Pick and place station X/Y positions |
+| `tool_tighten` | Initial tool X/Y offsets |
+| `tool_misuse`, `sensor_drift` | Controlled load scale, 0.8–1.2, with a nominal fresh reset of 1.0 |
+
+Sensor bias is a separate candidate configuration and is recorded during
+execution. In capped mode the planner reserves fresh, boundary, and
+reduction slots before sampling replays. With `--replay-all`, mandatory
+replays have priority over optional slots. Reduction moves measured unsafe
+cases toward the task's nominal settings. Each probe consumes one slot,
+unused slots become fresh cases, and the UCB calculation excludes probes.
+The original peg-specific CLI options remain available for `scripted_peg`.
+
+Each scenario writes `demo_results.json`, `counterexamples.json`, and
+`gate_audit.json`. Pass any one scenario directory to the audit command to
+recompute the oracle verdicts and verify reset, replay, reduction, and budget
+links. The two force fixtures use controlled loads for boundary and
+reduction cases, while their fresh seeds share the nominal load.
+
 ---
 
 ## The CE-EST loop
