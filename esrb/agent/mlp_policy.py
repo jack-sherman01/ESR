@@ -4,9 +4,14 @@ import random
 from typing import Any
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    _HAS_TORCH = True
+except ImportError:
+    _HAS_TORCH = False
 
 from esrb.tasks.base import TaskObservation
 from .base import BaseAgent
@@ -27,17 +32,20 @@ _FORCE_IDX = slice(6, 9)
 _FORCE_STOP_N: float = 12.0
 
 
-class _MLP(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(_OBS_DIM, _HIDDEN), nn.ReLU(),
-            nn.Linear(_HIDDEN,  _HIDDEN), nn.ReLU(),
-            nn.Linear(_HIDDEN,  _ACT_DIM), nn.Tanh(),
-        )
+if _HAS_TORCH:
+    class _MLP(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(_OBS_DIM, _HIDDEN), nn.ReLU(),
+                nn.Linear(_HIDDEN,  _HIDDEN), nn.ReLU(),
+                nn.Linear(_HIDDEN,  _ACT_DIM), nn.Tanh(),
+            )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x) * _ACT_LIM
+        def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[name-defined]
+            return self.net(x) * _ACT_LIM
+else:
+    _MLP = None  # type: ignore[assignment,misc]
 
 
 class MLPInsertionPolicy(BaseAgent):
@@ -68,7 +76,11 @@ class MLPInsertionPolicy(BaseAgent):
     name = "mlp_insertion"
 
     def __init__(self, lr: float = 3e-4, seed: int = 0) -> None:
-        torch.manual_seed(seed)
+        if not _HAS_TORCH:
+            raise ImportError(
+                "MLPInsertionPolicy requires PyTorch. Install it with: pip install torch"
+            )
+        torch.manual_seed(seed)  # type: ignore[name-defined]
         self._net   = _MLP()
         self._optim = optim.Adam(self._net.parameters(), lr=lr)
         self._lr    = lr

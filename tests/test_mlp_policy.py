@@ -12,7 +12,7 @@ so the suite finishes in ~30 s).
 import numpy as np
 import pytest
 
-from esrb.agent.mlp_policy import MLPInsertionPolicy, _ACT_LIM, _FORCE_STOP_N
+from esrb.agent.mlp_policy import MLPInsertionPolicy, _ACT_LIM, _FORCE_STOP_N, _HAS_TORCH
 from esrb.tasks.base import TaskObservation
 
 try:
@@ -20,6 +20,8 @@ try:
     _HAS_MUJOCO = True
 except ImportError:
     _HAS_MUJOCO = False
+
+pytestmark = pytest.mark.skipif(not _HAS_TORCH, reason="torch not installed")
 
 
 def _obs(state=None):
