@@ -42,6 +42,8 @@ The 8th scenario (`tool_misuse`) uses a **pure-Python** grasp-force simulation â
 ## Quick start
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e "."
 
 # Run all eight scenarios (MuJoCo scenarios require mujoco>=3.1):
