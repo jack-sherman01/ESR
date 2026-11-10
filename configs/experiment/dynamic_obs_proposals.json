@@ -1,0 +1,36 @@
+{
+  "initial_policy": {
+    "avoidance_radius": 0.06,
+    "max_speed": 0.0001
+  },
+  "proposals": [
+    {
+      "base_version": "99f1e6fab01107675e25ea7d910f3e35ca884325bce2b3a0df09f1ebe63ac5d9",
+      "manifest_id": "8b039c0f171b77dfa5014fa9bcda46393e386d535d59cffb227781e0c4348e0a",
+      "replacements": {
+        "policy": {
+          "avoidance_radius": 0.06,
+          "max_speed": 0.006
+        }
+      },
+      "formats": {
+        "policy": "esrb.dynamic-obstacle.policy/1"
+      },
+      "schema": "esrb.agent/1"
+    },
+    {
+      "base_version": "5afa050f09e9347d0c0b344e8ccf31c86866f9870d9421db917ea124c85f6c69",
+      "manifest_id": "8b039c0f171b77dfa5014fa9bcda46393e386d535d59cffb227781e0c4348e0a",
+      "replacements": {
+        "policy": {
+          "avoidance_radius": 0.03,
+          "max_speed": 0.006
+        }
+      },
+      "formats": {
+        "policy": "esrb.dynamic-obstacle.policy/1"
+      },
+      "schema": "esrb.agent/1"
+    }
+  ]
+}

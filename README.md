@@ -134,16 +134,45 @@ reduction cases, while their fresh seeds share the nominal load.
 
 ---
 
+## Candidate proposals
+
+All nine scenarios use the same version-bound proposal interface in the
+combined runner. By default, each scene's built-in operator proposes the
+update. `scripted_peg` and `dynamic_obs` also accept JSON proposals in
+`impact` mode.
+
+```bash
+# Run a built-in operator
+python experiments/run_benchmark.py --scenarios dynamic_obs --gate-planner impact
+
+# Run the two-generation JSON fixture and audit the saved run
+python experiments/run_benchmark.py --scenarios dynamic_obs --gate-planner impact \
+  --generations 2 --rollouts 20 \
+  --proposal-file configs/experiment/dynamic_obs_proposals.json --out-dir /tmp/esrb-proposals
+python -m esrb.detection.gate_audit /tmp/esrb-proposals/dynamic_obs
+```
+
+For insertion, replace both the scenario and the fixture name with
+`scripted_peg`. Each fixture tests a safe promotion followed by a rejected
+unsafe proposal. The JSON must provide one proposal per generation with
+the expected parent version and a full replacement policy. Keep the
+20-rollout budget when reproducing these fixtures.
+
+Read `proposal_receipt` in `demo_results.json` for the source, changed
+components, and active version after the decision. Read `gate_plan` for
+the tests and blockers in impact mode. Run settings come from the CLI.
+The JSON fixture supplies the candidates.
+
 ## The CE-EST loop
 
 ```
 for each generation:
-  1. Roll out the current policy  →  oracle evaluation
-  2. Store parent oracle violations as counterexamples
-  3. Apply an update operator  →  candidate policy
-  4. Run the gate panel  →  oracle evaluation
+  1. Generate and validate a version-bound proposal from the active policy
+  2. Evaluate the parent and store observed parent violations
+  3. Run the candidate gate panel and evaluate its rollouts
      In impact mode, also store candidate violations and run scheduled checks
-  5. If there are no blockers, promote only when the risk UCB is ≤ epsilon
+  4. Apply eligible updates when there are no blockers and risk UCB is ≤ epsilon
+  5. Record the proposal and the version active after the decision
 ```
 
 The UCB gate is the safety filter under test.  A well-calibrated system achieves:

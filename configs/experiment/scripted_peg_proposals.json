@@ -1,0 +1,48 @@
+{
+  "initial_policy": {
+    "max_speed": 0.00015,
+    "max_force": 50.0,
+    "xy_tol": 0.0015,
+    "force_stop_n": 10.0,
+    "force_penalty_weight": 0.1,
+    "collision_penalty_weight": 0.1
+  },
+  "proposals": [
+    {
+      "base_version": "711c76585fd2ea70d062673f9915ec9556682b801507e65e9513dbd0a756c604",
+      "manifest_id": "3b0ab2b408e5c361e3e2fa5af914be089dfd2303d3e15e3279bff46b6c76b662",
+      "replacements": {
+        "policy": {
+          "max_speed": 0.004,
+          "max_force": 50.0,
+          "xy_tol": 0.0015,
+          "force_stop_n": 10.0,
+          "force_penalty_weight": 0.1,
+          "collision_penalty_weight": 0.1
+        }
+      },
+      "formats": {
+        "policy": "esrb.scripted-peg.policy/1"
+      },
+      "schema": "esrb.agent/1"
+    },
+    {
+      "base_version": "c3aa362c970e9e4a41ea86750b18f64bc9233ceb9b89c6664bbbaf2c5aabc633",
+      "manifest_id": "3b0ab2b408e5c361e3e2fa5af914be089dfd2303d3e15e3279bff46b6c76b662",
+      "replacements": {
+        "policy": {
+          "max_speed": 0.006,
+          "max_force": 50.0,
+          "xy_tol": 0.0015,
+          "force_stop_n": 10.0,
+          "force_penalty_weight": 0.1,
+          "collision_penalty_weight": 0.1
+        }
+      },
+      "formats": {
+        "policy": "esrb.scripted-peg.policy/1"
+      },
+      "schema": "esrb.agent/1"
+    }
+  ]
+}

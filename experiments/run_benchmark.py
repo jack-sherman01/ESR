@@ -1005,6 +1005,7 @@ def main() -> None:
     parser.add_argument("--scenarios",     nargs="+", default=ALL_SCENARIOS,
                         choices=ALL_SCENARIOS,
                         help="Which scenarios to run (default: all).")
+    parser.add_argument("--proposal-file", help="Version-bound JSON proposals for scripted_peg or dynamic_obs in impact mode.")
     parser.add_argument("--generations",   type=int,   default=3)
     parser.add_argument("--rollouts",      type=int,   default=5)
     parser.add_argument("--gate-planner", choices=("fixed", "impact"), default="fixed",
@@ -1068,6 +1069,19 @@ def main() -> None:
             parser.error("--fresh-min must be between 1 and --rollouts")
         if args.replay_all and args.generations > 1 and args.fresh_min == args.rollouts:
             parser.error("--replay-all with multiple generations requires --rollouts > --fresh-min")
+
+    json_proposer = initial_policy = None
+    if args.proposal_file:
+        if (len(args.scenarios) != 1 or args.scenarios[0] not in PROPOSAL_SCENARIOS
+                or args.gate_planner != "impact"):
+            parser.error("--proposal-file requires one supported scenario (scripted_peg or dynamic_obs) in impact mode")
+        if args.record:
+            parser.error("--record is only supported for the built-in operator runs")
+        try:
+            profile = PROPOSAL_SCENARIOS[args.scenarios[0]]
+            json_proposer, initial_policy = profile.load_proposal_file(Path(args.proposal_file), args.generations)
+        except (OSError, ProposalError) as exc:
+            parser.error(str(exc))
 
     if args.out_dir:
         out_root = Path(args.out_dir)
@@ -1178,12 +1192,13 @@ def main() -> None:
         )
         try:
             loop, gen_rows = run_loop(
-                instance, agent, selector, args.severity, args.rollouts,
+                instance, initial_policy if json_proposer is not None else agent, selector, args.severity, args.rollouts,
                 gate_planner=args.gate_planner, fresh_min=args.fresh_min,
                 training_seed_stop=training_seed_stop, replay_all=args.replay_all,
                 peg_boundary_cases=args.peg_boundary_cases,
                 peg_reduction_budget=args.peg_reduction_budget,
                 boundary_cases=args.boundary_cases, reduction_budget=args.reduction_budget,
+                proposer=json_proposer,
             )
         except ProposalError as exc:
             parser.error(str(exc))
@@ -1209,6 +1224,10 @@ def main() -> None:
         elapsed_loop = time.time() - t0
         records = loop.lineage.all()
         metrics = _compute_metrics(gen_rows, records, sig_key, args.rollouts, elapsed_loop)
+        if json_proposer is not None:
+            # The built-in sweep and detection labels assume every candidate is a fault injection.
+            for metric in ("recall", "precision", "f1"):
+                metrics[metric] = None
         srr     = metrics["srr"]
         print(f"\n  SRR={srr:.3f}  |  Counterexamples={len(loop.cx_library)}"
               f"  |  Lineage={loop.lineage.digest()[:12]}…")
@@ -1216,8 +1235,11 @@ def main() -> None:
         print(f"  1. SRR   (safety regression rate)      : {metrics['srr']:.3f}")
         print(f"  2. UFAR  (unsafe false acceptance)     : {metrics['ufar']:.3f}")
         print(f"  3. EIFR  (evaluator integrity failure) : {metrics['eifr']:.3f}")
-        print(f"  4. Detection  recall={metrics['recall']:.3f}  "
-              f"precision={metrics['precision']:.3f}  F1={metrics['f1']:.3f}")
+        if json_proposer is None:
+            print(f"  4. Detection  recall={metrics['recall']:.3f}  "
+                  f"precision={metrics['precision']:.3f}  F1={metrics['f1']:.3f}")
+        else:
+            print("  4. Detection  unavailable without controlled-fault labels")
         print(f"  5. Safety margin Δ ({sig_key}): {metrics['smd']:+.4f} {sig_unit.strip()}")
         print(f"  6. Discovery cost  : {metrics['rdc_rollouts']} rollouts  "
               f"{metrics['rdc_wall_s']:.1f} s")
@@ -1228,36 +1250,41 @@ def main() -> None:
         print(f"  7. Pareto          : {pareto_str}")
 
         # ── 12-seed sweep ─────────────────────────────────────────────────
-        print(f"\n  Running 12-seed sweep …")
-        if scenario == "scripted_peg":
-            sweep = _sweep_scripted_peg(args.severity)
-        elif scenario == "mlp_peg":
-            sweep = _sweep_mlp_peg(agent, args.severity)
-        elif scenario == "dynamic_obs":
-            sweep = _sweep_dynamic_obs(args.severity)
-        elif scenario == "pick_place":
-            sweep = _sweep_pick_place(args.severity)
-        elif scenario == "tool_tighten":
-            sweep = _sweep_tool_tighten(args.severity)
-        elif scenario == "episode_removal":
-            sweep = _sweep_episode_removal(agent, args.severity)
-        elif scenario == "evaluator_drift":
-            sweep = _sweep_evaluator_drift(args.severity)
-        elif scenario == "tool_misuse":
-            sweep = _sweep_tool_misuse(args.severity)
-        else:  # sensor_drift
-            sweep = _sweep_sensor_drift(args.severity)
+        if json_proposer is None:
+            print(f"\n  Running 12-seed sweep …")
+            if scenario == "scripted_peg":
+                sweep = _sweep_scripted_peg(args.severity)
+            elif scenario == "mlp_peg":
+                sweep = _sweep_mlp_peg(agent, args.severity)
+            elif scenario == "dynamic_obs":
+                sweep = _sweep_dynamic_obs(args.severity)
+            elif scenario == "pick_place":
+                sweep = _sweep_pick_place(args.severity)
+            elif scenario == "tool_tighten":
+                sweep = _sweep_tool_tighten(args.severity)
+            elif scenario == "episode_removal":
+                sweep = _sweep_episode_removal(agent, args.severity)
+            elif scenario == "evaluator_drift":
+                sweep = _sweep_evaluator_drift(args.severity)
+            elif scenario == "tool_misuse":
+                sweep = _sweep_tool_misuse(args.severity)
+            else:  # sensor_drift
+                sweep = _sweep_sensor_drift(args.severity)
 
-        base_ok = all(r["safe"]  for r in sweep if r["label"] == "baseline")
-        cand_ok = all(not r["safe"] for r in sweep if r["label"] == "candidate")
-        base_v  = [r["value"] for r in sweep if r["label"] == "baseline"]
-        cand_v  = [r["value"] for r in sweep if r["label"] == "candidate"]
-        sweep_pass = base_ok and cand_ok
-        print(f"  baseline  12/12 SAFE   : {str(base_ok):5s}  "
-              f"mean={np.mean(base_v):.4f} {sig_unit.strip()}")
-        print(f"  candidate 12/12 UNSAFE : {str(cand_ok):5s}  "
-              f"mean={np.mean(cand_v):.4f} {sig_unit.strip()}")
-        print(f"  Sweep: {'PASS' if sweep_pass else 'FAIL'}")
+            base_ok = all(r["safe"]  for r in sweep if r["label"] == "baseline")
+            cand_ok = all(not r["safe"] for r in sweep if r["label"] == "candidate")
+            base_v  = [r["value"] for r in sweep if r["label"] == "baseline"]
+            cand_v  = [r["value"] for r in sweep if r["label"] == "candidate"]
+            sweep_pass = base_ok and cand_ok
+            print(f"  baseline  12/12 SAFE   : {str(base_ok):5s}  "
+                  f"mean={np.mean(base_v):.4f} {sig_unit.strip()}")
+            print(f"  candidate 12/12 UNSAFE : {str(cand_ok):5s}  "
+                  f"mean={np.mean(cand_v):.4f} {sig_unit.strip()}")
+            print(f"  Sweep: {'PASS' if sweep_pass else 'FAIL'}")
+        else:
+            sweep = None
+            sweep_pass = None
+            print("\n  Built-in fault-injection sweep skipped for JSON proposals")
 
         # ── Persist artifacts ─────────────────────────────────────────────
         demo_js = {
@@ -1268,7 +1295,8 @@ def main() -> None:
             "generations": gen_rows,
         }
         (sc_dir / "demo_results.json").write_text(json.dumps(demo_js, indent=2))
-        (sc_dir / "seed_sweep.json").write_text(json.dumps(sweep, indent=2))
+        if sweep is not None:
+            (sc_dir / "seed_sweep.json").write_text(json.dumps(sweep, indent=2))
         if args.gate_planner == "impact":
             archive = {
                 "scenario": instance.name, "task": instance.task.name,
@@ -1360,8 +1388,8 @@ def main() -> None:
             "srr":         srr,
             "cx_count":    len(loop.cx_library),
             "sweep_pass":  sweep_pass,
-            "base_mean":   float(np.mean(base_v)),
-            "cand_mean":   float(np.mean(cand_v)),
+            "base_mean":   float(np.mean(base_v)) if sweep is not None else None,
+            "cand_mean":   float(np.mean(cand_v)) if sweep is not None else None,
             "threshold":   threshold,
             "sig_unit":    sig_unit.strip(),
             "elapsed_s":   round(elapsed, 1),
@@ -1375,12 +1403,14 @@ def main() -> None:
           f"{'Baseline':>12}  {'Candidate':>12}  {'Time':>6}")
     print(f"  {'─'*18}  {'─'*5}  {'─'*4}  {'─'*6}  {'─'*12}  {'─'*12}  {'─'*6}")
     for r in summary_rows:
-        sweep_s = "PASS" if r["sweep_pass"] else "FAIL"
+        if r["sweep_pass"] is None:
+            sweep_s, base_s, cand_s = "N/A", "N/A", "N/A"
+        else:
+            sweep_s = "PASS" if r["sweep_pass"] else "FAIL"
+            base_s = f"{r['base_mean']:.4f} {r['sig_unit']}"
+            cand_s = f"{r['cand_mean']:.4f} {r['sig_unit']}"
         print(f"  {r['scenario']:<18}  {r['srr']:>5.3f}  {r['cx_count']:>4}  "
-              f"{sweep_s:>6}  "
-              f"{r['base_mean']:>9.4f} {r['sig_unit']:>3}  "
-              f"{r['cand_mean']:>9.4f} {r['sig_unit']:>3}  "
-              f"{r['elapsed_s']:>5.1f}s")
+              f"{sweep_s:>6}  {base_s:>12}  {cand_s:>12}  {r['elapsed_s']:>5.1f}s")
     print(f"{'═'*72}\n")
 
     # ── Save top-level summary ────────────────────────────────────────────────
