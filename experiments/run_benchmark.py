@@ -62,6 +62,11 @@ from esrb.agent import (
     DynamicObstaclePolicy, EvolutionLoop, GraspForcePolicy, MLPInsertionPolicy,
     PickPlacePolicy, ScriptedInsertionPolicy, SensorDriftPolicy, ToolTightenPolicy,
 )
+from esrb.agent_api.binding import apply_proposal
+from esrb.agent_api.contracts import CandidateProposer, PublicFeedback, ProposalError, identity, require
+from esrb.agent_api.controlled import ControlledProfile, TrustedOperatorProposer
+from esrb.agent_api.policy_sources import OperatorProposer
+from esrb.agent_api.profiles import BY_INSTANCE as PROPOSAL_INSTANCES, BY_SCENARIO as PROPOSAL_SCENARIOS
 from esrb.benchmark import (
     BenchmarkInstance, GenerationProtocol, HazardModel, HazardType,
 )
@@ -381,7 +386,6 @@ _ORACLE_TEST = {
     HeightClearanceOracle: "dynamics_safety",
     ForceTorqueOracle: "force_safety",
 }
-_SENSOR_BASELINE = {"true_force": 10.0, "sensor_bias": 0.0}
 
 
 def _changed_components(parent, candidate, parent_state, candidate_state):
@@ -490,17 +494,29 @@ def _reduce_panel(task, plan, executed, results, execute_case):
 
 def run_loop(instance, agent, selector, severity, n_rollouts, *,
              gate_planner="fixed", fresh_min=1, training_seed_stop=0, replay_all=False,
-             peg_boundary_cases=0, peg_reduction_budget=0, boundary_cases=0, reduction_budget=0):
+             peg_boundary_cases=0, peg_reduction_budget=0, boundary_cases=0, reduction_budget=0,
+             proposer: CandidateProposer | None = None):
     """Run the CE-EST loop, returning (EvolutionLoop, list[gen_dict])."""
     use_impact = gate_planner == "impact"
     task = instance.task
     if instance.name == "scripted_peg_speed_injection":
         boundary_cases = boundary_cases or peg_boundary_cases
         reduction_budget = reduction_budget or peg_reduction_budget
-    sensor_impact = use_impact and isinstance(instance.task, SensorDriftTask)
-    parent_config = _SENSOR_BASELINE if sensor_impact else None
-    if sensor_impact:
-        instance.task.configure(**_SENSOR_BASELINE)
+    policy_profile = PROPOSAL_INSTANCES.get(instance.name)
+    if policy_profile is None:
+        raise ProposalError("this scenario has no registered proposal consumer")
+    controlled = isinstance(policy_profile, ControlledProfile)
+    if controlled and proposer is not None:
+        raise ProposalError("this scenario only accepts the built-in operator")
+    if not controlled and proposer is None:
+        proposer = OperatorProposer(
+            instance.update_operator, instance.generation_protocol.seed, severity, policy_profile,
+        )
+    manifest_id = proposer.manifest.id if proposer is not None else None
+    public_history = []
+    parent_config = policy_profile.nominal_task_config if controlled else None
+    if parent_config is not None:
+        task.configure(**parent_config)
     loop  = EvolutionLoop(instance, agent, selector=selector, n_candidate_rollouts=n_rollouts)
     proto = instance.generation_protocol
     gen_rows: list[dict[str, Any]] = []
@@ -510,6 +526,23 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
     )
 
     for gen in range(proto.num_generations):
+        source = proposer
+        if controlled:
+            source = TrustedOperatorProposer(policy_profile, instance.update_operator, loop.agent, proto.seed, severity)
+        if manifest_id is None:
+            manifest_id = source.manifest.id
+        feedback = PublicFeedback(instance.name, gen + 1, tuple(public_history))
+        try:
+            child, receipt = apply_proposal(
+                source, manifest_id, policy_profile.snapshot(loop.agent), feedback, policy_profile.validators,
+            )
+            if controlled:
+                candidate, candidate_config = source.consume(child)
+            else:
+                candidate, candidate_config = policy_profile.build(child["policy"]), None
+        except ProposalError as exc:
+            raise ProposalError(f"generation {gen + 1}: {exc}") from exc
+
         parent_seed = proto.seed + gen * 1000
         parent_seeds = range(parent_seed, parent_seed + proto.rollouts_per_generation)
         if use_impact:
@@ -536,11 +569,6 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 )
                 loop.cx_library.add(cx)
 
-        update_result = instance.update_operator.apply(
-            loop.agent, seed=proto.seed + gen, severity=severity
-        )
-        candidate = update_result.candidate_policy
-
         plan = None
         executed = []
         check_results, check_blockers = {}, []
@@ -549,14 +577,8 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             candidate_state = candidate.state_dict()
             candidate_digest = hash_object(candidate_state)
             changed = _changed_components(loop.agent, candidate, parent_state, candidate_state)
-            candidate_config = None
-            if sensor_impact:
-                candidate_config = {
-                    "true_force": update_result.metadata["true_force_n"],
-                    "sensor_bias": update_result.metadata["sensor_bias_n"],
-                }
-                if candidate_config != parent_config:
-                    changed.add(ComponentType.DATA)
+            if candidate_config != parent_config:
+                changed.add(ComponentType.DATA)
             primary_test = _ORACLE_TEST[type(instance.oracle)]
             checks = available_checks(
                 instance.task, primary_test, loop.agent, candidate, parent_state, candidate_state,
@@ -604,17 +626,23 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                     instance.task.configure(**parent_config)
             check_results, check_blockers = execute_gate_checks(plan, checks, cand_results, primary_test)
         else:
-            cand_results = [
-                loop._run_rollout(candidate, parent_seed + r, gen)
-                for r in range(loop.n_candidate_rollouts)
-            ]
+            try:
+                if candidate_config is not None:
+                    task.configure(**candidate_config)
+                cand_results = [
+                    loop._run_rollout(candidate, parent_seed + r, gen)
+                    for r in range(loop.n_candidate_rollouts)
+                ]
+            finally:
+                if parent_config is not None:
+                    task.configure(**parent_config)
 
+        risk_results = [
+            result for case, result in zip(plan["cases"], cand_results, strict=True)
+            if case["phase"] != "reduction"
+        ] if use_impact else cand_results
         selected = None
-        if cand_results and not check_blockers:
-            risk_results = [
-                result for case, result in zip(plan["cases"], cand_results, strict=True)
-                if case["phase"] != "reduction"
-            ] if use_impact else cand_results
+        if risk_results and not check_blockers:
             cand_eval = CandidateEvaluation(
                 policy=candidate,
                 task_scores=[r.task_score for r in risk_results],
@@ -628,18 +656,23 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             policy_digest=parent_digest,
             data_digest="",
             evaluator_digest="",
-            update_operator=instance.update_operator.name,
+            update_operator=source.manifest.adapter_id,
             task_score=mean_score,
             safety_violated=any_unsafe,
             oracle_verdicts=last_sigs,
         ))
 
-        if selected is not None and not sensor_impact:
-            if use_impact and isinstance(loop.agent, MLPInsertionPolicy):
-                # MLP state_dict only serializes the weights and buffer lengths.
+        promoted = selected is not None and parent_config is None
+        active_version = receipt["base_version"]
+        if promoted:
+            if isinstance(loop.agent, MLPInsertionPolicy):
+                # Carry the validated weights, memory, optimizer and RNG together.
                 loop.agent = candidate
+                active_version = receipt["candidate_version"]
             else:
                 loop.agent.load_state_dict(candidate.state_dict())
+                active_version = identity(policy_profile.snapshot(loop.agent))
+                require(active_version == receipt["candidate_version"], "promoted state differs from proposal")
 
         row = {
             "generation":     gen,
@@ -672,108 +705,18 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 row["gate_plan"]["candidate_task_config"] = candidate_config
             row["gate_plan"]["reduction"] = reduction
             row["gate_plan"]["used_control_steps"] = sum(case["control_steps"] for case in executed)
+        row["proposal_receipt"] = {
+            **receipt,
+            "accepted": row["accepted"], "promoted": promoted,
+            "active_version_after": active_version,
+        }
+        public_history.append({
+            "generation": gen + 1, "slot": 0,
+            "task_scores": [result.task_score for result in risk_results],
+        })
         gen_rows.append(row)
 
     return loop, gen_rows
-
-
-# ── Sensor-drift loop (task config must toggle per generation) ────────────────
-
-def _run_sensor_drift_loop(instance, agent, selector, severity, n_rollouts):
-    """Custom CE-EST loop for sensor_drift: baseline uses accurate sensor,
-    candidate uses drifted sensor (true_force=30, sensor_bias=-20)."""
-    oracle    = instance.oracle
-    operator  = instance.update_operator
-    proto     = instance.generation_protocol
-    gen_rows: list[dict[str, Any]] = []
-
-    for gen in range(proto.num_generations):
-        # ── Baseline rollouts: accurate sensor ────────────────────────────────
-        instance.task.configure(true_force=10.0, sensor_bias=0.0)
-        results = []
-        for r in range(proto.rollouts_per_generation):
-            obs  = instance.task.reset(seed=proto.seed + gen * 1000 + r)
-            ep: dict = {}
-            done = False
-            while not done:
-                obs, _, done, ep = instance.task.step(agent.act(obs))
-            task_res = instance.task.evaluate(ep)
-            o_v      = oracle.evaluate(ep, gen)
-            results.append((task_res.task_score, o_v, ep))
-
-        mean_score = sum(s for s, _, _ in results) / len(results)
-        any_unsafe = any(not v.safe for _, v, _ in results)
-        last_b_sigs = results[-1][1].signal_values
-
-        # ── Apply operator → get drifted config ───────────────────────────────
-        update_result = operator.apply(agent, seed=proto.seed + gen, severity=severity)
-        candidate     = update_result.candidate_policy
-        c_true_force  = update_result.metadata["true_force_n"]
-        c_sensor_bias = update_result.metadata["sensor_bias_n"]
-
-        # ── Candidate rollouts: drifted sensor ────────────────────────────────
-        cand_task = SensorDriftTask()
-        cand_task.configure(true_force=c_true_force, sensor_bias=c_sensor_bias)
-        cand_results = []
-        for r in range(n_rollouts):
-            obs  = cand_task.reset(seed=proto.seed + gen * 1000 + r)
-            ep: dict = {}
-            done = False
-            while not done:
-                obs, _, done, ep = cand_task.step(candidate.act(obs))
-            task_res = cand_task.evaluate(ep)
-            o_v      = oracle.evaluate(ep, gen)
-            cand_results.append((task_res.task_score, o_v, ep))
-
-        last_c_sigs = cand_results[-1][1].signal_values
-        cand_eval   = CandidateEvaluation(
-            policy=candidate,
-            task_scores=[s for s, _, _ in cand_results],
-            safety_violations=[not v.safe for _, v, _ in cand_results],
-            generation=gen,
-        )
-        selected = selector.select([cand_eval])
-
-        gen_rows.append({
-            "generation":     gen,
-            "baseline_score": mean_score,
-            "baseline_safe":  not any_unsafe,
-            "baseline_sigs":  last_b_sigs,
-            "candidate_safe": all(v.safe for _, v, _ in cand_results),
-            "candidate_sigs": last_c_sigs,
-            "accepted":       selected is not None,
-            "baseline_rollout_safe":    [v.safe for _, v, _ in results],
-            "baseline_rollout_success": [
-                bool(ep.get("success", s > 0.5)) for s, _, ep in results
-            ],
-            "candidate_rollout_safe":    [v.safe for _, v, _ in cand_results],
-            "candidate_rollout_success": [
-                bool(ep.get("success", s > 0.5)) for s, _, ep in cand_results
-            ],
-        })
-
-    class _FakeLoop:
-        def __init__(self):
-            from esrb.benchmark.lineage import LineageTracker
-            from esrb.detection.counterexample import CounterexampleLibrary
-            self.cx_library = CounterexampleLibrary()
-            self.lineage    = LineageTracker()
-        def digest(self): return "sensor_drift"
-
-    fake_loop = _FakeLoop()
-    for row in gen_rows:
-        fake_loop.lineage.record(GenerationRecord(
-            generation=row["generation"],
-            policy_digest="",
-            data_digest="",
-            evaluator_digest="",
-            update_operator=operator.name,
-            task_score=row["baseline_score"],
-            safety_violated=not row["baseline_safe"],
-            oracle_verdicts=row["baseline_sigs"],
-        ))
-
-    return fake_loop, gen_rows
 
 
 # ── Seed sweeps ───────────────────────────────────────────────────────────────
@@ -1229,14 +1172,11 @@ def main() -> None:
         print(f"  {'─'*4}  {'─'*8}  {'─'*6}  {'─'*4}  "
               f"{'─'*12}  {'─'*12}  {'─'*8}")
 
-        if scenario == "sensor_drift" and args.gate_planner == "fixed":
-            loop, gen_rows = _run_sensor_drift_loop(
-                instance, agent, selector, args.severity, args.rollouts)
-        else:
-            training_seed_stop = (
-                _TEACHER_SEED_START + args.train_episodes
-                if isinstance(agent, MLPInsertionPolicy) else 0
-            )
+        training_seed_stop = (
+            _TEACHER_SEED_START + args.train_episodes
+            if isinstance(agent, MLPInsertionPolicy) else 0
+        )
+        try:
             loop, gen_rows = run_loop(
                 instance, agent, selector, args.severity, args.rollouts,
                 gate_planner=args.gate_planner, fresh_min=args.fresh_min,
@@ -1245,7 +1185,9 @@ def main() -> None:
                 peg_reduction_budget=args.peg_reduction_budget,
                 boundary_cases=args.boundary_cases, reduction_budget=args.reduction_budget,
             )
-            agent = loop.agent
+        except ProposalError as exc:
+            parser.error(str(exc))
+        agent = loop.agent
 
         for row in gen_rows:
             bsig = row["baseline_sigs"].get(sig_key, float("nan"))

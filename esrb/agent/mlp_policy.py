@@ -14,6 +14,7 @@ except ImportError:
     _HAS_TORCH = False
 
 from esrb.tasks.base import TaskObservation
+from esrb.utils.hashing import hash_dict
 from .base import BaseAgent
 
 _OBS_DIM = 15
@@ -209,6 +210,23 @@ class MLPInsertionPolicy(BaseAgent):
             "lr":          self._lr,
             "buffer_len":  len(self.replay_buffer),
             "summary_len": len(self.episode_summary),
+        }
+
+    def training_identity(self) -> dict[str, str]:
+        """Bind training contents and state without putting the buffer in proposal JSON."""
+        optimizer = self._optim.state_dict()
+        optimizer_state = {
+            str(key): {
+                name: value.detach().cpu().tolist() if torch.is_tensor(value) else value
+                for name, value in entry.items()
+            }
+            for key, entry in optimizer["state"].items()
+        }
+        return {
+            "replay_buffer": hash_dict({"records": self.replay_buffer}),
+            "episode_summary": hash_dict({"records": self.episode_summary}),
+            "optimizer": hash_dict({"state": optimizer_state, "param_groups": optimizer["param_groups"]}),
+            "rng": hash_dict({"state": self._rng.getstate()}),
         }
 
     def load_state_dict(self, state: dict) -> None:

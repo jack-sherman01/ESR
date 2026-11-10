@@ -6,6 +6,9 @@ from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
 
+from esrb.agent_api.contracts import SCHEMA, identity
+from esrb.agent_api.controlled import ControlledProfile
+from esrb.agent_api.profiles import BY_INSTANCE as PROPOSAL_INSTANCES
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.tasks.agentic import GraspForceTask, SensorDriftTask
@@ -32,6 +35,55 @@ _ORACLES = {
 }
 
 
+def _audit_proposal(row, scenario, history, active_version, manifest_id):
+    receipt = row["proposal_receipt"]
+    proposal = receipt["proposal"]
+    manifest = receipt["manifest"]
+    parent = receipt["parent_components"]
+    child = receipt["candidate_components"]
+    feedback = receipt["public_feedback"]
+    plan = row["gate_plan"]
+    profile = PROPOSAL_INSTANCES.get(scenario)
+    _require(profile is not None, "proposal has no registered scenario consumer")
+    validators = profile.validators
+    consumers = {role: item for role, (item, _) in validators.items()}
+    _require(manifest["schema"] == proposal["schema"] == SCHEMA
+             and list(manifest["consumers"]) == [asdict(item) for item in consumers.values()]
+             and set(proposal["replacements"]) == set(consumers)
+             and proposal["formats"] == {role: item.format for role, item in consumers.items()},
+             "proposal consumer mismatch")
+    _require(identity(manifest) == receipt["manifest_id"] == proposal["manifest_id"]
+             and (manifest_id is None or manifest_id == receipt["manifest_id"]),
+             "proposal manifest identity mismatch")
+    _require(identity(parent) == receipt["base_version"] == proposal["base_version"]
+             and (active_version is None or active_version == receipt["base_version"]),
+             "proposal parent version does not follow the active version")
+    reconstructed = {**parent, **{
+        role: validators[role][1](value) for role, value in proposal["replacements"].items()
+    }}
+    _require(identity(child) == receipt["candidate_version"]
+             and child == reconstructed
+             and profile.policy_digest(child) == plan["candidate_policy_digest"]
+             and identity(proposal) == receipt["proposal_id"], "proposal candidate identity mismatch")
+    _require(identity(feedback) == receipt["feedback_id"] and feedback["task_id"] == scenario
+             and feedback["generation"] == row["generation"] + 1
+             and list(feedback["history"]) == history, "proposal public feedback mismatch")
+    temporary = isinstance(profile, ControlledProfile) and profile.nominal_task_config is not None
+    _require((child["data"] if temporary else None) == plan.get("candidate_task_config"),
+             "proposal task configuration mismatch")
+    promoted = row["accepted"] and not temporary
+    expected_active = receipt["candidate_version"] if promoted else receipt["base_version"]
+    _require(receipt["accepted"] is row["accepted"] and receipt.get("promoted", promoted) is promoted
+             and receipt["active_version_after"] == expected_active,
+             "proposal promotion record mismatch")
+    history.append({
+        "generation": row["generation"] + 1, "slot": 0,
+        "task_scores": [case["raw_result"]["task_score"] for case in plan["executed"]
+                        if case["phase"] != "reduction"],
+    })
+    return expected_active, receipt["manifest_id"]
+
+
 def audit_gate(report, archive):
     legacy_peg = archive["reset_mode"] == "explicit_xy_offset" and report["scenario"] == "scripted_peg"
     _require(archive["reset_mode"] == "structured" or legacy_peg,
@@ -45,9 +97,17 @@ def audit_gate(report, archive):
     _require(len(bank) == len(archive["counterexamples"]), "duplicate counterexample ID")
     phases = Counter()
     total_steps = 0
+    history = []
+    active_version = manifest_id = None
+    has_proposals = any("proposal_receipt" in row for row in report["generations"])
     for row in report["generations"]:
         gen = row["generation"]
         plan = row["gate_plan"]
+        if has_proposals:
+            _require("proposal_receipt" in row, "missing proposal receipt")
+            active_version, manifest_id = _audit_proposal(
+                row, archive["scenario"], history, active_version, manifest_id,
+            )
         executed = plan["executed"]
         count = len(executed)
         _require(count == plan["used_rollouts"] == len(plan["cases"]), f"generation {gen}: rollout count mismatch")
@@ -144,11 +204,15 @@ def audit_gate(report, archive):
                 _require(retained["evidence_id"] in probe_ids and not retained["safe"]
                          and retained["disturbance"] == reduction["reduced"],
                          f"generation {gen}: retained reduction lacks a verified violation")
-    return {
+    result = {
         "status": "PASS", "generations": len(report["generations"]),
         "rollouts_by_phase": dict(phases), "control_steps": total_steps,
         "report_digest": hash_dict(report), "archive_digest": hash_dict(archive),
     }
+    if has_proposals:
+        result["proposals"] = len(history)
+        result["active_version"] = active_version
+    return result
 
 
 def main():

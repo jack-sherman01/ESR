@@ -30,6 +30,10 @@ def test_peg_gate_runs_boundary_replay_reduction_and_audits_raw_evidence():
         fresh_min=2, peg_boundary_cases=2, peg_reduction_budget=3,
     )
     first, second = [row["gate_plan"] for row in rows]
+    first_receipt, second_receipt = [row["proposal_receipt"] for row in rows]
+    assert first_receipt["manifest"]["adapter_id"] == "force_speed_injection"
+    assert first_receipt["base_version"] == first_receipt["active_version_after"]
+    assert second_receipt["base_version"] == first_receipt["active_version_after"]
     assert all(plan["used_rollouts"] == 8 for plan in (first, second))
     assert any(case["phase"] == "replay" for case in second["executed"])
     assert any(case.get("test_ids") == ["dynamics_safety"] for case in first["executed"])
