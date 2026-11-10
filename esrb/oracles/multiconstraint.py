@@ -1,6 +1,6 @@
 """Per-rule physical assessments over benchmark-owned rollout telemetry."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 
 import numpy as np
 
@@ -147,7 +147,7 @@ class MultiConstraintOracle(BaseOracle):
         )
 
 
-def scenario_oracle(scenario):
+def scenario_oracle(scenario, *, limits=None):
     """Freeze existing scenario limits and explicit engineering peg wrench limits."""
     task, primary_signal, threshold = SCENARIO_LIMITS[scenario]
     force_limit = threshold if primary_signal == "peak_force_n" else 50.0 if task == "peg_insertion" else None
@@ -167,7 +167,16 @@ def scenario_oracle(scenario):
     if task == "sensor_drift":
         rules.append(Rule("sensor_force_disagreement_n", 1e-6, "upper", "N",
                           "distribution_check", ("contact_forces", "sensor_readings")))
-    source = "deterministic_force_fixture" if task in {"grasp_force", "sensor_drift"} else "mujoco_control_step_telemetry"
+    fixture = task in {"grasp_force", "sensor_drift"}
+    if limits:
+        configurable = {rule.metric for rule in rules if rule.limit is not None}
+        if not fixture:
+            configurable.add("peak_tip_speed_ms")
+        unsupported = limits.keys() - configurable
+        if unsupported:
+            raise ValueError(f"{scenario} has no measured rule for: {', '.join(sorted(unsupported))}")
+        rules = [replace(rule, limit=limits[rule.metric]) if rule.metric in limits else rule for rule in rules]
+    source = "deterministic_force_fixture" if fixture else "mujoco_control_step_telemetry"
     oracle = MultiConstraintOracle(rules, source, force if primary_signal == "peak_force_n" else dynamics)
     if not any(rule.metric == primary_signal and rule.limit is not None for rule in rules) or not oracle.calibration_check():
         raise ValueError(f"invalid measurement protocol for {task}: {primary_signal}")

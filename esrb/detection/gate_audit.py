@@ -9,6 +9,7 @@ from pathlib import Path
 from esrb.agent_api.contracts import SCHEMA, identity
 from esrb.agent_api.controlled import ControlledProfile
 from esrb.agent_api.profiles import BY_INSTANCE as PROPOSAL_INSTANCES
+from esrb.benchmark.experiment_config import LegacyPegConfig, validate_experiment_config
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle, scenario_oracle, verdict_safety
@@ -138,12 +139,29 @@ def audit_gate(report, archive):
     signal = report.get("signal_key", "peak_tip_speed_ms")
     oracle = _ORACLES[signal](report["threshold"])
     primary_test = "force_safety" if isinstance(oracle, ForceTorqueOracle) else "dynamics_safety"
-    multi = report.get("args", {}).get("multi_constraint", False)
+    args = report.get("args", {})
+    multi = args.get("multi_constraint", False)
+    settings = report.get("experiment_config")
+    _require(("experiment_config" in report) == (args.get("config") is not None),
+             "experiment config missing or unexpected")
+    limits = {}
+    if "experiment_config" in report:
+        _require(isinstance(settings, dict), "invalid experiment config")
+        config = validate_experiment_config(settings["settings"])
+        if isinstance(config, LegacyPegConfig):
+            _require(multi and report["scenario"] == "scripted_peg", "unsupported legacy configured scenario")
+        _require(settings["digest"] == hash_dict(settings["settings"])
+                 and report["selector_alpha"] == config.selector.alpha,
+                 "experiment config digest or selector mismatch")
+        limits = config.limits_for(report["scenario"])
+        _require(multi or not limits, "configured oracle limits require multi-constraint measurements")
     _require(("measurement_protocol" in report) == multi, "measurement protocol missing or unexpected")
     if multi:
-        _require(SCENARIO_LIMITS.get(report["scenario"]) == (task.name, signal, report["threshold"]),
+        scenario_task, primary_signal, default_threshold = SCENARIO_LIMITS[report["scenario"]]
+        expected_threshold = limits.get(primary_signal, default_threshold)
+        _require((task.name, signal, report["threshold"]) == (scenario_task, primary_signal, expected_threshold),
                  "measurement scenario or primary limit mismatch")
-        oracle = scenario_oracle(report["scenario"])
+        oracle = scenario_oracle(report["scenario"], limits=limits)
         _require(report["measurement_protocol"] == oracle.protocol(), "measurement protocol mismatch")
         primary_test = oracle.primary_test
     boundaries = {case["id"]: case for case in boundary_catalog(task, primary_test)}

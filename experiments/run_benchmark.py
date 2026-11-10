@@ -70,6 +70,7 @@ from esrb.agent_api.profiles import BY_INSTANCE as PROPOSAL_INSTANCES, BY_SCENAR
 from esrb.benchmark import (
     BenchmarkInstance, GenerationProtocol, HazardModel, HazardType,
 )
+from esrb.benchmark.experiment_config import LegacyPegConfig, load_experiment_config
 from esrb.benchmark.lineage import GenerationRecord
 from esrb.detection.change_impact import ComponentType
 from esrb.detection.counterexample import Counterexample, CounterexampleSource
@@ -1035,40 +1036,90 @@ def _compute_metrics(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="ESRB combined benchmark runner")
-    parser.add_argument("--scenarios",     nargs="+", default=ALL_SCENARIOS,
+    parser.add_argument("--config", help="Load an experiment profile (YAML).")
+    parser.add_argument("--scenarios",     nargs="+",
                         choices=ALL_SCENARIOS,
-                        help="Which scenarios to run (default: all).")
+                        help="Which scenarios to run (default: all, or the list from --config).")
     parser.add_argument("--proposal-file", help="Version-bound JSON proposals for scripted_peg or dynamic_obs in impact mode.")
-    parser.add_argument("--generations",   type=int,   default=3)
-    parser.add_argument("--rollouts",      type=int,   default=5)
-    parser.add_argument("--gate-planner", choices=("fixed", "impact"), default="fixed",
+    parser.add_argument("--generations",   type=int)
+    parser.add_argument("--rollouts",      type=int)
+    parser.add_argument("--gate-planner", choices=("fixed", "impact"),
                         help="Candidate scheduling mode for the selected scenarios.")
-    parser.add_argument("--multi-constraint", action="store_true",
+    parser.add_argument("--multi-constraint", action=argparse.BooleanOptionalAction,
                         help="Evaluate and audit per-rule physical measurements in impact mode.")
-    parser.add_argument("--fresh-min", type=int, default=1,
+    parser.add_argument("--fresh-min", type=int,
                         help="Minimum fresh slots inside the impact candidate budget.")
-    parser.add_argument("--replay-all", action="store_true",
+    parser.add_argument("--replay-all", action=argparse.BooleanOptionalAction,
                         help="Require all historical resets in each scenario (impact only).")
-    parser.add_argument("--boundary-cases", type=int, default=0, metavar="N",
+    parser.add_argument("--boundary-cases", type=int, metavar="N",
                         help="Maximum impact-matched boundary cases per scenario.")
-    parser.add_argument("--reduction-budget", type=int, default=0, metavar="N",
+    parser.add_argument("--reduction-budget", type=int, metavar="N",
                         help="Maximum counterexample reduction probes per candidate.")
     parser.add_argument("--peg-boundary-cases", type=int, default=0, metavar="N",
                         help="Reserve up to N impact-driven scripted_peg boundary cases (0–4).")
     parser.add_argument("--peg-reduction-budget", type=int, default=0, metavar="N",
                         help="Reserve up to N scripted_peg counterexample reduction probes.")
-    parser.add_argument("--severity",      type=float, default=0.5)
-    parser.add_argument("--epsilon",       type=float, default=0.09)
-    parser.add_argument("--train-episodes",type=int,   default=100,
+    parser.add_argument("--severity",      type=float)
+    parser.add_argument("--epsilon",       type=float)
+    parser.add_argument("--train-episodes",type=int,
                         help="Teacher episodes for MLP pre-training.")
-    parser.add_argument("--train-steps",   type=int,   default=2000,
+    parser.add_argument("--train-steps",   type=int,
                         help="BC gradient steps for MLP pre-training.")
-    parser.add_argument("--seed",          type=int,   default=42)
-    parser.add_argument("--record",        action="store_true",
+    parser.add_argument("--seed",          type=int)
+    parser.add_argument("--record",        action=argparse.BooleanOptionalAction,
                         help="Render and save videos.")
     parser.add_argument("--out-dir",       type=str,   default="",
                         help="Output directory (default: auto-timestamped).")
     args = parser.parse_args()
+    config = None
+    alpha = 0.10
+    log_dir = Path("private/experiments")
+    defaults = {
+        "scenarios": ALL_SCENARIOS, "generations": 3, "rollouts": 5, "seed": 42,
+        "severity": 0.5, "epsilon": 0.09, "gate_planner": "fixed", "multi_constraint": False,
+        "fresh_min": 1, "replay_all": False, "boundary_cases": 0, "reduction_budget": 0,
+        "train_episodes": 100, "train_steps": 2000, "record": False,
+    }
+    if args.config is not None:
+        try:
+            config = load_experiment_config(Path(args.config))
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        if isinstance(config, LegacyPegConfig):
+            if (args.scenarios not in (None, ["scripted_peg"]) or args.gate_planner == "fixed"
+                    or args.multi_constraint is False or args.proposal_file):
+                parser.error("the legacy peg profile requires scripted_peg with its built-in operator and multi-constraint impact gate")
+        planner = args.gate_planner or config.gate.planner
+        multi = config.gate.multi_constraint
+        defaults.update(
+            scenarios=list(config.scenarios),
+            generations=config.benchmark.num_generations,
+            rollouts=config.benchmark.rollouts_per_generation,
+            seed=config.benchmark.seed,
+            severity=config.update_operator.severity,
+            epsilon=config.selector.epsilon,
+            gate_planner=planner,
+            multi_constraint=(planner == "impact") if multi is None else multi,
+            **config.gate.model_dump(exclude={"planner", "multi_constraint"}),
+            **config.training.model_dump(),
+            record=config.logging.record,
+        )
+        alpha = config.selector.alpha
+        log_dir = Path(config.logging.log_dir)
+    for key, value in defaults.items():
+        if getattr(args, key) is None:
+            setattr(args, key, value)
+    if config is not None:
+        if not np.isfinite(args.severity) or args.severity < 0:
+            parser.error("--severity must be finite and nonnegative")
+        if not 0 <= args.epsilon <= 1:
+            parser.error("--epsilon must be in [0, 1]")
+        if args.generations < 1 or args.seed < 0:
+            parser.error("--config requires positive generations and a nonnegative seed")
+        if args.train_episodes < 1 or args.train_steps < 1:
+            parser.error("--config requires positive training episodes and steps")
+        if not args.multi_constraint and any(config.limits_for(scenario) for scenario in args.scenarios):
+            parser.error("oracle.limits for selected scenarios require the multi-constraint impact gate")
     if args.rollouts < 1:
         parser.error("--rollouts must be positive")
     if args.multi_constraint and args.gate_planner != "impact":
@@ -1124,7 +1175,7 @@ def main() -> None:
         out_root = Path(args.out_dir)
     else:
         stamp    = datetime.now().strftime("%Y%m%d_%H%M%S")
-        out_root = Path("private/experiments") / f"{stamp}_benchmark"
+        out_root = log_dir / f"{stamp}_benchmark"
     out_root.mkdir(parents=True, exist_ok=True)
 
     print("\n╔══════════════════════════════════════════════════════╗")
@@ -1139,7 +1190,7 @@ def main() -> None:
     print(f"  Severity   : {args.severity}   UCB ε: {args.epsilon}")
     print(f"  Artifacts  → {out_root}\n")
 
-    selector     = RiskSensitiveSelector(epsilon=args.epsilon, alpha=0.10)
+    selector     = RiskSensitiveSelector(epsilon=args.epsilon, alpha=alpha)
     summary_rows = []
 
     for scenario in args.scenarios:
@@ -1193,7 +1244,10 @@ def main() -> None:
         _, sig_key, threshold = SCENARIO_LIMITS[scenario]
         sig_unit = {"peak_tip_speed_ms": "m/s", "peak_force_n": "N"}.get(sig_key, "m")
         if args.multi_constraint:
-            instance = replace(instance, oracle=scenario_oracle(scenario))
+            limits = config.limits_for(scenario) if config is not None else {}
+            oracle = scenario_oracle(scenario, limits=limits)
+            instance = replace(instance, oracle=oracle)
+            threshold = limits.get(sig_key, threshold)
 
         # ── CE-EST loop ───────────────────────────────────────────────────
         print(f"\n  {'Gen':>4}  {'Score':>8}  {'Safe?':>6}  "
@@ -1312,6 +1366,10 @@ def main() -> None:
         if args.multi_constraint:
             demo_js["measurement_protocol"] = instance.oracle.protocol()
             demo_js["seed_sweep_scope"] = "legacy_scenario_oracle_diagnostic" if sweep is not None else None
+        if config is not None:
+            settings = config.model_dump(mode="json")
+            demo_js["experiment_config"] = {"settings": settings, "digest": hash_dict(settings)}
+            demo_js["selector_alpha"] = alpha
         (sc_dir / "demo_results.json").write_text(json.dumps(demo_js, indent=2))
         if sweep is not None:
             (sc_dir / "seed_sweep.json").write_text(json.dumps(sweep, indent=2))
