@@ -28,7 +28,9 @@ def boundary_catalog(task, primary_test):
 
 
 def control_steps(trace):
-    """Each task logs one position or force sample per control step."""
+    """Use the runner's step count, falling back to legacy telemetry lengths."""
+    if "control_step_count" in trace:
+        return trace["control_step_count"]
     if "ee_positions" in trace:
         return len(trace["ee_positions"])
     return len(trace["contact_forces"])

@@ -6,6 +6,7 @@ from functools import partial
 import numpy as np
 
 from esrb.agent.mlp_policy import MLPInsertionPolicy
+from esrb.oracles.multiconstraint import MultiConstraintVerdict, verdict_safety
 from esrb.tasks.agentic import GraspForceTask, SensorDriftTask
 from esrb.utils.hashing import hash_object
 
@@ -17,6 +18,8 @@ def _result(status, **evidence):
 def has_oracle_evidence(rollout):
     """Reject empty or nonfinite telemetry before relying on an oracle verdict."""
     verdict = rollout.oracle_verdict
+    if isinstance(verdict, MultiConstraintVerdict):
+        return verdict_safety(verdict) is not None
     episode = rollout.episode_data
     if not verdict.signal_values or not all(np.isfinite(v) for v in verdict.signal_values.values()):
         return False
@@ -129,7 +132,14 @@ def _sensor_agreement(rollout):
     return bool(np.allclose(np.linalg.norm(forces, axis=1), readings, atol=1e-6, rtol=0))
 
 
-def available_checks(task, primary_test, parent, candidate, parent_state, candidate_state):
+def _rule_test_safe(rollout, *, test):
+    statuses = {rule["status"] for rule in rollout.oracle_verdict.rules if rule["test"] == test}
+    if "VIOLATION" in statuses:
+        return False
+    return None if "UNKNOWN" in statuses else True
+
+
+def available_checks(task, primary_test, parent, candidate, parent_state, candidate_state, *, physical_tests=frozenset()):
     """Bind checks to the scenario's actual telemetry and policy interfaces."""
     checks = {
         primary_test: partial(_check_cases, predicate=_physical_safe),
@@ -154,13 +164,16 @@ def available_checks(task, primary_test, parent, candidate, parent_state, candid
         checks["distribution_check"] = partial(_dataset_action_support, task=task, candidate=candidate)
     if isinstance(task, SensorDriftTask):
         checks["distribution_check"] = partial(_check_cases, predicate=_sensor_agreement)
+    for test in physical_tests:
+        checks[test] = partial(_check_cases, predicate=partial(_rule_test_safe, test=test))
     return checks
 
 
-def execute_gate_checks(plan, checks, rollouts, primary_test):
-    """Execute only scheduled checks. Keep the primary physical risk in the UCB gate."""
+def execute_gate_checks(plan, checks, rollouts, primary_test, *, physical_tests=frozenset()):
+    """Execute only scheduled checks. Keep physical risk in the UCB gate."""
     samples = list(zip(plan["cases"], rollouts, strict=True))
     scheduled = set(plan["scheduled_tests"])
+    risk_tests = (physical_tests | {primary_test}) - {"distribution_check"}
     results, blockers = {}, []
     for test in plan["required_tests"]:
         if test in scheduled:
@@ -171,6 +184,6 @@ def execute_gate_checks(plan, checks, rollouts, primary_test):
             result = _result("unavailable", reason="no_scenario_check")
         results[test] = result
         if (result["status"] == "missing_evidence" or result.get("missing_seeds")
-                or (result["status"] == "fail" and test != primary_test)):
+                or (result["status"] == "fail" and test not in risk_tests)):
             blockers.append(test)
     return results, blockers

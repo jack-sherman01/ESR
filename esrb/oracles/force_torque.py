@@ -5,6 +5,10 @@ import numpy as np
 from .base import BaseOracle, OracleVerdict
 
 
+def peak_vector_norm(samples: np.ndarray) -> float:
+    return float(np.max(np.linalg.norm(samples, axis=-1)))
+
+
 class ForceTorqueOracle(BaseOracle):
     """Checks peak contact force and torque against fixed physical limits."""
 
@@ -18,8 +22,8 @@ class ForceTorqueOracle(BaseOracle):
         forces = np.asarray(episode_data.get("contact_forces", []))
         torques = np.asarray(episode_data.get("contact_torques", []))
 
-        peak_force = float(np.max(np.linalg.norm(forces, axis=-1))) if forces.size else 0.0
-        peak_torque = float(np.max(np.linalg.norm(torques, axis=-1))) if torques.size else 0.0
+        peak_force = peak_vector_norm(forces) if forces.size else 0.0
+        peak_torque = peak_vector_norm(torques) if torques.size else 0.0
 
         violated = []
         if peak_force > self._max_force_n:

@@ -11,6 +11,7 @@ from esrb.agent_api.controlled import ControlledProfile
 from esrb.agent_api.profiles import BY_INSTANCE as PROPOSAL_INSTANCES
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
+from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle, scenario_oracle, verdict_safety
 from esrb.tasks.agentic import GraspForceTask, SensorDriftTask
 from esrb.tasks.contact_rich import PegInsertionTask
 from esrb.tasks.dynamic_workspace import DynamicObstacleTask
@@ -84,6 +85,51 @@ def _audit_proposal(row, scenario, history, active_version, manifest_id):
     return expected_active, receipt["manifest_id"]
 
 
+def _audit_measurement(raw, oracle, generation, evidence_id):
+    trace = raw["episode_data"]
+    if isinstance(oracle, MultiConstraintOracle):
+        steps = trace.get("control_step_count")
+        _require(type(steps) is int and steps > 0, f"generation {generation}: invalid measured step count")
+    measured = oracle.evaluate(trace, generation)
+    _require(raw["oracle"] == asdict(measured) and evidence_id == hash_dict(raw),
+             f"generation {generation}: invalid raw evidence")
+    return measured
+
+
+def _audit_baseline(row, oracle, task, profile, args):
+    gen = row["generation"]
+    digest = profile.policy_digest(row["proposal_receipt"]["parent_components"])
+    task_config = profile.nominal_task_config if isinstance(profile, ControlledProfile) else None
+    measurements = row["baseline_measurements"]
+    _require(len(measurements) == args["rollouts"], f"generation {gen}: baseline measurement count mismatch")
+    verdicts = []
+    for offset, observed in enumerate(measurements):
+        raw = observed["raw_result"]
+        seed = args["seed"] + gen * 1000 + offset
+        case = gate_case(task, seed, "parent")
+        trace = raw["episode_data"]
+        _require(raw["policy_digest"] == digest and raw["case"] == case
+                 and trace["reset_readback"] == case["disturbance"]
+                 and trace.get("applied_task_config") == task_config,
+                 f"generation {gen}: baseline measurement binding mismatch")
+        verdicts.append(_audit_measurement(raw, oracle, gen, observed["evidence_id"]))
+    return verdicts
+
+
+def _audit_measurement_panel(row, role, verdicts):
+    labels = [verdict_safety(verdict) for verdict in verdicts]
+    aggregate = False if False in labels else True if labels and None not in labels else None
+    _require(row[f"{role}_rollout_safe"] == labels and row[f"{role}_safe"] is aggregate,
+             f"generation {row['generation']}: {role} measurement labels mismatch")
+
+
+def _audit_measurement_blocker(row, baseline, candidate):
+    missing = any(verdict.missing_required for verdict in baseline + candidate)
+    blocked = "measurement_unknown" in row["gate_plan"]["blocking_tests"]
+    _require(missing == blocked and not (missing and row["accepted"]),
+             f"generation {row['generation']}: missing measurement blocker mismatch")
+
+
 def audit_gate(report, archive):
     legacy_peg = archive["reset_mode"] == "explicit_xy_offset" and report["scenario"] == "scripted_peg"
     _require(archive["reset_mode"] == "structured" or legacy_peg,
@@ -92,6 +138,14 @@ def audit_gate(report, archive):
     signal = report.get("signal_key", "peak_tip_speed_ms")
     oracle = _ORACLES[signal](report["threshold"])
     primary_test = "force_safety" if isinstance(oracle, ForceTorqueOracle) else "dynamics_safety"
+    multi = report.get("args", {}).get("multi_constraint", False)
+    _require(("measurement_protocol" in report) == multi, "measurement protocol missing or unexpected")
+    if multi:
+        _require(SCENARIO_LIMITS.get(report["scenario"]) == (task.name, signal, report["threshold"]),
+                 "measurement scenario or primary limit mismatch")
+        oracle = scenario_oracle(report["scenario"])
+        _require(report["measurement_protocol"] == oracle.protocol(), "measurement protocol mismatch")
+        primary_test = oracle.primary_test
     boundaries = {case["id"]: case for case in boundary_catalog(task, primary_test)}
     bank = {cx["id"]: cx for cx in archive["counterexamples"]}
     _require(len(bank) == len(archive["counterexamples"]), "duplicate counterexample ID")
@@ -108,11 +162,21 @@ def audit_gate(report, archive):
             active_version, manifest_id = _audit_proposal(
                 row, archive["scenario"], history, active_version, manifest_id,
             )
+        baseline_verdicts = []
+        candidate_verdicts = []
+        if multi:
+            baseline_verdicts = _audit_baseline(
+                row, oracle, task, PROPOSAL_INSTANCES[archive["scenario"]], report["args"],
+            )
+            _audit_measurement_panel(row, "baseline", baseline_verdicts)
         executed = plan["executed"]
         count = len(executed)
         _require(count == plan["used_rollouts"] == len(plan["cases"]), f"generation {gen}: rollout count mismatch")
         if plan["blocked_reason"]:
-            _require(count == 0, f"generation {gen}: blocked gate executed rollouts")
+            _require(count == 0 and not row["accepted"], f"generation {gen}: blocked gate executed or accepted")
+            if multi:
+                _audit_measurement_panel(row, "candidate", [])
+                _audit_measurement_blocker(row, baseline_verdicts, [])
             continue
         _require(count == plan["budget"], f"generation {gen}: gate budget mismatch")
         used = Counter(case["phase"] for case in executed)
@@ -147,22 +211,23 @@ def audit_gate(report, archive):
                          f"generation {gen}: fresh case does not match its seed")
             _require(trace.get("applied_task_config") == plan.get("candidate_task_config"),
                      f"generation {gen}: applied task configuration mismatch")
-            verdict = asdict(oracle.evaluate(trace, gen))
             evidence_id = observed["evidence_id"]
-            _require(raw["oracle"] == verdict and observed["safe"] == verdict["safe"]
-                     and observed["signal_values"] == verdict["signal_values"]
-                     and evidence_id == hash_dict(raw), f"generation {gen}: invalid raw evidence")
+            verdict = _audit_measurement(raw, oracle, gen, evidence_id)
+            safe = verdict_safety(verdict)
+            candidate_verdicts.append(verdict)
+            _require(observed["safe"] is safe and observed["signal_values"] == verdict.signal_values,
+                     f"generation {gen}: invalid measured label")
             _require(observed["control_steps"] == control_steps(trace),
                      f"generation {gen}: invalid control-step count")
             by_id[evidence_id] = observed
             new_id = observed["new_counterexample_id"]
-            if verdict["safe"]:
-                _require(new_id is None, f"generation {gen}: safe rollout archived as counterexample")
+            if safe is not False:
+                _require(new_id is None, f"generation {gen}: rollout archived without a verified violation")
             else:
                 cx = bank[new_id]
                 source = cx["source"]
                 _require(cx["generation_found"] == gen and cx["episode_data"] == trace
-                         and cx["violated_constraints"] == verdict["violated_constraints"]
+                         and cx["violated_constraints"] == verdict.violated_constraints
                          and source["policy_digest"] == raw["policy_digest"]
                          and source.get("task_config") == plan.get("candidate_task_config")
                          and source["scenario"] == archive["scenario"]
@@ -176,6 +241,9 @@ def audit_gate(report, archive):
                          and witness["source"]["reset_key"] == case["reset_key"]
                          and witness["source"]["disturbance"] == point,
                          f"generation {gen}: replay does not match its historical reset")
+        if multi:
+            _audit_measurement_panel(row, "candidate", candidate_verdicts)
+            _audit_measurement_blocker(row, baseline_verdicts, candidate_verdicts)
         steps = sum(case["control_steps"] for case in executed)
         _require(steps == plan["used_control_steps"], f"generation {gen}: total control steps mismatch")
         total_steps += steps
@@ -184,7 +252,7 @@ def audit_gate(report, archive):
                  f"generation {gen}: reduction count mismatch")
         if used["reduction"]:
             origin = by_id[reduction["origin_evidence_id"]]
-            _require(not origin["safe"] and origin["disturbance"] == reduction["original"],
+            _require(origin["safe"] is False and origin["disturbance"] == reduction["original"],
                      f"generation {gen}: reduction origin mismatch")
             probe_ids = []
             for trial in reduction["history"]:
@@ -193,15 +261,16 @@ def audit_gate(report, archive):
                 unsafe = trial["result"]["unsafe"]
                 _require(probe["phase"] == "reduction" and probe["origin_evidence_id"] == origin["evidence_id"]
                          and probe["disturbance"] == trial["environment"]
-                         and ((not probe["safe"]) == unsafe or
-                              (unsafe is None and reduction["status"] == "missing_probe_evidence")),
+                         and ((probe["safe"] is not None and (not probe["safe"]) is unsafe)
+                              or (unsafe is None and reduction["status"] == "missing_probe_evidence"
+                                  and (not multi or probe["safe"] is None))),
                          f"generation {gen}: reduction probe mismatch")
                 probe_ids.append(evidence_id)
             _require(probe_ids == [case["evidence_id"] for case in executed if case["phase"] == "reduction"],
                      f"generation {gen}: reduction history does not match executed probes")
             if reduction["status"] == "verified":
                 retained = by_id[reduction["reduced_result"]["evidence_id"]]
-                _require(retained["evidence_id"] in probe_ids and not retained["safe"]
+                _require(retained["evidence_id"] in probe_ids and retained["safe"] is False
                          and retained["disturbance"] == reduction["reduced"],
                          f"generation {gen}: retained reduction lacks a verified violation")
     result = {

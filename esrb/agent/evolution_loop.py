@@ -9,6 +9,7 @@ from esrb.detection.change_impact import ChangeImpactGraph, ComponentType
 from esrb.detection.counterexample import Counterexample, CounterexampleLibrary
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
 from esrb.oracles.base import OracleVerdict
+from esrb.oracles.multiconstraint import MultiConstraintOracle
 from esrb.utils.hashing import hash_object
 from .base import BaseAgent
 
@@ -154,9 +155,13 @@ class EvolutionLoop:
         obs = self.instance.task.reset(seed=seed, **(reset_options or {}))
         episode_data: dict[str, Any] = {}
         done = False
+        steps = 0
         while not done:
             action = agent.act(obs)
             obs, _reward, done, episode_data = self.instance.task.step(action)
+            steps += 1
+        if isinstance(self.instance.oracle, MultiConstraintOracle):
+            episode_data = {**episode_data, "control_step_count": steps}
         # episode_data is the full accumulated log from the final step
         result = self.instance.task.evaluate(episode_data)
         oracle_v = self.instance.oracle.evaluate(episode_data, generation)
