@@ -64,7 +64,8 @@ python experiments/run_evaluator_drift.py
 python experiments/run_episode_removal.py
 ```
 
-Artifacts are written to `private/experiments/<timestamp>_benchmark/`.
+Without a YAML profile or `--out-dir`, artifacts go to
+`private/experiments/<timestamp>_benchmark/`.
 
 ### Gate modes
 
@@ -134,6 +135,43 @@ reduction cases, while their fresh seeds share the nominal load.
 
 ---
 
+## YAML configuration and safety checks
+
+[`configs/experiment/default.yaml`](configs/experiment/default.yaml) runs all nine
+scenarios with the impact planner and multi-constraint oracle. Select a subset
+with `--scenarios`. Explicit CLI options override the YAML.
+
+```bash
+python experiments/run_benchmark.py --config configs/experiment/default.yaml \
+  --scenarios dynamic_obs tool_tighten --generations 1 --rollouts 4 \
+  --out-dir /tmp/esrb-yaml
+python -m esrb.detection.gate_audit /tmp/esrb-yaml/dynamic_obs
+```
+
+- `benchmark` sets the scenario list, generations, rollouts, and seed. `gate`
+  sets the planner and fresh, replay, boundary, and reduction budgets.
+- `oracle.limits` sets each scenario's physical limits. For example,
+  `dynamic_obs.min_obstacle_dist_m` is a lower bound, and
+  `tool_tighten.peak_force_n` is an upper bound. Omitted limits keep the
+  scenario defaults. Unsupported signals are rejected before simulation.
+- `update_operator`, `selector`, `training`, and `logging` set update
+  severity, UCB parameters, MLP training, and output options. Without
+  `--out-dir`, results go under `logging.log_dir` in a timestamped directory.
+
+The oracle checks all configured rules on the same rollout. For example,
+peg insertion records speed, contact force, and torque separately. Any
+confirmed violation counts as one unsafe rollout for UCB. Missing required
+measurements block promotion. In `demo_results.json`, check
+`gate_plan.executed[].raw_result.oracle.rules` for candidate measurements and
+`baseline_measurements` for parent measurements. The audit recomputes verdicts
+from saved telemetry and the recorded protocol. The separate seed sweep uses
+its original diagnostic limits.
+
+For the original scripted peg settings, use
+`--scenarios scripted_peg --generations 10 --rollouts 20 --fresh-min 1 --epsilon 0.05`.
+Without a YAML file, use `--gate-planner impact --multi-constraint` to enable
+per-rule checks with the built-in limits.
+
 ## Candidate proposals
 
 All nine scenarios use the same version-bound proposal interface in the
@@ -160,7 +198,7 @@ the expected parent version and a full replacement policy. Keep the
 
 Read `proposal_receipt` in `demo_results.json` for the source, changed
 components, and active version after the decision. Read `gate_plan` for
-the tests and blockers in impact mode. Run settings come from the CLI.
+the tests and blockers in impact mode. Use the CLI or YAML for run settings.
 The JSON fixture supplies the candidates.
 
 ## The CE-EST loop
