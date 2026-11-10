@@ -6,6 +6,7 @@ from .mlp_policy import MLPInsertionPolicy
 from .pick_place_policy import PickPlacePolicy
 from .scripted_policy import ScriptedInsertionPolicy
 from .sensor_drift_policy import SensorDriftPolicy
+from .stochastic_force_policy import StochasticForcePolicy
 from .tool_tighten_policy import ToolTightenPolicy
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "PickPlacePolicy",
     "ScriptedInsertionPolicy",
     "SensorDriftPolicy",
+    "StochasticForcePolicy",
     "ToolTightenPolicy",
 ]

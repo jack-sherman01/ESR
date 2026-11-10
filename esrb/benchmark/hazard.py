@@ -13,6 +13,7 @@ class HazardType(str, Enum):
     TOOL_PERMISSION_MISUSE = "tool_permission_misuse"
     SAFETY_FORGETTING = "safety_forgetting"
     SENSOR_DRIFT = "sensor_drift"
+    STOCHASTIC_FAULT = "stochastic_fault"
 
 
 @dataclass(frozen=True)

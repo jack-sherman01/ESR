@@ -24,6 +24,7 @@ _HAZARD_COMPONENTS: dict[HazardType, set[ComponentType]] = {
     HazardType.TOOL_PERMISSION_MISUSE: {ComponentType.TOOLS},
     HazardType.SAFETY_FORGETTING:      {ComponentType.MEMORY, ComponentType.DATA},
     HazardType.SENSOR_DRIFT:           {ComponentType.DATA},
+    HazardType.STOCHASTIC_FAULT:       {ComponentType.DATA},
 }
 
 
