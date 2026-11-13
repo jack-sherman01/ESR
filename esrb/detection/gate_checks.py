@@ -171,7 +171,10 @@ def available_checks(task, primary_test, parent, candidate, parent_state, candid
 
 def execute_gate_checks(plan, checks, rollouts, primary_test, *, physical_tests=frozenset()):
     """Execute only scheduled checks. Keep physical risk in the UCB gate."""
-    samples = list(zip(plan["cases"], rollouts, strict=True))
+    samples = [
+        (case, rollout) for case, rollout in zip(plan["cases"], rollouts, strict=True)
+        if case["phase"] != "risk"
+    ]
     scheduled = set(plan["scheduled_tests"])
     risk_tests = (physical_tests | {primary_test}) - {"distribution_check"}
     results, blockers = {}, []

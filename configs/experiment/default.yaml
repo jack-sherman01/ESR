@@ -53,3 +53,6 @@ logging:
   wandb: false
   log_dir: private/runs
   record: false
+
+# Optional independent risk budget. See the README for a bounds example.
+risk_sampling: null

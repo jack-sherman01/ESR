@@ -78,8 +78,9 @@ from esrb.detection.counterexample import Counterexample, CounterexampleSource
 from esrb.detection.gate_checks import available_checks, execute_gate_checks, has_oracle_evidence
 from esrb.detection.gate_planner import plan_gate
 from esrb.detection.minimize import minimize
-from esrb.detection.gate_audit import audit_gate
+from esrb.detection.gate_audit import TASKS_BY_NAME, audit_gate
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
+from esrb.detection.risk_sampling import risk_cases, risk_summary, sampling_protocol
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
 from esrb.metrics import (
     capability_safety_pareto,
@@ -478,11 +479,11 @@ def _reduce_panel(task, plan, executed, results, execute_case):
     """Spend reserved slots on measured reduction probes, then fill with fresh cases."""
     initial = next((
         row for row, result in zip(executed, results, strict=True)
-        if not result.oracle_verdict.safe and has_oracle_evidence(result)
+        if row["phase"] != "risk" and not result.oracle_verdict.safe and has_oracle_evidence(result)
         and any(abs(value - task.reset_reference[field]) > 1e-6
                 for field, value in row["disturbance"].items())
     ), None)
-    next_seed = 1 + max(case["seed"] for case in plan["cases"] if case["phase"] != "replay")
+    next_seed = 1 + max(case["seed"] for case in plan["cases"] if case["phase"] not in {"replay", "risk"})
 
     def run_extra(case):
         plan["cases"].append(case)
@@ -539,13 +540,15 @@ def _panel_safety(labels):
 def run_loop(instance, agent, selector, severity, n_rollouts, *,
              gate_planner="fixed", fresh_min=1, training_seed_stop=0, replay_all=False,
              peg_boundary_cases=0, peg_reduction_budget=0, boundary_cases=0, reduction_budget=0,
-             proposer: CandidateProposer | None = None):
+             proposer: CandidateProposer | None = None, risk_protocol=None):
     """Run the CE-EST loop, returning (EvolutionLoop, list[gen_dict])."""
     use_impact = gate_planner == "impact"
     task = instance.task
     multi = instance.oracle if isinstance(instance.oracle, MultiConstraintOracle) else None
     if multi is not None and not use_impact:
         raise ValueError("the multi-constraint oracle requires impact mode")
+    if risk_protocol is not None and multi is None:
+        raise ValueError("independent risk sampling requires the multi-constraint impact gate")
     physical_tests = multi.physical_tests if multi is not None else frozenset()
     if instance.name == "scripted_peg_speed_injection":
         boundary_cases = boundary_cases or peg_boundary_cases
@@ -642,6 +645,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 replay_seed=proto.seed,
                 boundary_catalog=boundary_catalog(task, primary_test) if boundary_cases else (),
                 boundary_limit=boundary_cases, reduction_budget=reduction_budget,
+                risk_cases=risk_cases(task, risk_protocol, instance.name, gen) if risk_protocol is not None else (),
             )
             cand_results = []
 
@@ -686,10 +690,20 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 if parent_config is not None:
                     task.configure(**parent_config)
 
-        risk_results = [
+        feedback_results = [
             result for case, result in zip(plan["cases"], cand_results, strict=True)
-            if case["phase"] != "reduction"
+            if case["phase"] not in {"reduction", "risk"}
         ] if use_impact else cand_results
+        risk_results = feedback_results
+        independent_risk = None
+        if risk_protocol is not None:
+            independent_risk = risk_summary(executed, gen, selector.alpha)
+            risk_results = [
+                result for case, result in zip(plan["cases"], cand_results, strict=True)
+                if case["phase"] == "risk"
+            ]
+            if independent_risk["regression_violations"]:
+                check_blockers.append("regression_violation")
         if multi is not None and any(
             r.oracle_verdict.missing_required for r in results + cand_results
         ):
@@ -763,6 +777,8 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 "test_results": check_results, "blocking_tests": check_blockers,
                 "counterexamples_after_generation": len(loop.cx_library),
             }
+            if independent_risk is not None:
+                row["gate_plan"]["independent_risk"] = independent_risk
             if candidate_config is not None:
                 row["gate_plan"]["candidate_task_config"] = candidate_config
             row["gate_plan"]["reduction"] = reduction
@@ -774,7 +790,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
         }
         public_history.append({
             "generation": gen + 1, "slot": 0,
-            "task_scores": [result.task_score for result in risk_results],
+            "task_scores": [result.task_score for result in feedback_results],
         })
         gen_rows.append(row)
 
@@ -1371,6 +1387,24 @@ def main() -> None:
             parser.error("--config requires positive training episodes and steps")
         if not args.multi_constraint and any(config.limits_for(scenario) for scenario in args.scenarios):
             parser.error("oracle.limits for selected scenarios require the multi-constraint impact gate")
+    risk_config = getattr(config, "risk_sampling", None)
+    risk_protocols = {}
+    risk_count = 0
+    if risk_config is not None:
+        if args.gate_planner != "impact" or not args.multi_constraint:
+            parser.error("risk_sampling requires the multi-constraint impact gate")
+        risk_count = risk_config.samples
+        if args.fresh_min + risk_count > args.rollouts:
+            parser.error("risk_sampling.samples plus --fresh-min must fit within --rollouts")
+        risk_seed = args.seed if risk_config.seed is None else risk_config.seed
+        try:
+            for scenario in set(args.scenarios) | risk_config.bounds.keys():
+                task = TASKS_BY_NAME[SCENARIO_LIMITS[scenario][0]]
+                risk_protocols[scenario] = sampling_protocol(
+                    task, risk_seed, risk_count, risk_config.bounds.get(scenario, {}),
+                )
+        except ValueError as exc:
+            parser.error(str(exc))
     if args.rollouts < 1:
         parser.error("--rollouts must be positive")
     if args.multi_constraint and args.gate_planner != "impact":
@@ -1386,7 +1420,7 @@ def main() -> None:
             parser.error("boundary and reduction options require --gate-planner impact")
         if args.peg_boundary_cases or args.peg_reduction_budget:
             parser.error("use either general or peg-specific boundary and reduction options")
-        if args.boundary_cases + args.reduction_budget > args.rollouts - args.fresh_min:
+        if args.boundary_cases + args.reduction_budget > args.rollouts - args.fresh_min - risk_count:
             parser.error("boundary cases and reduction probes must fit after --fresh-min")
     if not 0 <= args.peg_boundary_cases <= 4:
         parser.error("--peg-boundary-cases must be between 0 and 4")
@@ -1395,7 +1429,7 @@ def main() -> None:
     if args.peg_boundary_cases or args.peg_reduction_budget:
         if args.gate_planner != "impact" or "scripted_peg" not in args.scenarios:
             parser.error("peg boundary and reduction options require scripted_peg in impact mode")
-        if args.peg_boundary_cases + args.peg_reduction_budget > args.rollouts - args.fresh_min:
+        if args.peg_boundary_cases + args.peg_reduction_budget > args.rollouts - args.fresh_min - risk_count:
             parser.error("peg boundary cases and reduction probes must fit after --fresh-min")
     if args.gate_planner == "impact":
         if len(set(args.scenarios)) != len(args.scenarios):
@@ -1406,7 +1440,7 @@ def main() -> None:
             parser.error("--gate-planner impact requires at least one generation")
         if not 1 <= args.fresh_min <= args.rollouts:
             parser.error("--fresh-min must be between 1 and --rollouts")
-        if args.replay_all and args.generations > 1 and args.fresh_min == args.rollouts:
+        if args.replay_all and args.generations > 1 and args.fresh_min + risk_count == args.rollouts:
             parser.error("--replay-all with multiple generations requires --rollouts > --fresh-min")
 
     json_proposer = initial_policy = None
@@ -1437,7 +1471,7 @@ def main() -> None:
     if args.gate_planner == "impact":
         replay_mode = "all required" if args.replay_all else "capped"
         print(f"  Gate budget: fresh >= {args.fresh_min}, "
-              f"replay slots = {args.rollouts - args.fresh_min} ({replay_mode})")
+              f"risk = {risk_count}, replay slots <= {args.rollouts - args.fresh_min - risk_count} ({replay_mode})")
     print(f"  Severity   : {args.severity}   UCB ε: {args.epsilon}")
     print(f"  Artifacts  → {out_root}\n")
 
@@ -1529,7 +1563,7 @@ def main() -> None:
                     peg_boundary_cases=args.peg_boundary_cases,
                     peg_reduction_budget=args.peg_reduction_budget,
                     boundary_cases=args.boundary_cases, reduction_budget=args.reduction_budget,
-                    proposer=json_proposer,
+                    proposer=json_proposer, risk_protocol=risk_protocols.get(scenario),
                 )
             except ProposalError as exc:
                 parser.error(str(exc))
@@ -1635,6 +1669,8 @@ def main() -> None:
             "metrics": metrics,
             "generations": gen_rows,
         }
+        if scenario in risk_protocols:
+            demo_js["risk_sampling"] = risk_protocols[scenario]
         if args.multi_constraint:
             demo_js["measurement_protocol"] = instance.oracle.protocol()
             demo_js["seed_sweep_scope"] = "legacy_scenario_oracle_diagnostic" if sweep is not None else None

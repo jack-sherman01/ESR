@@ -78,11 +78,26 @@ class _Profile(_Section):
     logging: _Logging = Field(default_factory=_Logging)
 
 
+class RiskSamplingConfig(_Section):
+    distribution: Literal["uniform"] = "uniform"
+    seed: int | None = Field(default=None, ge=0)
+    samples: int = Field(ge=1)
+    bounds: dict[str, dict[str, Annotated[list[float], Field(min_length=2, max_length=2)]]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def check_scenarios(self):
+        unknown = self.bounds.keys() - SCENARIO_LIMITS.keys()
+        if unknown:
+            raise ValueError(f"unknown scenarios in risk_sampling.bounds: {', '.join(sorted(unknown))}")
+        return self
+
+
 class ExperimentConfig(_Profile):
     benchmark: _Benchmark = Field(default_factory=_Benchmark)
     gate: _Gate = Field(default_factory=_Gate)
     training: _Training = Field(default_factory=_Training)
     oracle: _Oracle = Field(default_factory=_Oracle)
+    risk_sampling: RiskSamplingConfig | None = None
 
     @property
     def scenarios(self):

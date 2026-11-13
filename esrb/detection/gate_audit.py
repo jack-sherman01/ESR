@@ -11,6 +11,7 @@ from esrb.agent_api.controlled import ControlledProfile
 from esrb.agent_api.profiles import BY_INSTANCE as PROPOSAL_INSTANCES
 from esrb.benchmark.experiment_config import LegacyPegConfig, validate_experiment_config
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
+from esrb.detection.risk_sampling import risk_cases, risk_summary, sampling_protocol
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle, scenario_oracle, verdict_safety
 from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceTask
@@ -26,7 +27,7 @@ def _require(condition, message):
         raise ValueError(message)
 
 
-_TASKS = {task.name: task for task in (
+TASKS_BY_NAME = {task.name: task for task in (
     GraspForceTask, SensorDriftTask, PegInsertionTask, DynamicObstacleTask, PickPlaceTask, ToolTightenTask,
     StochasticForceTask,
 )}
@@ -82,7 +83,7 @@ def _audit_proposal(row, scenario, history, active_version, manifest_id):
     history.append({
         "generation": row["generation"] + 1, "slot": 0,
         "task_scores": [case["raw_result"]["task_score"] for case in plan["executed"]
-                        if case["phase"] != "reduction"],
+                        if case["phase"] not in {"reduction", "risk"}],
     })
     return expected_active, receipt["manifest_id"]
 
@@ -137,11 +138,32 @@ def _audit_measurement_blocker(row, baseline, candidate):
              f"generation {row['generation']}: missing measurement blocker mismatch")
 
 
+def _audit_risk(row, task, protocol, instance_name, alpha, epsilon):
+    gen = row["generation"]
+    plan = row["gate_plan"]
+    actual = [case for case in plan["cases"] if case["phase"] == "risk"]
+    _require(("independent_risk" in plan) == (protocol is not None),
+             f"generation {gen}: independent risk summary missing or unexpected")
+    if protocol is None:
+        _require(not actual, f"generation {gen}: risk draws without a sampling protocol")
+        return
+    expected = [] if plan["blocked_reason"] else risk_cases(task, protocol, instance_name, gen)
+    _require(actual == expected, f"generation {gen}: risk cases differ from the frozen draw schedule")
+    summary = risk_summary(plan["executed"], gen, alpha)
+    _require(summary == plan["independent_risk"], f"generation {gen}: independent risk summary mismatch")
+    blockers = plan["blocking_tests"]
+    _require(("regression_violation" in blockers) == bool(summary["regression_violations"]),
+             f"generation {gen}: regression blocker mismatch")
+    bound = summary["upper_bound"]
+    eligible = not plan["blocked_reason"] and not blockers and bound is not None and bound <= epsilon
+    _require(row["accepted"] is eligible, f"generation {gen}: independent risk decision mismatch")
+
+
 def audit_gate(report, archive):
     legacy_peg = archive["reset_mode"] == "explicit_xy_offset" and report["scenario"] == "scripted_peg"
     _require(archive["reset_mode"] == "structured" or legacy_peg,
              "expected structured gate artifacts")
-    task = PegInsertionTask if legacy_peg else _TASKS[archive["task"]]
+    task = PegInsertionTask if legacy_peg else TASKS_BY_NAME[archive["task"]]
     signal = report.get("signal_key", "peak_tip_speed_ms")
     oracle = _ORACLES[signal](report["threshold"])
     primary_test = "force_safety" if isinstance(oracle, ForceTorqueOracle) else "dynamics_safety"
@@ -151,6 +173,7 @@ def audit_gate(report, archive):
     _require(("experiment_config" in report) == (args.get("config") is not None),
              "experiment config missing or unexpected")
     limits = {}
+    risk_config = None
     if "experiment_config" in report:
         _require(isinstance(settings, dict), "invalid experiment config")
         config = validate_experiment_config(settings["settings"])
@@ -159,6 +182,7 @@ def audit_gate(report, archive):
         _require(settings["digest"] == hash_dict(settings["settings"])
                  and report["selector_alpha"] == config.selector.alpha,
                  "experiment config digest or selector mismatch")
+        risk_config = getattr(config, "risk_sampling", None)
         limits = config.limits_for(report["scenario"])
         _require(multi or not limits, "configured oracle limits require multi-constraint measurements")
     _require(("measurement_protocol" in report) == multi, "measurement protocol missing or unexpected")
@@ -170,6 +194,13 @@ def audit_gate(report, archive):
         oracle = scenario_oracle(report["scenario"], limits=limits)
         _require(report["measurement_protocol"] == oracle.protocol(), "measurement protocol mismatch")
         primary_test = oracle.primary_test
+    protocol = None
+    _require(("risk_sampling" in report) == (risk_config is not None), "risk sampling protocol missing or unexpected")
+    if risk_config is not None:
+        _require(multi and args.get("gate_planner") == "impact", "risk sampling requires multi-constraint impact mode")
+        risk_seed = args["seed"] if risk_config.seed is None else risk_config.seed
+        protocol = sampling_protocol(task, risk_seed, risk_config.samples, risk_config.bounds.get(report["scenario"], {}))
+        _require(report["risk_sampling"] == protocol, "risk sampling protocol mismatch")
     boundaries = {case["id"]: case for case in boundary_catalog(task, primary_test)}
     bank = {cx["id"]: cx for cx in archive["counterexamples"]}
     _require(len(bank) == len(archive["counterexamples"]), "duplicate counterexample ID")
@@ -181,6 +212,10 @@ def audit_gate(report, archive):
     for row in report["generations"]:
         gen = row["generation"]
         plan = row["gate_plan"]
+        if protocol is not None:
+            _require(plan["budget"] == args["rollouts"] and plan["fresh_min"] == args["fresh_min"]
+                     and plan["fresh_min"] + protocol["samples"] <= plan["budget"],
+                     f"generation {gen}: independent risk budget mismatch")
         if has_proposals:
             _require("proposal_receipt" in row, "missing proposal receipt")
             active_version, manifest_id = _audit_proposal(
@@ -201,6 +236,7 @@ def audit_gate(report, archive):
             if multi:
                 _audit_measurement_panel(row, "candidate", [])
                 _audit_measurement_blocker(row, baseline_verdicts, [])
+            _audit_risk(row, task, protocol, archive["scenario"], report.get("selector_alpha"), args.get("epsilon"))
             continue
         _require(count == plan["budget"], f"generation {gen}: gate budget mismatch")
         used = Counter(case["phase"] for case in executed)
@@ -268,6 +304,7 @@ def audit_gate(report, archive):
         if multi:
             _audit_measurement_panel(row, "candidate", candidate_verdicts)
             _audit_measurement_blocker(row, baseline_verdicts, candidate_verdicts)
+        _audit_risk(row, task, protocol, archive["scenario"], report.get("selector_alpha"), args.get("epsilon"))
         steps = sum(case["control_steps"] for case in executed)
         _require(steps == plan["used_control_steps"], f"generation {gen}: total control steps mismatch")
         total_steps += steps

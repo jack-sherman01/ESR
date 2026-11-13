@@ -22,14 +22,16 @@ def plan_gate(
     boundary_catalog=(),
     boundary_limit: int = 0,
     reduction_budget: int = 0,
+    risk_cases=(),
 ) -> dict:
     """Reserve fresh slots and select at most one historical replay per reset.
 
     Sample relevant resets uniformly without replacement when slots are limited.
     In all-replay mode, require every historical reset in this scenario.
     """
-    if not 1 <= fresh_min <= budget:
-        raise ValueError("fresh_min must be between 1 and the gate budget")
+    risk_count = len(risk_cases)
+    if not 1 <= fresh_min <= budget - risk_count:
+        raise ValueError("fresh_min and independent risk samples must fit the gate budget")
 
     impacted = graph.impacted_components(changed)
     required_tests = set(graph.required_tests(changed))
@@ -48,11 +50,11 @@ def plan_gate(
         if source is not None and source.scenario == scenario and cx.generation_found < generation:
             witnesses.setdefault(source.reset_key, []).append(cx)
 
-    replay_capacity = budget - fresh_min
+    replay_capacity = budget - fresh_min - risk_count
     if not replay_all:
         replay_capacity = max(0, replay_capacity - min(len(boundaries), boundary_limit) - reduction_budget)
     replay_count = len(witnesses) if replay_all else min(replay_capacity, len(witnesses))
-    required_budget = replay_count + fresh_min
+    required_budget = replay_count + fresh_min + risk_count
     blocked = required_budget > budget
     replay_keys = list(witnesses)
     sampling_seed = None
@@ -92,8 +94,9 @@ def plan_gate(
         )
         cases.extend(
             {"phase": "fresh", "seed": fresh_seed + len(boundaries) + slot}
-            for slot in range(budget - len(cases) - reserved_reduction)
+            for slot in range(budget - len(cases) - reserved_reduction - risk_count)
         )
+        cases.extend(risk_cases)
 
     return {
         "changed_components": sorted(component.value for component in changed),
