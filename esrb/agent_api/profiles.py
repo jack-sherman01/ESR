@@ -6,6 +6,7 @@ from esrb.agent.mlp_policy import MLPInsertionPolicy
 from esrb.agent.pick_place_policy import PickPlacePolicy
 from esrb.agent.scripted_policy import ScriptedInsertionPolicy
 from esrb.agent.sensor_drift_policy import SensorDriftPolicy
+from esrb.agent.stochastic_force_policy import StochasticForcePolicy
 from esrb.agent.tool_tighten_policy import ToolTightenPolicy
 from .contracts import Consumer
 from .controlled import ControlledProfile
@@ -38,6 +39,11 @@ BY_INSTANCE = {
     ),
     "sensor_drift_calibration_fault": ControlledProfile(
         SensorDriftPolicy, ("data",), nominal_task_config={"true_force": 10.0, "sensor_bias": 0.0},
+        task_config_metadata={"true_force": "true_force_n", "sensor_bias": "sensor_bias_n"},
+    ),
+    "stochastic_force_intermittent_fault": ControlledProfile(
+        StochasticForcePolicy, ("data",), nominal_task_config={"fault_prob": 0.0},
+        task_config_metadata={"fault_prob": "fault_prob"},
     ),
 }
 BY_SCENARIO = {"scripted_peg": SCRIPTED_PEG, "dynamic_obs": DYNAMIC_OBS}

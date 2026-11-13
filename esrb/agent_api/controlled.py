@@ -18,6 +18,7 @@ class ControlledProfile:
     mutable_roles: tuple[str, ...]
     fields_by_role: dict[str, tuple[str, ...]] = field(default_factory=dict)
     nominal_task_config: dict[str, float] | None = None
+    task_config_metadata: dict[str, str] = field(default_factory=dict)
 
     @property
     def validators(self):
@@ -46,7 +47,7 @@ class ControlledProfile:
 
     def candidate_config(self, metadata):
         if self.nominal_task_config is not None:
-            return {"true_force": metadata["true_force_n"], "sensor_bias": metadata["sensor_bias_n"]}
+            return {name: metadata[key] for name, key in self.task_config_metadata.items()}
         return None
 
     def validate(self, role, document):
@@ -59,7 +60,8 @@ class ControlledProfile:
         elif role == "data":
             require(set(document) == set(self.nominal_task_config)
                     and all(type(value) in (int, float) and isfinite(value) for value in document.values())
-                    and document["true_force"] >= 0, "invalid sensor task configuration")
+                    and document.get("true_force", 0.0) >= 0
+                    and 0 <= document.get("fault_prob", 0.0) <= 1, "invalid task configuration")
         elif role != "policy" or self.policy_type is not MLPInsertionPolicy:
             if role == "policy":
                 fields = set(self.policy_type().state_dict()).difference(

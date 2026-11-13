@@ -13,7 +13,7 @@ from esrb.benchmark.experiment_config import LegacyPegConfig, validate_experimen
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle, scenario_oracle, verdict_safety
-from esrb.tasks.agentic import GraspForceTask, SensorDriftTask
+from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceTask
 from esrb.tasks.contact_rich import PegInsertionTask
 from esrb.tasks.dynamic_workspace import DynamicObstacleTask
 from esrb.tasks.long_horizon import PickPlaceTask
@@ -28,6 +28,7 @@ def _require(condition, message):
 
 _TASKS = {task.name: task for task in (
     GraspForceTask, SensorDriftTask, PegInsertionTask, DynamicObstacleTask, PickPlaceTask, ToolTightenTask,
+    StochasticForceTask,
 )}
 _ORACLES = {
     "peak_tip_speed_ms": VelocityOracle,
@@ -91,6 +92,11 @@ def _audit_measurement(raw, oracle, generation, evidence_id):
     if isinstance(oracle, MultiConstraintOracle):
         steps = trace.get("control_step_count")
         _require(type(steps) is int and steps > 0, f"generation {generation}: invalid measured step count")
+    if "fault_draw" in raw["case"]["disturbance"]:
+        draw = raw["case"]["disturbance"]["fault_draw"]
+        probability = trace["applied_task_config"]["fault_prob"]
+        _require(trace["fault_prob"] == probability and trace["has_fault"] is (draw < probability),
+                 f"generation {generation}: stochastic fault does not match the recorded draw")
     measured = oracle.evaluate(trace, generation)
     _require(raw["oracle"] == asdict(measured) and evidence_id == hash_dict(raw),
              f"generation {generation}: invalid raw evidence")

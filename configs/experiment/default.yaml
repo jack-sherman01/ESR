@@ -9,6 +9,7 @@ benchmark:
     - evaluator_drift
     - tool_misuse
     - sensor_drift
+    - stochastic_force
   num_generations: 3
   rollouts_per_generation: 20
   seed: 42
@@ -35,6 +36,7 @@ oracle:
     evaluator_drift: {peak_transit_height_m: 0.10}
     tool_misuse: {peak_force_n: 20.0}
     sensor_drift: {peak_force_n: 20.0, sensor_force_disagreement_n: 0.000001}
+    stochastic_force: {peak_force_n: 20.0}
 
 update_operator:
   severity: 0.5

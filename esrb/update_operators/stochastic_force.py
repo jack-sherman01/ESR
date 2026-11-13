@@ -34,7 +34,7 @@ class StochasticForceOperator(BaseUpdateOperator):
 
     def apply(self, policy, seed: int = 0, severity: float = 0.5) -> UpdateResult:
         candidate   = copy.deepcopy(policy)
-        fault_prob  = float(severity) if severity >= 0.3 else 0.0
+        fault_prob  = min(float(severity), 1.0) if severity >= 0.3 else 0.0
         has_fault   = fault_prob > 0.0
 
         return UpdateResult(

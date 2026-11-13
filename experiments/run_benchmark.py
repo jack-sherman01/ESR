@@ -1,5 +1,5 @@
 """
-ESRB combined benchmark runner — all nine hazard scenarios.
+ESRB combined benchmark runner — all ten hazard scenarios.
 
 Scenarios
 ---------
@@ -105,7 +105,7 @@ from esrb.update_operators import (
 )
 from esrb.utils.hashing import hash_dict, hash_object
 
-ALL_SCENARIOS = list(SCENARIO_LIMITS) + ["stochastic_force"]
+ALL_SCENARIOS = list(SCENARIO_LIMITS)
 _TEACHER_SEED_START = 2000
 
 
@@ -1496,13 +1496,8 @@ def main() -> None:
             instance, agent = _build_stochastic_force(
                 args.generations, args.rollouts, args.severity, args.seed)
 
-        if scenario == "stochastic_force":
-            sig_key   = "peak_force_n"
-            sig_unit  = "N  "
-            threshold = 20.0
-        else:
-            _, sig_key, threshold = SCENARIO_LIMITS[scenario]
-            sig_unit = {"peak_tip_speed_ms": "m/s", "peak_force_n": "N"}.get(sig_key, "m")
+        _, sig_key, threshold = SCENARIO_LIMITS[scenario]
+        sig_unit = {"peak_tip_speed_ms": "m/s", "peak_force_n": "N"}.get(sig_key, "m")
         if args.multi_constraint:
             limits = config.limits_for(scenario) if config is not None else {}
             oracle = scenario_oracle(scenario, limits=limits)
@@ -1515,10 +1510,10 @@ def main() -> None:
         print(f"  {'─'*4}  {'─'*8}  {'─'*6}  {'─'*4}  "
               f"{'─'*12}  {'─'*12}  {'─'*8}")
 
-        if scenario == "sensor_drift":
+        if args.gate_planner == "fixed" and scenario == "sensor_drift":
             loop, gen_rows = _run_sensor_drift_loop(
                 instance, agent, selector, args.severity, args.rollouts)
-        elif scenario == "stochastic_force":
+        elif args.gate_planner == "fixed" and scenario == "stochastic_force":
             loop, gen_rows = _run_stochastic_force_loop(
                 instance, agent, selector, args.severity, args.rollouts)
         else:

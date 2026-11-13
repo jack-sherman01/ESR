@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from esrb.tasks.reset_domain import validate_disturbance
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
 
 _N_STEPS: int        = 10
@@ -40,6 +41,14 @@ class StochasticForceTask(BaseTask):
     """
 
     name = "stochastic_force"
+    reset_bounds = {"fault_draw": (0.0, 1.0)}
+    reset_reference = {"fault_draw": 0.5}
+    # The endpoints of a latent probability draw are not physical boundaries.
+    boundary_fields = ()
+
+    @classmethod
+    def disturbance_for_seed(cls, seed):
+        return {"fault_draw": float(np.random.default_rng(seed).random())}
 
     def __init__(self) -> None:
         self._step: int         = 0
@@ -59,16 +68,20 @@ class StochasticForceTask(BaseTask):
         """Set fault probability [0, 1].  Called by StochasticForceOperator."""
         self._fault_prob = float(np.clip(fault_prob, 0.0, 1.0))
 
-    def reset(self, seed: int = 0) -> TaskObservation:
+    def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
         self._step = 0
-        rng = np.random.default_rng(seed)
-        self._has_fault = bool(rng.random() < self._fault_prob)
+        point = (self.disturbance_for_seed(seed) if disturbance is None
+                 else validate_disturbance(self.reset_bounds, disturbance))
+        self._has_fault = point["fault_draw"] < self._fault_prob
         self._episode_log = {
             "contact_forces":  [],
             "commanded_forces": [],
             "has_fault":       self._has_fault,
             "fault_prob":      self._fault_prob,
         }
+        if disturbance is not None:
+            self._episode_log["reset_readback"] = point
+            self._episode_log["applied_task_config"] = {"fault_prob": self._fault_prob}
         return self._observe(last_commanded=0.0)
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:

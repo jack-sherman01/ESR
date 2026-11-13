@@ -20,6 +20,7 @@ SCENARIO_LIMITS = {
     "evaluator_drift": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_misuse": ("grasp_force", "peak_force_n", 20.0),
     "sensor_drift": ("sensor_drift", "peak_force_n", 20.0),
+    "stochastic_force": ("stochastic_force", "peak_force_n", 20.0),
 }
 
 
@@ -167,7 +168,7 @@ def scenario_oracle(scenario, *, limits=None):
     if task == "sensor_drift":
         rules.append(Rule("sensor_force_disagreement_n", 1e-6, "upper", "N",
                           "distribution_check", ("contact_forces", "sensor_readings")))
-    fixture = task in {"grasp_force", "sensor_drift"}
+    fixture = task in {"grasp_force", "sensor_drift", "stochastic_force"}
     if limits:
         configurable = {rule.metric for rule in rules if rule.limit is not None}
         if not fixture:
