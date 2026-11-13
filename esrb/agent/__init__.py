@@ -8,6 +8,7 @@ from .scripted_policy import ScriptedInsertionPolicy
 from .sensor_drift_policy import SensorDriftPolicy
 from .stochastic_force_policy import StochasticForcePolicy
 from .tool_tighten_policy import ToolTightenPolicy
+from .tool_handling_policy import ToolHandlingPolicy
 
 __all__ = [
     "BaseAgent",
@@ -20,4 +21,5 @@ __all__ = [
     "SensorDriftPolicy",
     "StochasticForcePolicy",
     "ToolTightenPolicy",
+    "ToolHandlingPolicy",
 ]

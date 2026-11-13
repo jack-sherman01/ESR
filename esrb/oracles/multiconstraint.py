@@ -7,6 +7,7 @@ import numpy as np
 from esrb.utils.hashing import hash_dict
 from .base import BaseOracle, OracleVerdict
 from .force_torque import peak_vector_norm
+from .tool_retention import retention_metric
 
 
 # Benchmark scenario name -> task, primary signal, engineering limit.
@@ -16,6 +17,7 @@ SCENARIO_LIMITS = {
     "dynamic_obs": ("dynamic_obstacle", "min_obstacle_dist_m", 0.04),
     "pick_place": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_tighten": ("tool_tighten", "peak_force_n", 35.0),
+    "tool_handling": ("tool_handling", "peak_tool_slip_m", 0.005),
     "episode_removal": ("peg_insertion", "peak_tip_speed_ms", 0.22),
     "evaluator_drift": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_misuse": ("grasp_force", "peak_force_n", 20.0),
@@ -55,6 +57,8 @@ def verdict_safety(verdict):
 
 def _measure(metric, values, control_dt):
     first = values[0]
+    if metric in {"peak_tool_slip_m", "peak_tool_rotation_rad", "tool_drop", "peak_grip_force_n"}:
+        return retention_metric(metric, values)
     if metric == "peak_tip_speed_ms":
         return peak_vector_norm(np.diff(first, axis=0)) / control_dt
     if metric == "min_obstacle_dist_m":
@@ -105,8 +109,12 @@ class MultiConstraintOracle(BaseOracle):
                 raise ValueError("nonnumeric telemetry")
             values = [value.astype(float, copy=False) for value in values]
             for channel, value in zip(rule.channels, values, strict=True):
-                scalar = channel == "sensor_readings"
-                shape_ok = value.ndim == 1 if scalar else value.ndim == 2 and value.shape[1] == 3
+                scalar = channel in {"sensor_readings", "retention_active"}
+                width = {"gripper_quaternions": 4, "tool_quaternions": 4,
+                         "grip_normal_forces": 2}.get(channel, 3)
+                shape_ok = value.ndim == 1 if scalar else value.ndim == 2 and value.shape[1] == width
+                if channel.endswith("quaternions") and shape_ok and not np.allclose(np.linalg.norm(value, axis=1), 1, atol=1e-5):
+                    raise ValueError("invalid pose quaternion")
                 if not shape_ok or not value.size or not np.isfinite(value).all():
                     raise ValueError("invalid telemetry shape or value")
             minimum_samples = 2 if rule.metric == "peak_tip_speed_ms" else 1
@@ -151,8 +159,10 @@ class MultiConstraintOracle(BaseOracle):
 def scenario_oracle(scenario, *, limits=None):
     """Freeze existing scenario limits and explicit engineering peg wrench limits."""
     task, primary_signal, threshold = SCENARIO_LIMITS[scenario]
-    force_limit = threshold if primary_signal == "peak_force_n" else 50.0 if task == "peg_insertion" else None
-    torque_limit = 10.0 if task in {"peg_insertion", "tool_tighten"} else None
+    force_limit = {"peg_insertion": 50.0, "tool_handling": 35.0}.get(task)
+    if primary_signal == "peak_force_n":
+        force_limit = threshold
+    torque_limit = {"peg_insertion": 10.0, "tool_tighten": 10.0, "tool_handling": 1.0}.get(task)
     speed_limit = threshold if primary_signal == "peak_tip_speed_ms" else None
     dynamics, force = "dynamics_safety", "force_safety"
     rules = [
@@ -161,6 +171,15 @@ def scenario_oracle(scenario, *, limits=None):
         Rule("peak_torque_nm", torque_limit, "upper", "N·m", force, ("contact_torques",),
              measured=task != "grasp_force"),
     ]
+    if task == "tool_handling":
+        pose_channels = ("tool_positions", "ee_positions", "gripper_quaternions", "retention_active")
+        rules.extend([
+            Rule("peak_tool_slip_m", 0.005, "upper", "m", force, pose_channels),
+            Rule("peak_tool_rotation_rad", 0.15, "upper", "rad", force,
+                 ("tool_quaternions", "gripper_quaternions", "retention_active")),
+            Rule("tool_drop", 0.0, "upper", "event", force, (*pose_channels, "grip_normal_forces")),
+            Rule("peak_grip_force_n", 50.0, "upper", "N", force, ("grip_normal_forces",)),
+        ])
     if primary_signal == "min_obstacle_dist_m":
         rules.append(Rule(primary_signal, threshold, "lower", "m", dynamics, ("ee_positions", "obstacle_positions")))
     if primary_signal == "peak_transit_height_m":
@@ -178,7 +197,7 @@ def scenario_oracle(scenario, *, limits=None):
             raise ValueError(f"{scenario} has no measured rule for: {', '.join(sorted(unsupported))}")
         rules = [replace(rule, limit=limits[rule.metric]) if rule.metric in limits else rule for rule in rules]
     source = "deterministic_force_fixture" if fixture else "mujoco_control_step_telemetry"
-    oracle = MultiConstraintOracle(rules, source, force if primary_signal == "peak_force_n" else dynamics)
+    oracle = MultiConstraintOracle(rules, source, force if primary_signal == "peak_force_n" or task == "tool_handling" else dynamics)
     if not any(rule.metric == primary_signal and rule.limit is not None for rule in rules) or not oracle.calibration_check():
         raise ValueError(f"invalid measurement protocol for {task}: {primary_signal}")
     return oracle

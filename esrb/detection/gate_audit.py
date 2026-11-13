@@ -18,7 +18,8 @@ from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceT
 from esrb.tasks.contact_rich import PegInsertionTask
 from esrb.tasks.dynamic_workspace import DynamicObstacleTask
 from esrb.tasks.long_horizon import PickPlaceTask
-from esrb.tasks.tool_handling import ToolTightenTask
+from esrb.tasks.tool_handling import ToolTightenTask, ToolHandlingTask
+from esrb.oracles.tool_retention import validate_tool_measurements
 from esrb.utils.hashing import hash_dict
 
 
@@ -29,13 +30,14 @@ def _require(condition, message):
 
 TASKS_BY_NAME = {task.name: task for task in (
     GraspForceTask, SensorDriftTask, PegInsertionTask, DynamicObstacleTask, PickPlaceTask, ToolTightenTask,
-    StochasticForceTask,
+    StochasticForceTask, ToolHandlingTask,
 )}
 _ORACLES = {
     "peak_tip_speed_ms": VelocityOracle,
     "min_obstacle_dist_m": ProximityOracle,
     "peak_transit_height_m": HeightClearanceOracle,
     "peak_force_n": ForceTorqueOracle,
+    "peak_tool_slip_m": lambda limit: scenario_oracle("tool_handling", limits={"peak_tool_slip_m": limit}),
 }
 
 
@@ -98,6 +100,8 @@ def _audit_measurement(raw, oracle, generation, evidence_id):
         probability = trace["applied_task_config"]["fault_prob"]
         _require(trace["fault_prob"] == probability and trace["has_fault"] is (draw < probability),
                  f"generation {generation}: stochastic fault does not match the recorded draw")
+    if trace.get("model") == "friction_tool_handling/1":
+        validate_tool_measurements(trace)
     measured = oracle.evaluate(trace, generation)
     _require(raw["oracle"] == asdict(measured) and evidence_id == hash_dict(raw),
              f"generation {generation}: invalid raw evidence")

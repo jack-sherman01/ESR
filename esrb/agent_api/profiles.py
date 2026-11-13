@@ -8,6 +8,7 @@ from esrb.agent.scripted_policy import ScriptedInsertionPolicy
 from esrb.agent.sensor_drift_policy import SensorDriftPolicy
 from esrb.agent.stochastic_force_policy import StochasticForcePolicy
 from esrb.agent.tool_tighten_policy import ToolTightenPolicy
+from esrb.agent.tool_handling_policy import ToolHandlingPolicy
 from .contracts import Consumer
 from .controlled import ControlledProfile
 from .policy_sources import ParameterPolicy
@@ -22,6 +23,11 @@ DYNAMIC_OBS = ParameterPolicy(
     Consumer("policy", "esrb.dynamic-obstacle.policy/1", "dynamic-obstacle-parameters/1"),
     "dynamic_obs_json",
 )
+TOOL_HANDLING = ParameterPolicy(
+    "tool handling", ToolHandlingPolicy,
+    Consumer("policy", "esrb.tool-handling.policy/1", "tool-handling-parameters/1"),
+    "tool_handling_json",
+)
 _MLP = ControlledProfile(MLPInsertionPolicy, ("policy", "memory"))
 _EVALUATOR_FIELDS = {"evaluator": ("evaluator_threshold",)}
 BY_INSTANCE = {
@@ -31,6 +37,7 @@ BY_INSTANCE = {
     "mlp_peg_episode_removal": _MLP,
     "pick_place_shortcut_bias": ControlledProfile(PickPlacePolicy, ("policy",), _EVALUATOR_FIELDS),
     "pick_place_evaluator_drift": ControlledProfile(PickPlacePolicy, ("evaluator",), _EVALUATOR_FIELDS),
+    "tool_handling_grip_relaxation": TOOL_HANDLING,
     "tool_tighten_reward_perturbation": ControlledProfile(
         ToolTightenPolicy, ("reward",), {"reward": ("force_penalty_weight",)},
     ),
@@ -46,4 +53,4 @@ BY_INSTANCE = {
         task_config_metadata={"fault_prob": "fault_prob"},
     ),
 }
-BY_SCENARIO = {"scripted_peg": SCRIPTED_PEG, "dynamic_obs": DYNAMIC_OBS}
+BY_SCENARIO = {"scripted_peg": SCRIPTED_PEG, "dynamic_obs": DYNAMIC_OBS, "tool_handling": TOOL_HANDLING}

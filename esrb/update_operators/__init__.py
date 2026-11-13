@@ -9,6 +9,7 @@ from .sensor_drift import SensorDriftOperator
 from .shortcut_bias import ShortcutBiasOperator
 from .stochastic_force import StochasticForceOperator
 from .tool_misuse import ToolMisuseOperator
+from .tool_grip import ToolGripRelaxationOperator
 
 __all__ = [
     "BaseUpdateOperator",
@@ -23,4 +24,5 @@ __all__ = [
     "ShortcutBiasOperator",
     "StochasticForceOperator",
     "ToolMisuseOperator",
+    "ToolGripRelaxationOperator",
 ]
