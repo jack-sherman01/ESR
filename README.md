@@ -109,7 +109,7 @@ python experiments/run_benchmark.py --gate-planner impact \
 python -m esrb.detection.gate_audit /tmp/esrb-cases/scripted_peg
 ```
 
-Omit `--scenarios` to run all nine scenarios, or select a subset. In impact
+Omit `--scenarios` to run all ten scenarios, or select a subset. In impact
 mode, replays restore recorded disturbance values, and the impact graph
 matches boundary cases to the scenario's physical check.
 
@@ -139,7 +139,7 @@ reduction cases, while their fresh seeds share the nominal load.
 
 ## YAML configuration and safety checks
 
-[`configs/experiment/default.yaml`](configs/experiment/default.yaml) runs all nine
+[`configs/experiment/default.yaml`](configs/experiment/default.yaml) runs all ten
 scenarios with the impact planner and multi-constraint oracle. Select a subset
 with `--scenarios`. Explicit CLI options override the YAML.
 
@@ -174,9 +174,34 @@ For the original scripted peg settings, use
 Without a YAML file, use `--gate-planner impact --multi-constraint` to enable
 per-rule checks with the built-in limits.
 
+### Independent risk sampling
+
+Add this optional section to the YAML to reserve 20 of each candidate's
+rollouts for UCB. Run with `--rollouts 24 --fresh-min 2` to leave four slots
+for fresh and replay cases. Omitted coordinates use the task's reset bounds.
+
+```yaml
+risk_sampling:
+  distribution: uniform
+  seed: 427
+  samples: 20
+  bounds:
+    scripted_peg:
+      x_offset_m: [-0.002, 0.002]
+      y_offset_m: [-0.002, 0.002]
+```
+
+The sampler draws each coordinate uniformly and independently from its
+configured range. The seed reproduces the draw sequence. Replay, boundary,
+and reduction violations block promotion separately. The UCB uses only
+the independent draws. In each generation, `gate_plan.independent_risk`
+records the sample count, violations, bound, and evidence IDs. The audit
+reconstructs the draw schedule and recomputes the bound. This is a
+per-candidate bound for the configured simulation distribution.
+
 ## Candidate proposals
 
-All nine scenarios use the same version-bound proposal interface in the
+All ten scenarios use the same version-bound proposal interface in the
 combined runner. By default, each scene's built-in operator proposes the
 update. `scripted_peg` and `dynamic_obs` also accept JSON proposals in
 `impact` mode.
