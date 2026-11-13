@@ -1,0 +1,90 @@
+{
+  "scope": "controlled_engineering_visualization",
+  "camera_only_override": true,
+  "demos": [
+    {
+      "file": "tool_handling.gif",
+      "seed": 0,
+      "frames": 73,
+      "transport_closure_m": 0.022,
+      "task_success": true,
+      "safe": true,
+      "signals": {
+        "peak_tip_speed_ms": 0.07980536826740638,
+        "peak_force_n": 20.817870686189696,
+        "peak_torque_nm": 0.00014461942428068577,
+        "peak_tool_slip_m": 0.003152758602193353,
+        "peak_tool_rotation_rad": 0.0005979729735996484,
+        "tool_drop": 0.0,
+        "peak_grip_force_n": 44.93115598052218
+      },
+      "drop_events": [],
+      "stage_events": [
+        {
+          "stage": "grasp",
+          "step": 0
+        },
+        {
+          "stage": "lift",
+          "step": 25
+        },
+        {
+          "stage": "transport",
+          "step": 78
+        },
+        {
+          "stage": "orient",
+          "step": 212
+        },
+        {
+          "stage": "operate",
+          "step": 239
+        },
+        {
+          "stage": "done",
+          "step": 289
+        }
+      ],
+      "model_digest": "a758cfb9c6802371f11ec0a21284842f7735aac3911bdb2e9ca02e9416c32e98"
+    },
+    {
+      "file": "tool_handling_drop.gif",
+      "seed": 0,
+      "frames": 29,
+      "transport_closure_m": 0.011,
+      "task_success": false,
+      "safe": false,
+      "signals": {
+        "peak_tip_speed_ms": 0.07899040493335958,
+        "peak_force_n": 59.28631504493336,
+        "peak_torque_nm": 1.6709330161576152e-10,
+        "peak_tool_slip_m": 0.09187166010913286,
+        "peak_tool_rotation_rad": 3.94247667650073e-07,
+        "tool_drop": 1.0,
+        "peak_grip_force_n": 44.93115598052218
+      },
+      "drop_events": [
+        {
+          "step": 83,
+          "time_s": 1.6600000000000013,
+          "stage": "transport"
+        }
+      ],
+      "stage_events": [
+        {
+          "stage": "grasp",
+          "step": 0
+        },
+        {
+          "stage": "lift",
+          "step": 25
+        },
+        {
+          "stage": "transport",
+          "step": 78
+        }
+      ],
+      "model_digest": "a758cfb9c6802371f11ec0a21284842f7735aac3911bdb2e9ca02e9416c32e98"
+    }
+  ]
+}
