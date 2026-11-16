@@ -1,0 +1,512 @@
+{
+  "scope": "controlled_engineering_visualization",
+  "camera_only_override": true,
+  "size_px": [
+    480,
+    360
+  ],
+  "capture_stride": 4,
+  "final_frame_pause_ms": 1200,
+  "demos": [
+    {
+      "file": "long_horizon_assembly.gif",
+      "seed": 0,
+      "frames": 75,
+      "sampled_steps": [
+        1,
+        5,
+        9,
+        13,
+        17,
+        21,
+        25,
+        29,
+        33,
+        37,
+        41,
+        45,
+        49,
+        53,
+        57,
+        61,
+        65,
+        69,
+        73,
+        77,
+        81,
+        85,
+        89,
+        93,
+        97,
+        101,
+        105,
+        109,
+        113,
+        117,
+        121,
+        125,
+        129,
+        133,
+        137,
+        141,
+        145,
+        149,
+        153,
+        157,
+        161,
+        165,
+        169,
+        173,
+        177,
+        181,
+        185,
+        189,
+        193,
+        197,
+        201,
+        205,
+        209,
+        213,
+        217,
+        221,
+        225,
+        229,
+        233,
+        237,
+        241,
+        245,
+        249,
+        253,
+        257,
+        261,
+        265,
+        269,
+        273,
+        277,
+        281,
+        285,
+        289,
+        293,
+        295
+      ],
+      "policy": {
+        "max_speed": 0.0015,
+        "angular_step": 0.025,
+        "grasp_closure": 0.022,
+        "transport_closure": 0.022,
+        "transport_yaw_bias": 0.0
+      },
+      "disturbance": {
+        "tool_mass_kg": 0.08547846749285817,
+        "friction": 0.7444253498173546,
+        "tool_x_m": -0.10275415885638282,
+        "tool_y_m": -0.0029008341868288256,
+        "tool_yaw_rad": 0.018796214352016345,
+        "grasp_offset_m": 0.004953066927332661,
+        "grasp_x_error_m": 0.00021327155153435975
+      },
+      "task_success": true,
+      "safe": true,
+      "failure_reason": null,
+      "stage_events": [
+        {
+          "stage": "grasp",
+          "step": 0
+        },
+        {
+          "stage": "lift",
+          "step": 25
+        },
+        {
+          "stage": "transport",
+          "step": 78
+        },
+        {
+          "stage": "preposition",
+          "step": 212
+        },
+        {
+          "stage": "insert",
+          "step": 235
+        },
+        {
+          "stage": "verify",
+          "step": 271
+        },
+        {
+          "stage": "done",
+          "step": 295
+        }
+      ],
+      "stage_reports": [
+        {
+          "stage": "grasp",
+          "enter_time_s": 0.0,
+          "exit_time_s": 0.5000000000000003,
+          "exit_condition": "bilateral_grasp_contact",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 20.817879188095883,
+            "peak_torque_nm": 0.001097197960536118,
+            "peak_tool_slip_m": 0.0,
+            "peak_tool_rotation_rad": 0.0,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 44.931155980521176
+          }
+        },
+        {
+          "stage": "lift",
+          "enter_time_s": 0.5000000000000003,
+          "exit_time_s": 1.5600000000000012,
+          "exit_condition": "part_lifted_clear_of_rack",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 1.745616552746206,
+            "peak_torque_nm": 0.0001373288010022213,
+            "peak_tool_slip_m": 0.00025270246562282957,
+            "peak_tool_rotation_rad": 8.585965806775119e-07,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 6.977168472760502
+          }
+        },
+        {
+          "stage": "transport",
+          "enter_time_s": 1.5600000000000012,
+          "exit_time_s": 4.239999999999755,
+          "exit_condition": "part_above_socket",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 0.0,
+            "peak_torque_nm": 0.0,
+            "peak_tool_slip_m": 0.0009010728426933957,
+            "peak_tool_rotation_rad": 4.42584957274958e-05,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 7.064393163928602
+          }
+        },
+        {
+          "stage": "preposition",
+          "enter_time_s": 4.239999999999755,
+          "exit_time_s": 4.699999999999704,
+          "exit_condition": "part_tip_at_preinsertion_pose",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 0.0,
+            "peak_torque_nm": 0.0,
+            "peak_tool_slip_m": 0.0010117087322308645,
+            "peak_tool_rotation_rad": 4.178212261516614e-05,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 6.977524125889451
+          }
+        },
+        {
+          "stage": "insert",
+          "enter_time_s": 4.699999999999704,
+          "exit_time_s": 5.419999999999625,
+          "exit_condition": "measured_depth_and_pose_reached",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 0.0,
+            "peak_torque_nm": 0.0,
+            "peak_tool_slip_m": 0.0011861087287786465,
+            "peak_tool_rotation_rad": 2.213612509335383e-06,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 6.976479607333134
+          }
+        },
+        {
+          "stage": "verify",
+          "enter_time_s": 5.419999999999625,
+          "exit_time_s": 5.899999999999572,
+          "exit_condition": "released_part_stable_for_0.4s",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 27.413580441321194,
+            "peak_torque_nm": 1.4673794966851641e-05,
+            "peak_tool_slip_m": 0.0,
+            "peak_tool_rotation_rad": 0.0,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 0.0
+          }
+        }
+      ],
+      "final_depth_m": 0.040002130682284705,
+      "stable_hold_s": 0.4,
+      "simulation_steps": 295,
+      "simulation_time_s": 5.899999999999572,
+      "trace_digest": "191007848d2a854d2e1f76aaee648dd685a2ec05fe9e45ee454877d43ebe27d6",
+      "model_digest": "58b73889380194b38e2759b90173ed2387bd9eb827c7acfb47dbc6d724152fb2"
+    },
+    {
+      "file": "long_horizon_assembly_failure.gif",
+      "seed": 0,
+      "frames": 100,
+      "sampled_steps": [
+        1,
+        5,
+        9,
+        13,
+        17,
+        21,
+        25,
+        29,
+        33,
+        37,
+        41,
+        45,
+        49,
+        53,
+        57,
+        61,
+        65,
+        69,
+        73,
+        77,
+        81,
+        85,
+        89,
+        93,
+        97,
+        101,
+        105,
+        109,
+        113,
+        117,
+        121,
+        125,
+        129,
+        133,
+        137,
+        141,
+        145,
+        149,
+        153,
+        157,
+        161,
+        165,
+        169,
+        173,
+        177,
+        181,
+        185,
+        189,
+        193,
+        197,
+        201,
+        205,
+        209,
+        213,
+        217,
+        221,
+        225,
+        229,
+        233,
+        237,
+        241,
+        245,
+        249,
+        253,
+        257,
+        261,
+        265,
+        269,
+        273,
+        277,
+        281,
+        285,
+        289,
+        293,
+        297,
+        301,
+        305,
+        309,
+        313,
+        317,
+        321,
+        325,
+        329,
+        333,
+        337,
+        341,
+        345,
+        349,
+        353,
+        357,
+        361,
+        365,
+        369,
+        373,
+        377,
+        381,
+        385,
+        389,
+        393,
+        394
+      ],
+      "policy": {
+        "max_speed": 0.0015,
+        "angular_step": 0.025,
+        "grasp_closure": 0.022,
+        "transport_closure": 0.022,
+        "transport_yaw_bias": 0.35
+      },
+      "disturbance": {
+        "tool_mass_kg": 0.08547846749285817,
+        "friction": 0.7444253498173546,
+        "tool_x_m": -0.10275415885638282,
+        "tool_y_m": -0.0029008341868288256,
+        "tool_yaw_rad": 0.018796214352016345,
+        "grasp_offset_m": 0.004953066927332661,
+        "grasp_x_error_m": 0.00021327155153435975
+      },
+      "task_success": false,
+      "safe": false,
+      "failure_reason": "insertion_blocked_orientation",
+      "stage_events": [
+        {
+          "stage": "grasp",
+          "step": 0
+        },
+        {
+          "stage": "lift",
+          "step": 25
+        },
+        {
+          "stage": "transport",
+          "step": 78
+        },
+        {
+          "stage": "preposition",
+          "step": 212
+        },
+        {
+          "stage": "insert",
+          "step": 234
+        }
+      ],
+      "stage_reports": [
+        {
+          "stage": "grasp",
+          "enter_time_s": 0.0,
+          "exit_time_s": 0.5000000000000003,
+          "exit_condition": "bilateral_grasp_contact",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 20.817879188095883,
+            "peak_torque_nm": 0.001097197960536118,
+            "peak_tool_slip_m": 0.0,
+            "peak_tool_rotation_rad": 0.0,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 44.931155980521176
+          }
+        },
+        {
+          "stage": "lift",
+          "enter_time_s": 0.5000000000000003,
+          "exit_time_s": 1.5600000000000012,
+          "exit_condition": "part_lifted_clear_of_rack",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 1.745616552746206,
+            "peak_torque_nm": 0.0001373288010022213,
+            "peak_tool_slip_m": 0.00025270246562282957,
+            "peak_tool_rotation_rad": 8.585965806775119e-07,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 6.977168472760502
+          }
+        },
+        {
+          "stage": "transport",
+          "enter_time_s": 1.5600000000000012,
+          "exit_time_s": 4.239999999999755,
+          "exit_condition": "part_above_socket",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 0.0,
+            "peak_torque_nm": 0.0,
+            "peak_tool_slip_m": 0.001196073344448974,
+            "peak_tool_rotation_rad": 0.0005957737723308794,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 8.788635934342953
+          }
+        },
+        {
+          "stage": "preposition",
+          "enter_time_s": 4.239999999999755,
+          "exit_time_s": 4.679999999999707,
+          "exit_condition": "part_tip_at_preinsertion_pose",
+          "failure_reason": null,
+          "status": "completed",
+          "safety_status": "PASS",
+          "safety_violations": [],
+          "measured_peaks": {
+            "peak_force_n": 0.0,
+            "peak_torque_nm": 0.0,
+            "peak_tool_slip_m": 0.0013013852448622183,
+            "peak_tool_rotation_rad": 3.4645824657898525e-05,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 6.9965130150255455
+          }
+        },
+        {
+          "stage": "insert",
+          "enter_time_s": 4.679999999999707,
+          "exit_time_s": 7.879999999999354,
+          "exit_condition": "insertion_blocked_orientation",
+          "failure_reason": "insertion_blocked_orientation",
+          "status": "failed",
+          "safety_status": "VIOLATION",
+          "safety_violations": [
+            {
+              "metric": "peak_tool_slip_m",
+              "value": 0.05971588296626616,
+              "limit": 0.005,
+              "first_time_s": 5.219999999999647
+            }
+          ],
+          "measured_peaks": {
+            "peak_force_n": 10.74262340518065,
+            "peak_torque_nm": 0.023061357118314717,
+            "peak_tool_slip_m": 0.05971588296626616,
+            "peak_tool_rotation_rad": 8.445584332203802e-05,
+            "tool_drop": 0.0,
+            "peak_grip_force_n": 41.68834503921088
+          }
+        }
+      ],
+      "final_depth_m": 7.102876552339543e-07,
+      "stable_hold_s": 0.0,
+      "simulation_steps": 394,
+      "simulation_time_s": 7.879999999999354,
+      "trace_digest": "adcaca1bc72db5511a32c6ba9f2ec8894da8cc08158d0527435b6a58465c64ba",
+      "model_digest": "58b73889380194b38e2759b90173ed2387bd9eb827c7acfb47dbc6d724152fb2"
+    }
+  ]
+}
