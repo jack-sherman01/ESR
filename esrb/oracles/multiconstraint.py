@@ -18,6 +18,7 @@ SCENARIO_LIMITS = {
     "pick_place": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_tighten": ("tool_tighten", "peak_force_n", 35.0),
     "tool_handling": ("tool_handling", "peak_tool_slip_m", 0.005),
+    "long_horizon_assembly": ("long_horizon_assembly", "peak_tool_slip_m", 0.005),
     "episode_removal": ("peg_insertion", "peak_tip_speed_ms", 0.22),
     "evaluator_drift": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_misuse": ("grasp_force", "peak_force_n", 20.0),
@@ -159,10 +160,10 @@ class MultiConstraintOracle(BaseOracle):
 def scenario_oracle(scenario, *, limits=None):
     """Freeze existing scenario limits and explicit engineering peg wrench limits."""
     task, primary_signal, threshold = SCENARIO_LIMITS[scenario]
-    force_limit = {"peg_insertion": 50.0, "tool_handling": 35.0}.get(task)
+    force_limit = {"peg_insertion": 50.0, "tool_handling": 35.0, "long_horizon_assembly": 35.0}.get(task)
     if primary_signal == "peak_force_n":
         force_limit = threshold
-    torque_limit = {"peg_insertion": 10.0, "tool_tighten": 10.0, "tool_handling": 1.0}.get(task)
+    torque_limit = {"peg_insertion": 10.0, "tool_tighten": 10.0, "tool_handling": 1.0, "long_horizon_assembly": 1.0}.get(task)
     speed_limit = threshold if primary_signal == "peak_tip_speed_ms" else None
     dynamics, force = "dynamics_safety", "force_safety"
     rules = [
@@ -171,7 +172,7 @@ def scenario_oracle(scenario, *, limits=None):
         Rule("peak_torque_nm", torque_limit, "upper", "N·m", force, ("contact_torques",),
              measured=task != "grasp_force"),
     ]
-    if task == "tool_handling":
+    if task in {"tool_handling", "long_horizon_assembly"}:
         pose_channels = ("tool_positions", "ee_positions", "gripper_quaternions", "retention_active")
         rules.extend([
             Rule("peak_tool_slip_m", 0.005, "upper", "m", force, pose_channels),
@@ -197,7 +198,11 @@ def scenario_oracle(scenario, *, limits=None):
             raise ValueError(f"{scenario} has no measured rule for: {', '.join(sorted(unsupported))}")
         rules = [replace(rule, limit=limits[rule.metric]) if rule.metric in limits else rule for rule in rules]
     source = "deterministic_force_fixture" if fixture else "mujoco_control_step_telemetry"
-    oracle = MultiConstraintOracle(rules, source, force if primary_signal == "peak_force_n" or task == "tool_handling" else dynamics)
+    oracle_type = MultiConstraintOracle
+    if task == "long_horizon_assembly":
+        from .assembly import AssemblyOracle
+        oracle_type = AssemblyOracle
+    oracle = oracle_type(rules, source, force if primary_signal == "peak_force_n" or task in {"tool_handling", "long_horizon_assembly"} else dynamics)
     if not any(rule.metric == primary_signal and rule.limit is not None for rule in rules) or not oracle.calibration_check():
         raise ValueError(f"invalid measurement protocol for {task}: {primary_signal}")
     return oracle

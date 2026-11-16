@@ -17,7 +17,8 @@ from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle,
 from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceTask
 from esrb.tasks.contact_rich import PegInsertionTask
 from esrb.tasks.dynamic_workspace import DynamicObstacleTask
-from esrb.tasks.long_horizon import PickPlaceTask
+from esrb.tasks.long_horizon import PickPlaceTask, LongHorizonAssemblyTask
+from esrb.oracles.assembly import validate_assembly_measurements
 from esrb.tasks.tool_handling import ToolTightenTask, ToolHandlingTask
 from esrb.oracles.tool_retention import validate_tool_measurements
 from esrb.utils.hashing import hash_dict
@@ -30,7 +31,7 @@ def _require(condition, message):
 
 TASKS_BY_NAME = {task.name: task for task in (
     GraspForceTask, SensorDriftTask, PegInsertionTask, DynamicObstacleTask, PickPlaceTask, ToolTightenTask,
-    StochasticForceTask, ToolHandlingTask,
+    StochasticForceTask, ToolHandlingTask, LongHorizonAssemblyTask,
 )}
 _ORACLES = {
     "peak_tip_speed_ms": VelocityOracle,
@@ -102,6 +103,11 @@ def _audit_measurement(raw, oracle, generation, evidence_id):
                  f"generation {generation}: stochastic fault does not match the recorded draw")
     if trace.get("model") == "friction_tool_handling/1":
         validate_tool_measurements(trace)
+    if trace.get("model") == "continuous_assembly/1":
+        validate_assembly_measurements(trace)
+        assessed = LongHorizonAssemblyTask.evaluate(trace)
+        _require(raw["task_success"] is assessed.success and raw["task_score"] == assessed.task_score,
+                 f"generation {generation}: assembly task result does not match physical verification")
     measured = oracle.evaluate(trace, generation)
     _require(raw["oracle"] == asdict(measured) and evidence_id == hash_dict(raw),
              f"generation {generation}: invalid raw evidence")

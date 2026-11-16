@@ -41,7 +41,7 @@ def retention_metric(metric, values):
     return float(np.any((np.min(grip, axis=1) < 0.05) & (displacement > 0.035)))
 
 
-def validate_tool_measurements(trace):
+def validate_tool_measurements(trace, *, retention_stages=None):
     """Check reductions against ten recorded contact substeps per control step."""
     samples = np.asarray(trace["contact_samples"], dtype=float)
     count = len(trace["ee_positions"])
@@ -63,7 +63,8 @@ def validate_tool_measurements(trace):
         raise ValueError("tool contact reduction mismatch")
     if not np.allclose(np.diff(samples[:, :, 0].ravel()), 0.002, atol=1e-10, rtol=0):
         raise ValueError("tool contact timebase mismatch")
-    active = [int(stage != "grasp") for stage in trace["stages"]]
+    active = [int(stage != "grasp" if retention_stages is None else stage in retention_stages)
+              for stage in trace["stages"]]
     if trace["retention_active"] != active:
         raise ValueError("tool retention stage mismatch")
 

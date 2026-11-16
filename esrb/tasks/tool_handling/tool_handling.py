@@ -23,6 +23,9 @@ class ToolHandlingTask(BaseTask):
     """A Cartesian gripper with wrist yaw carries a free tool using pad friction."""
 
     name = "tool_handling"
+    MODEL_XML = _XML
+    STAGES = STAGES
+    MAX_STEPS = 600
     reset_reference = {
         "tool_mass_kg": 0.08, "friction": 0.9,
         "tool_x_m": -0.10, "tool_y_m": 0.0, "tool_yaw_rad": 0.0,
@@ -36,7 +39,7 @@ class ToolHandlingTask(BaseTask):
     boundary_fields = ("friction", "tool_mass_kg", "grasp_offset_m")
 
     def __init__(self):
-        self._model = mujoco.MjModel.from_xml_path(str(_XML))
+        self._model = mujoco.MjModel.from_xml_path(str(self.MODEL_XML))
         self._data = mujoco.MjData(self._model)
         self._tool = self._model.body("tool").id
         self._gripper = self._model.body("gripper").id
@@ -97,7 +100,7 @@ class ToolHandlingTask(BaseTask):
             reset_readback=point, model="friction_tool_handling/1", dt_s=DT,
             stage_events=[{"stage": "grasp", "step": 0}], success=False,
             measurement_frame="world", wrench_origin="tool_center",
-            model_digest=hash_artifact(_XML), drop_events=[],
+            model_digest=hash_artifact(self.MODEL_XML), drop_events=[],
         )
         return self._observe()
 
@@ -106,7 +109,7 @@ class ToolHandlingTask(BaseTask):
             np.array([*self._data.xpos[self._gripper], yaw(self._data.xquat[self._gripper]),
                       *self._data.xpos[self._tool], yaw(self._data.xquat[self._tool]),
                       self._stage, self._surface_force]),
-            {"stage": STAGES[self._stage], "pick": self._pick.tolist(),
+            {"stage": self.STAGES[self._stage], "pick": self._pick.tolist(),
              "initial_yaw": self._initial_yaw, "target_yaw": 0.7, "target_xy": [0.10, 0.0],
              "actuator_targets": self._data.ctrl[:4].tolist()},
         )
@@ -184,25 +187,28 @@ class ToolHandlingTask(BaseTask):
         mujoco.mju_mulQuat(relative_quaternion, inverse, self._data.xquat[self._tool])
         self._log["relative_positions"].append(relative.tolist())
         self._log["relative_quaternions"].append(relative_quaternion.tolist())
-        if self._stage >= 1:
+        if self._retention_required():
             if self._grasp_reference is None:
                 self._grasp_reference = relative.copy()
             dropped = np.min(peaks[2]) < 0.05 and np.linalg.norm(relative - self._grasp_reference) > 0.035
             if dropped and not self._drop_active:
                 self._log["drop_events"].append({
-                    "step": self._steps, "time_s": float(self._data.time), "stage": STAGES[self._stage],
+                    "step": self._steps, "time_s": float(self._data.time), "stage": self.STAGES[self._stage],
                 })
             self._drop_active = bool(dropped)
-        self._log["retention_active"].append(int(self._stage >= 1))
+        self._log["retention_active"].append(int(self._retention_required()))
         self._log["contact_samples"].append(contact_samples)
-        self._log["stages"].append(STAGES[self._stage])
+        self._log["stages"].append(self.STAGES[self._stage])
         self._log["times_s"].append(float(self._data.time))
         self._log["commands"].append(action.tolist())
         self._log["contacts"].append(peaks[4])
         self._advance(peaks[2], tip)
-        done = self._stage == 5 or self._steps >= 600
-        self._log["success"] = self._stage == 5
-        return self._observe(), float(self._stage) / 5, done, dict(self._log)
+        done = self._stage == len(self.STAGES) - 1 or self._steps >= self.MAX_STEPS
+        self._log["success"] = self._stage == len(self.STAGES) - 1
+        return self._observe(), float(self._stage) / (len(self.STAGES) - 1), done, dict(self._log)
+
+    def _retention_required(self):
+        return self._stage >= 1
 
     def _advance(self, grip, tip):
         tool = self._data.xpos[self._tool]
@@ -223,7 +229,7 @@ class ToolHandlingTask(BaseTask):
         if reached:
             self._stage += 1
             self._stage_ticks = 0
-            self._log["stage_events"].append({"stage": STAGES[self._stage], "step": self._steps})
+            self._log["stage_events"].append({"stage": self.STAGES[self._stage], "step": self._steps})
 
     def evaluate(self, episode_data):
         completed = max(0, len(episode_data.get("stage_events", [])) - 1)

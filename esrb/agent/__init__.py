@@ -1,3 +1,4 @@
+from .assembly_policy import AssemblyPolicy
 from .base import BaseAgent
 from .dynamic_obstacle_policy import DynamicObstaclePolicy
 from .evolution_loop import EvolutionLoop
@@ -22,4 +23,5 @@ __all__ = [
     "StochasticForcePolicy",
     "ToolTightenPolicy",
     "ToolHandlingPolicy",
+    "AssemblyPolicy",
 ]

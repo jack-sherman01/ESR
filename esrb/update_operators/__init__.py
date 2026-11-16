@@ -1,3 +1,4 @@
+from .assembly_orientation import AssemblyOrientationOperator
 from .base import BaseUpdateOperator, UpdateResult
 from .distribution_shift import DistributionShiftOperator
 from .episode_removal import EpisodeRemovalOperator
@@ -25,4 +26,5 @@ __all__ = [
     "StochasticForceOperator",
     "ToolMisuseOperator",
     "ToolGripRelaxationOperator",
+    "AssemblyOrientationOperator",
 ]

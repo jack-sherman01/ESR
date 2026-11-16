@@ -1,0 +1,54 @@
+<mujoco model="continuous_assembly">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81" cone="elliptic" iterations="80"/>
+  <default>
+    <joint damping="2"/>
+    <geom condim="4" friction="0.9 0.005 0.0001" solref="0.004 1" solimp="0.95 0.99 0.001"/>
+  </default>
+  <worldbody>
+    <light pos="0 -0.3 0.8" dir="0 0 -1"/>
+    <camera name="overview" pos="0 -0.65 0.45" xyaxes="1 0 0 0 0.5 1"/>
+    <geom name="floor" type="plane" size="0.4 0.3 0.01" rgba="0.85 0.85 0.85 1"/>
+    <geom name="rack" type="box" pos="-0.10 0 0.0175" size="0.045 0.045 0.0175" rgba="0.4 0.45 0.5 1"/>
+    <!-- Keyed rectangular opening: 39 x 21 mm, top z=85 mm, floor z=45 mm.
+         The free part is 36 x 18 mm. Its yaw error changes physical rim contact. -->
+    <geom name="work_surface" type="box" pos="0.10 0 0.035" size="0.045 0.045 0.010" rgba="0.35 0.55 0.4 1"/>
+    <geom name="socket_left" type="box" pos="0.06775 0 0.065" size="0.01275 0.045 0.020" rgba="0.35 0.6 0.45 1"/>
+    <geom name="socket_right" type="box" pos="0.13225 0 0.065" size="0.01275 0.045 0.020" rgba="0.35 0.6 0.45 1"/>
+    <geom name="socket_front" type="box" pos="0.10 -0.02775 0.065" size="0.0195 0.01725 0.020" rgba="0.35 0.6 0.45 1"/>
+    <geom name="socket_back" type="box" pos="0.10 0.02775 0.065" size="0.0195 0.01725 0.020" rgba="0.35 0.6 0.45 1"/>
+    <body name="gantry" pos="0 0 0">
+      <joint name="x" type="slide" axis="1 0 0" range="-0.2 0.2"/>
+      <joint name="y" type="slide" axis="0 1 0" range="-0.15 0.15"/>
+      <joint name="z" type="slide" axis="0 0 1" range="0.07 0.35"/>
+      <inertial pos="0 0 0" mass="0.4" diaginertia="0.002 0.002 0.002"/>
+      <geom type="box" pos="0 0 0.04" size="0.035 0.035 0.009" contype="0" conaffinity="0" rgba="0.3 0.4 0.6 1"/>
+      <body name="gripper">
+        <joint name="yaw" type="hinge" axis="0 0 1" range="-1.5 1.5" damping="0.08"/>
+        <inertial pos="0 0 0" mass="0.12" diaginertia="0.0002 0.0002 0.0002"/>
+        <site name="grip_origin" size="0.003" rgba="0 0 1 1"/>
+        <body name="left_finger" pos="0 0.03 0">
+          <joint name="left" type="slide" axis="0 -1 0" range="0 0.025" damping="1"/>
+          <geom name="left_pad" type="box" size="0.024 0.004 0.024" mass="0.04" rgba="0.25 0.3 0.4 1"/>
+        </body>
+        <body name="right_finger" pos="0 -0.03 0">
+          <joint name="right" type="slide" axis="0 1 0" range="0 0.025" damping="1"/>
+          <geom name="right_pad" type="box" size="0.024 0.004 0.024" mass="0.04" rgba="0.25 0.3 0.4 1"/>
+        </body>
+      </body>
+    </body>
+    <body name="tool" pos="-0.10 0 0.095">
+      <freejoint name="tool_free"/>
+      <geom name="tool_handle" type="box" size="0.018 0.009 0.060" mass="0.08" rgba="0.9 0.5 0.1 1"/>
+      <site name="tool_tip" pos="0 0 -0.06" size="0.003" rgba="1 0 0 1"/>
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="x_drive" joint="x" kp="1800" kv="55" ctrlrange="-0.2 0.2"/>
+    <position name="y_drive" joint="y" kp="1800" kv="55" ctrlrange="-0.15 0.15"/>
+    <position name="z_drive" joint="z" kp="1800" kv="55" ctrlrange="0.07 0.35"/>
+    <position name="yaw_drive" joint="yaw" kp="8" kv="0.3" ctrlrange="-1.5 1.5"/>
+    <position name="left_drive" joint="left" kp="700" kv="5" ctrlrange="0 0.025"/>
+    <position name="right_drive" joint="right" kp="700" kv="5" ctrlrange="0 0.025"/>
+  </actuator>
+</mujoco>
