@@ -33,11 +33,17 @@ TASKS_BY_NAME = {task.name: task for task in (
     GraspForceTask, SensorDriftTask, PegInsertionTask, DynamicObstacleTask, PickPlaceTask, ToolTightenTask,
     StochasticForceTask, ToolHandlingTask, LongHorizonAssemblyTask,
 )}
+from esrb.tasks.extensions.registry import EXTENSIONS
+from esrb.tasks.extensions.settings import configured_task
+from esrb.oracles.extensions import validate_extension
+TASKS_BY_NAME.update({name:item[0] for name,item in EXTENSIONS.items()})
 _ORACLES = {
     "peak_tip_speed_ms": VelocityOracle,
     "min_obstacle_dist_m": ProximityOracle,
     "peak_transit_height_m": HeightClearanceOracle,
     "peak_force_n": ForceTorqueOracle,
+    "min_surface_distance_m": lambda limit: scenario_oracle("moving_transport",limits={"min_surface_distance_m":limit}),
+    "peak_wall_force_n": lambda limit: scenario_oracle("constrained_push",limits={"peak_wall_force_n":limit}),
     "peak_tool_slip_m": lambda limit: scenario_oracle("tool_handling", limits={"peak_tool_slip_m": limit}),
 }
 
@@ -91,8 +97,11 @@ def _audit_proposal(row, scenario, history, active_version, manifest_id):
     return expected_active, receipt["manifest_id"]
 
 
-def _audit_measurement(raw, oracle, generation, evidence_id):
+def _audit_measurement(raw, oracle, generation, evidence_id, task=None):
     trace = raw["episode_data"]
+    if task is not None:
+        _require(trace.get('task_settings',{})==getattr(task,'engineering_settings',{}),
+                 'task settings not bound to experiment configuration')
     if isinstance(oracle, MultiConstraintOracle):
         steps = trace.get("control_step_count")
         _require(type(steps) is int and steps > 0, f"generation {generation}: invalid measured step count")
@@ -101,9 +110,16 @@ def _audit_measurement(raw, oracle, generation, evidence_id):
         probability = trace["applied_task_config"]["fault_prob"]
         _require(trace["fault_prob"] == probability and trace["has_fault"] is (draw < probability),
                  f"generation {generation}: stochastic fault does not match the recorded draw")
+    extension=trace.get('moving_model') or trace.get('extension_model') or trace.get('model','').split('/')[0] in EXTENSIONS
+    if extension:
+        validate_extension(trace)
+        name=(trace.get('moving_model') or trace.get('extension_model') or trace['model']).split('/')[0]
+        assessed=EXTENSIONS[name][0].evaluate(trace)
+        _require(raw['task_success'] is assessed.success and raw['task_score']==assessed.task_score,
+                 'extension task result mismatch')
     if trace.get("model") == "friction_tool_handling/1":
         validate_tool_measurements(trace)
-    if trace.get("model") == "continuous_assembly/1":
+    if trace.get("model") == "continuous_assembly/1" and not extension:
         validate_assembly_measurements(trace)
         assessed = LongHorizonAssemblyTask.evaluate(trace)
         _require(raw["task_success"] is assessed.success and raw["task_score"] == assessed.task_score,
@@ -130,7 +146,7 @@ def _audit_baseline(row, oracle, task, profile, args):
                  and trace["reset_readback"] == case["disturbance"]
                  and trace.get("applied_task_config") == task_config,
                  f"generation {gen}: baseline measurement binding mismatch")
-        verdicts.append(_audit_measurement(raw, oracle, gen, observed["evidence_id"]))
+        verdicts.append(_audit_measurement(raw, oracle, gen, observed["evidence_id"],task))
     return verdicts
 
 
@@ -194,6 +210,8 @@ def audit_gate(report, archive):
                  "experiment config digest or selector mismatch")
         risk_config = getattr(config, "risk_sampling", None)
         limits = config.limits_for(report["scenario"])
+        if hasattr(config,'task_settings_for'):
+            task=configured_task(task,config.task_settings_for(report['scenario']))
         _require(multi or not limits, "configured oracle limits require multi-constraint measurements")
     _require(("measurement_protocol" in report) == multi, "measurement protocol missing or unexpected")
     if multi:
@@ -216,6 +234,7 @@ def audit_gate(report, archive):
     _require(len(bank) == len(archive["counterexamples"]), "duplicate counterexample ID")
     phases = Counter()
     total_steps = 0
+    parent_steps = parent_rollouts = 0
     history = []
     active_version = manifest_id = None
     has_proposals = any("proposal_receipt" in row for row in report["generations"])
@@ -237,6 +256,8 @@ def audit_gate(report, archive):
             baseline_verdicts = _audit_baseline(
                 row, oracle, task, PROPOSAL_INSTANCES[archive["scenario"]], report["args"],
             )
+            parent_steps += sum(control_steps(item['raw_result']['episode_data']) for item in row['baseline_measurements'])
+            parent_rollouts += len(row['baseline_measurements'])
             _audit_measurement_panel(row, "baseline", baseline_verdicts)
         executed = plan["executed"]
         count = len(executed)
@@ -282,7 +303,7 @@ def audit_gate(report, archive):
             _require(trace.get("applied_task_config") == plan.get("candidate_task_config"),
                      f"generation {gen}: applied task configuration mismatch")
             evidence_id = observed["evidence_id"]
-            verdict = _audit_measurement(raw, oracle, gen, evidence_id)
+            verdict = _audit_measurement(raw, oracle, gen, evidence_id,task)
             safe = verdict_safety(verdict)
             candidate_verdicts.append(verdict)
             _require(observed["safe"] is safe and observed["signal_values"] == verdict.signal_values,
@@ -349,6 +370,14 @@ def audit_gate(report, archive):
         "rollouts_by_phase": dict(phases), "control_steps": total_steps,
         "report_digest": hash_dict(report), "archive_digest": hash_dict(archive),
     }
+    if task.name in EXTENSIONS:
+        result['execution_cost']={
+            'parent_rollouts':parent_rollouts,'candidate_rollouts':sum(phases.values()),
+            'total_rollouts':parent_rollouts+sum(phases.values()),
+            'parent_control_steps':parent_steps,'candidate_control_steps':total_steps,
+            'total_control_steps':parent_steps+total_steps,'total_physics_steps':10*(parent_steps+total_steps),
+            'scope':'gate_and_parent_panels_excluding_optional_diagnostic_sweep',
+        }
     if has_proposals:
         result["proposals"] = len(history)
         result["active_version"] = active_version

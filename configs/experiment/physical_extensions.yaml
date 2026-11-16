@@ -1,0 +1,28 @@
+# Small controlled engineering panel; not paper data.
+benchmark:
+  scenarios: [moving_transport, moving_assembly, constrained_push, force_alignment, compliant_assembly]
+  num_generations: 2
+  rollouts_per_generation: 8
+  seed: 42
+gate:
+  planner: impact
+  multi_constraint: true
+  fresh_min: 2
+  boundary_cases: 1
+  reduction_budget: 2
+# Difficulty narrows physical domains only. Limits stay frozen in scenario_oracle.
+tasks:
+  moving_transport: {difficulty: easy}
+  moving_assembly: {difficulty: easy}
+  constrained_push: {difficulty: easy}
+  force_alignment: {difficulty: easy}
+  compliant_assembly: {difficulty: easy}
+risk_sampling:
+  distribution: uniform
+  samples: 2
+  seed: 73001
+selector:
+  epsilon: 0.09
+  alpha: 0.10
+# This panel demonstrates rejections; two risk draws cannot certify epsilon=.09.
+# A zero-violation candidate still needs enough independent draws to pass UCB.

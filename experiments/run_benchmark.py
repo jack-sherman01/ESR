@@ -106,6 +106,8 @@ from esrb.update_operators import (
 )
 from esrb.utils.hashing import hash_dict, hash_object
 
+from esrb.tasks.extensions.registry import EXTENSIONS,ExtensionOperator
+from esrb.tasks.extensions.settings import configured_task
 ALL_SCENARIOS = list(SCENARIO_LIMITS)
 _TEACHER_SEED_START = 2000
 
@@ -284,6 +286,18 @@ def _build_long_horizon_assembly(gens, rollouts, severity, seed):
         name="long_horizon_assembly_orientation",
     )
     return instance, AssemblyPolicy()
+
+
+def _build_extension(name,gens,rollouts,severity,seed,settings=None):
+    task_type,policy_type=EXTENSIONS[name]
+    instance=BenchmarkInstance(
+        task=configured_task(task_type,settings)(),update_operator=ExtensionOperator(name),
+        hazard_model=HazardModel(HazardType.POLICY_REGRESSION,severity,
+            "Controlled physical stress update","World pose and physics-rate contact evidence",
+            "Separation, contact load or assembly failure","Reject with unchanged engineering limits"),
+        oracle=scenario_oracle(name),generation_protocol=GenerationProtocol(gens,rollouts,seed),
+        name=name+"_controlled_update")
+    return instance,policy_type()
 
 
 def _build_episode_removal(gens, rollouts, severity, seed, train_episodes, train_steps):
@@ -1410,6 +1424,7 @@ def main() -> None:
     parser.add_argument("--seed",          type=int)
     parser.add_argument("--record",        action=argparse.BooleanOptionalAction,
                         help="Render and save videos.")
+    parser.add_argument("--skip-sweep",action="store_true",help="Skip the separate diagnostic seed sweep (gate budget is unchanged).")
     parser.add_argument("--out-dir",       type=str,   default="",
                         help="Output directory (default: auto-timestamped).")
     args = parser.parse_args()
@@ -1422,6 +1437,13 @@ def main() -> None:
         "fresh_min": 1, "replay_all": False, "boundary_cases": 0, "reduction_budget": 0,
         "train_episodes": 100, "train_steps": 2000, "record": False,
     }
+    if args.config is None:
+        # Preserve the original fixed/default command, including its early budget checks.
+        defaults['scenarios']=(ALL_SCENARIOS if args.gate_planner=='impact' else
+                               [name for name in ALL_SCENARIOS if name not in EXTENSIONS])
+        selected=args.scenarios if args.scenarios is not None else defaults['scenarios']
+        if set(selected)&EXTENSIONS.keys():
+            defaults.update(gate_planner="impact",multi_constraint=True)
     if args.config is not None:
         try:
             config = load_experiment_config(Path(args.config))
@@ -1475,11 +1497,14 @@ def main() -> None:
         try:
             for scenario in set(args.scenarios) | risk_config.bounds.keys():
                 task = TASKS_BY_NAME[SCENARIO_LIMITS[scenario][0]]
+                task=configured_task(task,config.task_settings_for(scenario) if hasattr(config,'task_settings_for') else {})
                 risk_protocols[scenario] = sampling_protocol(
                     task, risk_seed, risk_count, risk_config.bounds.get(scenario, {}),
                 )
         except ValueError as exc:
             parser.error(str(exc))
+    if set(args.scenarios)&EXTENSIONS.keys() and (args.gate_planner!='impact' or not args.multi_constraint):
+        parser.error('physical extension scenarios require the multi-constraint impact gate')
     if args.rollouts < 1:
         parser.error("--rollouts must be positive")
     if args.multi_constraint and args.gate_planner != "impact":
@@ -1590,6 +1615,10 @@ def main() -> None:
         elif scenario == "long_horizon_assembly":
             instance, agent = _build_long_horizon_assembly(args.generations, args.rollouts, args.severity, args.seed)
 
+        elif scenario in EXTENSIONS:
+            instance,agent=_build_extension(scenario,args.generations,args.rollouts,args.severity,args.seed,
+                config.task_settings_for(scenario) if config is not None and hasattr(config,'task_settings_for') else {})
+
         elif scenario == "episode_removal":
             instance, agent = _build_episode_removal(
                 args.generations, args.rollouts, args.severity, args.seed,
@@ -1696,7 +1725,7 @@ def main() -> None:
         print(f"  7. Pareto          : {pareto_str}")
 
         # ── 12-seed sweep ─────────────────────────────────────────────────
-        if json_proposer is None:
+        if json_proposer is None and not args.skip_sweep:
             print(f"\n  Running 12-seed sweep …")
             if scenario == "scripted_peg":
                 sweep = _sweep_scripted_peg(args.severity)
@@ -1720,6 +1749,17 @@ def main() -> None:
                 sweep = _sweep_tool_misuse(args.severity)
             elif scenario == "sensor_drift":
                 sweep = _sweep_sensor_drift(args.severity)
+            elif scenario in EXTENSIONS:
+                sweep=[]
+                for sweep_seed in range(12):
+                    task_type,policy_type=EXTENSIONS[scenario]
+                    for label in ('baseline','candidate'):
+                        policy=policy_type()
+                        if label=='candidate':
+                            policy=ExtensionOperator(scenario).apply(policy,severity=args.severity).candidate_policy
+                        measured=EvolutionLoop(instance,policy)._run_rollout(policy,sweep_seed,0)
+                        sweep.append({'label':label,'seed':sweep_seed,'safe':measured.oracle_verdict.safe,
+                                      'value':measured.oracle_verdict.signal_values.get(sig_key)})
             else:  # stochastic_force
                 sweep = _sweep_stochastic_force(args.severity)
 
@@ -1744,7 +1784,7 @@ def main() -> None:
         else:
             sweep = None
             sweep_pass = None
-            print("\n  Built-in fault-injection sweep skipped for JSON proposals")
+            print("\n  Separate seed sweep skipped")
 
         # ── Persist artifacts ─────────────────────────────────────────────
         demo_js = {
@@ -1830,6 +1870,14 @@ def main() -> None:
                 b, c = _record(LongHorizonAssemblyTask, baseline, child, sc_dir, max_steps=850,
                                base_label="Continuous released-part assembly",
                                cand_label="Carry yaw error blocks insertion")
+            elif scenario in EXTENSIONS:
+                task_type,policy_type=EXTENSIONS[scenario]
+                baseline=policy_type()
+                child=ExtensionOperator(scenario).apply(baseline,severity=args.severity).candidate_policy
+                settings=config.task_settings_for(scenario) if config is not None and hasattr(config,'task_settings_for') else {}
+                task_type=configured_task(task_type,settings)
+                b,c=_record(task_type,baseline,child,sc_dir,max_steps=task_type.MAX_STEPS,
+                            base_label=scenario+" baseline",cand_label=scenario+" controlled update")
             elif scenario == "episode_removal":
                 cand_ag = EpisodeRemovalOperator().apply(
                     agent, seed=42, severity=args.severity).candidate_policy

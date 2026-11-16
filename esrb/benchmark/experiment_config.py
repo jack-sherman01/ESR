@@ -92,12 +92,35 @@ class RiskSamplingConfig(_Section):
         return self
 
 
+class TaskSettings(_Section):
+    difficulty: Literal["easy", "medium", "hard"] = "hard"
+    reset_reference: dict[str, float] = Field(default_factory=dict)
+    reset_bounds: dict[str, Annotated[list[float], Field(min_length=2,max_length=2)]] = Field(default_factory=dict)
+    max_steps: int | None = Field(default=None,ge=1)
+
+
 class ExperimentConfig(_Profile):
     benchmark: _Benchmark = Field(default_factory=_Benchmark)
     gate: _Gate = Field(default_factory=_Gate)
     training: _Training = Field(default_factory=_Training)
     oracle: _Oracle = Field(default_factory=_Oracle)
     risk_sampling: RiskSamplingConfig | None = None
+    tasks: dict[str,TaskSettings] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def check_task_settings(self):
+        from esrb.tasks.extensions.registry import EXTENSIONS
+        from esrb.tasks.extensions.settings import configured_task
+        for name,settings in self.tasks.items():
+            if name not in EXTENSIONS:
+                raise ValueError(f"task settings not supported for {name}")
+            configured_task(EXTENSIONS[name][0],settings.model_dump(exclude_none=True))
+        return self
+
+    def task_settings_for(self,scenario):
+        value=self.tasks.get(scenario)
+        return value.model_dump(exclude_none=True) if value else {}
+
 
     @property
     def scenarios(self):

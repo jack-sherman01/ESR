@@ -30,7 +30,7 @@ def assembly_readback(trace):
     spin = np.r_[0., 2*np.arccos(np.clip(np.abs(np.sum(rotations[1:]*rotations[:-1], axis=1)), 0, 1)) / np.diff(times)]
     return {
         "insertion_depth_m": np.maximum(0., HOLE_TOP_Z - tips[:, 2]),
-        "assembly_xy_error_m": np.linalg.norm(tips[:, :2] - HOLE_XY, axis=1),
+        "assembly_xy_error_m": np.linalg.norm(tips[:, :2] - np.asarray(trace.get("socket_xy_m", HOLE_XY)), axis=1),
         "assembly_yaw_error_rad": angles, "assembly_tilt_rad": tilt,
         "part_speed_ms": speed, "part_angular_speed_rads": spin,
     }

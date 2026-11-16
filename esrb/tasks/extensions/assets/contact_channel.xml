@@ -1,0 +1,27 @@
+<mujoco model="contact_channel">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81" iterations="80" cone="elliptic"/>
+  <default><geom friction=".45 .005 .0001" condim="4" solref=".004 1"/></default>
+  <worldbody>
+    <light pos="0 -.3 1"/>
+    <camera name="overview" pos="0 -.5 .4" xyaxes="1 0 0 0 .6 1"/>
+    <geom name="floor" type="plane" size=".3 .2 .01" rgba=".8 .8 .8 1"/>
+    <geom name="rail_left" type="box" pos=".03 .045 .025" size=".15 .01 .025" rgba=".3 .5 .7 1"/>
+    <geom name="rail_right" type="box" pos=".03 -.045 .025" size=".15 .01 .025" rgba=".3 .5 .7 1"/>
+    <geom name="channel_endstop" type="box" pos=".16 0 .025" size=".01 .06 .025" rgba=".8 .3 .3 1"/>
+    <site name="target" type="box" pos=".09 0 .001" size=".02 .02 .001" rgba=".2 .8 .3 .4"/>
+    <body name="pusher">
+      <joint name="push_x" type="slide" axis="1 0 0" damping="3" range="-.2 .17"/>
+      <joint name="push_y" type="slide" axis="0 1 0" damping="3" range="-.08 .08"/>
+      <geom name="pusher_pad" type="box" pos="0 0 .018" size=".008 .022 .012" mass=".3" rgba=".3 .3 .4 1"/>
+    </body>
+    <body name="part" pos="-.10 0 .016">
+      <freejoint name="part_free"/>
+      <geom name="part_geom" type="box" size=".018 .012 .015" mass=".08" rgba=".95 .55 .1 1"/>
+    </body>
+  </worldbody>
+  <actuator>
+    <position joint="push_x" kp="1000" kv="35" ctrlrange="-.2 .17"/>
+    <position joint="push_y" kp="1000" kv="35" ctrlrange="-.08 .08"/>
+  </actuator>
+</mujoco>

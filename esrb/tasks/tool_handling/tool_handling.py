@@ -39,7 +39,7 @@ class ToolHandlingTask(BaseTask):
     boundary_fields = ("friction", "tool_mass_kg", "grasp_offset_m")
 
     def __init__(self):
-        self._model = mujoco.MjModel.from_xml_path(str(self.MODEL_XML))
+        self._model = self._make_model()
         self._data = mujoco.MjData(self._model)
         self._tool = self._model.body("tool").id
         self._gripper = self._model.body("gripper").id
@@ -49,6 +49,15 @@ class ToolHandlingTask(BaseTask):
         self._tool_q = self._model.jnt_qposadr[self._model.joint("tool_free").id]
         self._original_inertia = self._model.body_inertia[self._tool].copy()
         self._renderer = None
+
+    def _make_model(self):
+        return mujoco.MjModel.from_xml_path(str(self.MODEL_XML))
+
+    def _before_substep(self):
+        """Extension hook for externally prescribed obstacle motion."""
+
+    def _after_substep(self):
+        """Extension hook for physics-rate evidence, without resetting state."""
 
     @property
     def action_space(self):
@@ -155,8 +164,10 @@ class ToolHandlingTask(BaseTask):
         peaks = None
         contact_samples = []
         for _ in range(10):
+            self._before_substep()
             mujoco.mj_step(self._model, self._data)
             mujoco.mj_forward(self._model, self._data)
+            self._after_substep()
             values = self._contacts()
             contact_samples.append([float(self._data.time), *values[0], *values[1], *values[2], values[3]])
             if peaks is None:
@@ -231,7 +242,8 @@ class ToolHandlingTask(BaseTask):
             self._stage_ticks = 0
             self._log["stage_events"].append({"stage": self.STAGES[self._stage], "step": self._steps})
 
-    def evaluate(self, episode_data):
+    @staticmethod
+    def evaluate(episode_data):
         completed = max(0, len(episode_data.get("stage_events", [])) - 1)
         passed = completed == 5 and episode_data.get("success", False)
         return TaskResult(float(completed) / 5, passed, episode_data,

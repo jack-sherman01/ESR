@@ -18,12 +18,19 @@ def require(value, message):
         raise ValueError(message)
 
 
-def validate_assembly_measurements(trace):
+def validate_assembly_measurements(trace, *, task_type=LongHorizonAssemblyTask):
     """Recompute task predicates and stage boundaries from physical telemetry."""
     validate_tool_measurements(trace, retention_stages=RETENTION_STAGES)
+    # An unshifted legacy socket cannot acquire a different target from trace metadata.
+    expected_socket=np.array([0.10,0.0])
+    if task_type.name=='compliant_assembly':
+        expected_socket+=np.array([trace['reset_readback']['socket_dx_m'],trace['reset_readback']['socket_dy_m']])
+    require(np.shape(trace.get('socket_xy_m',expected_socket))==(2,)
+            and np.allclose(trace.get('socket_xy_m',expected_socket),expected_socket,atol=1e-12,rtol=0),
+            'assembly fixture frame mismatch')
     count = len(trace["stages"])
     require(count > 0 and trace["reset_count"] == 1, "assembly must contain one continuous reset")
-    require(trace["model_digest"] == hash_artifact(LongHorizonAssemblyTask.MODEL_XML), "assembly model mismatch")
+    require(trace["model_digest"] == hash_artifact(task_type.MODEL_XML), "assembly model mismatch")
     require(np.allclose(trace["times_s"], np.arange(1, count+1)*DT, atol=1e-10, rtol=0), "assembly clock discontinuity")
     require(trace["retention_stages"] == list(RETENTION_STAGES), "assembly retention protocol mismatch")
     positions, q = np.asarray(trace["tool_positions"]), np.asarray(trace["tool_quaternions"])
@@ -43,7 +50,7 @@ def validate_assembly_measurements(trace):
     expected_events = []
     previous = None
     for number, row in enumerate(records):
-        stage = LongHorizonAssemblyTask.STAGES[number]
+        stage = task_type.STAGES[number]
         start, stop = row["enter_step"], row["exit_step"]
         require(row["stage"] == stage and type(start) is int and type(stop) is int
                 and 0 <= start < stop <= count, "assembly stage order or interval mismatch")
@@ -84,8 +91,8 @@ def validate_assembly_measurements(trace):
                 or reason == "insertion_force_limit" and stage == "insert" and np.linalg.norm(trace["contact_forces"][index]) > 35.
                 or reason == "insertion_blocked_orientation" and stage == "insert" and stop-start >= 160
                 and values["assembly_yaw_error_rad"][index] > YAW_TOLERANCE_RAD
-                or reason == f"{stage}_timeout" and stop-start >= LongHorizonAssemblyTask.STAGE_BUDGETS[number]
-                or reason == "episode_timeout" and count >= LongHorizonAssemblyTask.MAX_STEPS
+                or reason == f"{stage}_timeout" and stop-start >= task_type.STAGE_BUDGETS[number]
+                or reason == "episode_timeout" and count >= task_type.MAX_STEPS
             )
             require(row["status"] == "failed" and number == len(records)-1 and valid_failure
                     and row["failure_reason"] == row["exit_condition"] == reason, "assembly failure reason mismatch")
@@ -157,7 +164,7 @@ class AssemblyOracle(MultiConstraintOracle):
         except (KeyError, ValueError, TypeError, IndexError):
             fields["safe"] = False
             fields["status"] = "VIOLATION" if base.violated_constraints else "UNKNOWN"
-            fields["rules"].append({"metric": "assembly_evidence_integrity", "limit": None,
+            fields["rules"].append({"metric": "assembly_evidence_integrity", "test": "force_safety", "limit": None,
                                      "status": "UNKNOWN", "value": None, "reason": "invalid_assembly_evidence"})
             reports = []
         return AssemblyVerdict(**fields, stage_reports=reports)

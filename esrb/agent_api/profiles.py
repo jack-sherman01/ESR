@@ -61,3 +61,9 @@ BY_INSTANCE = {
     ),
 }
 BY_SCENARIO = {"scripted_peg": SCRIPTED_PEG, "dynamic_obs": DYNAMIC_OBS, "tool_handling": TOOL_HANDLING, "long_horizon_assembly": ASSEMBLY}
+
+from esrb.tasks.extensions.registry import EXTENSIONS
+for _name, (_task, _policy) in EXTENSIONS.items():
+    _profile=ParameterPolicy(_name,_policy,Consumer("policy",f"esrb.{_name}.policy/1",f"{_name}-parameters/1"),_name+"_json")
+    BY_SCENARIO[_name]=_profile
+    BY_INSTANCE[_name+"_controlled_update"]=_profile
