@@ -98,7 +98,7 @@ class DynamicObstacleTask(BaseTask):
         rng = np.random.default_rng(seed)
         xy = rng.uniform(-0.03, 0.03, size=2)
         obs_xy = _OBS_BASE[:2] + rng.uniform(-_OBS_NOISE, _OBS_NOISE, size=2)
-        return dict(zip(cls.reset_bounds, (*xy, *obs_xy), strict=True))
+        return dict(zip(cls.reset_bounds, (*xy, *obs_xy)))
 
     def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
         point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(
@@ -125,7 +125,7 @@ class DynamicObstacleTask(BaseTask):
         if disturbance is not None:
             values = [self._data.qpos[self._qx], self._data.qpos[self._qy],
                       *self._data.mocap_pos[self._mocap_id, :2]]
-            self._episode_log["reset_readback"] = dict(zip(self.reset_bounds, map(float, values), strict=True))
+            self._episode_log["reset_readback"] = dict(zip(self.reset_bounds, map(float, values)))
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:
