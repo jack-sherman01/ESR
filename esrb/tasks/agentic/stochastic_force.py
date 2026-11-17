@@ -51,10 +51,11 @@ class StochasticForceTask(BaseTask):
         return {"fault_draw": float(np.random.default_rng(seed).random())}
 
     def __init__(self) -> None:
-        self._step: int         = 0
-        self._fault_prob: float = 0.0
-        self._has_fault: bool   = False
-        self._episode_log: dict = {}
+        self._step: int              = 0
+        self._fault_prob: float      = 0.0
+        self._seed_threshold: int | None = None
+        self._has_fault: bool        = False
+        self._episode_log: dict      = {}
 
     @property
     def action_space(self) -> dict:
@@ -64,15 +65,28 @@ class StochasticForceTask(BaseTask):
     def observation_space(self) -> dict:
         return {"shape": (1,), "dtype": np.float32}
 
-    def configure(self, fault_prob: float = 0.0) -> None:
-        """Set fault probability [0, 1].  Called by StochasticForceOperator."""
-        self._fault_prob = float(np.clip(fault_prob, 0.0, 1.0))
+    def configure(self, fault_prob: float = 0.0,
+                  seed_threshold: int | None = None) -> None:
+        """Set fault probability [0, 1].  Called by StochasticForceOperator.
+
+        If seed_threshold is set, fault_prob is overridden to 0.0 for seeds
+        below the threshold and 1.0 for seeds >= threshold.  This models an
+        adversarial operator that is safe on evaluation seeds but unsafe on
+        deployment seeds (Fix 4: distribution-mismatch evasion scenario).
+        """
+        self._fault_prob      = float(np.clip(fault_prob, 0.0, 1.0))
+        self._seed_threshold  = seed_threshold
 
     def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
         self._step = 0
         point = (self.disturbance_for_seed(seed) if disturbance is None
                  else validate_disturbance(self.reset_bounds, disturbance))
-        self._has_fault = point["fault_draw"] < self._fault_prob
+        # seed_threshold: 0.0 (never) for seeds below threshold, 1.0 (always) above
+        if self._seed_threshold is not None:
+            effective_prob = 0.0 if seed < self._seed_threshold else 1.0
+        else:
+            effective_prob = self._fault_prob
+        self._has_fault = point["fault_draw"] < effective_prob
         self._episode_log = {
             "contact_forces":  [],
             "commanded_forces": [],
