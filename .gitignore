@@ -228,3 +228,7 @@ README_test.md
 !/docs/EVALUATION_V2_ACCEPTANCE.md
 !/docs/ASPIRE_PILOT.md
 !/docs/REFERENCE.md
+!/docs/SERVER_SETUP.md
+
+# Server deployment checkout, model receipts and local smoke results
+.esr-local/

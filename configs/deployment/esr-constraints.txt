@@ -1,0 +1,20 @@
+# Resolved and checked under Linux x86_64 / CPython 3.12.
+annotated-types==0.8.0
+glfw==2.11.0
+markdown-it-py==4.3.0
+mdurl==0.1.2
+mujoco==4.0.0
+mujoco-core==4.0.0
+mujoco-studio==4.0.0
+networkx==3.7
+numpy==2.5.4
+pydantic==2.14.3
+pydantic-core==2.50.4
+pygments==2.21.0
+pyopengl==3.1.10
+pyyaml==6.0.3
+rich==15.0.0
+scipy==1.18.1
+typing-extensions==4.16.0
+typing-inspection==0.4.5
+websockets==17.4

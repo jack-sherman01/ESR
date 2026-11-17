@@ -1,0 +1,10 @@
+{
+  "original_local_head": "ed096465a371b9302e2e24c39d19fb1469a13659",
+  "patched_files": {
+    "configs/dependency-lock.json": "77cf0d557e7e5a5372600a4fa647270006f9a6fb22e7be23df677f34e1931c87",
+    "configs/profiles/rtx3060_local.json": "6e5ed71d3259ad9842e089d400487e6a08fd1eeb6993599518234f6a904c0de9",
+    "src/cap_harness/libero/adapter.py": "a71642c158bd2d130412d36a95bb994bdefaea5b2b78573d87f4885e8f5702f6",
+    "tests/test_libero_adapter_fake.py": "4b3d9e18e81f653fd771db471496333475e39a80d82243eaae2a6e25c1e5eec9"
+  },
+  "upstream_commit": "fa00f0ef2bc1d91d594b9aa502c22133c9f538f7"
+}

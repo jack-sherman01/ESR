@@ -1,0 +1,75 @@
+diff --git a/configs/dependency-lock.json b/configs/dependency-lock.json
+index 2743ed1..09a44df 100644
+--- a/configs/dependency-lock.json
++++ b/configs/dependency-lock.json
+@@ -47,6 +47,12 @@
+           "l40",
+           "rtx4090"
+         ]
++      },
++      "sm_86": {
++        "cuda_arch_list": "8.6",
++        "profiles": [
++          "rtx3060_local"
++        ]
+       }
+     },
+     "cuda_runtime": "12.8",
+diff --git a/configs/profiles/rtx3060_local.json b/configs/profiles/rtx3060_local.json
+new file mode 100644
+index 0000000..463337e
+--- /dev/null
++++ b/configs/profiles/rtx3060_local.json
+@@ -0,0 +1,19 @@
++{
++  "schema": "cap-harness/profile/1",
++  "name": "rtx3060_local",
++  "arch": "sm_86",
++  "description": "Local RTX3060 Laptop 6GB, serial simulation; GraspNet CPU placement is provided by the local launcher override.",
++  "venv_root": null,
++  "gpus": {
++    "sam3": 0,
++    "contact_graspnet": 0,
++    "curobo": 0
++  },
++  "concurrency": {
++    "sam3": 1,
++    "contact_graspnet": 1,
++    "pyroki": 1,
++    "curobo": 1
++  },
++  "ports": {}
++}
+diff --git a/src/cap_harness/libero/adapter.py b/src/cap_harness/libero/adapter.py
+index a50e0a4..97aef7e 100644
+--- a/src/cap_harness/libero/adapter.py
++++ b/src/cap_harness/libero/adapter.py
+@@ -435,7 +435,7 @@ class LiberoAdapter:
+             # randomization -- which is what previously pinned all 50 seeds to one
+             # scene -- so seeded mode applies no saved state at all.
+             state_index = None
+-        elif not init_states:
++        elif len(init_states) == 0:
+             raise ValueError(
+                 f"{metadata.task_ref} ships no saved init states, so init_mode "
+                 "'saved' cannot select a layout; use init_mode 'seeded'"
+diff --git a/tests/test_libero_adapter_fake.py b/tests/test_libero_adapter_fake.py
+index b27750e..43cb62e 100644
+--- a/tests/test_libero_adapter_fake.py
++++ b/tests/test_libero_adapter_fake.py
+@@ -462,3 +462,15 @@ def test_metadata_extensions_are_allowlisted_and_close_is_idempotent(tmp_path) -
+     adapter.close()
+     adapter.close()
+     assert env.close_calls == 1
++
++
++def test_reset_accepts_numpy_init_state_bank(tmp_path) -> None:
++    """Saved LIBERO states are arrays, whose truth value is ambiguous."""
++    adapter, env, _ = _build_adapter(tmp_path)
++    adapter.registry.init_states = np.asarray(adapter.registry.init_states)
++    try:
++        observation = adapter.reset(("libero_goal_task", 2), seed=2)
++        assert env.selected_init_state == pytest.approx(0.2)
++        np.testing.assert_allclose(observation.robot_state.joint_positions["primary"], 0.2)
++    finally:
++        adapter.close()

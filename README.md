@@ -54,6 +54,25 @@ Moving Assembly adds insertion and released-part verification. Force Alignment
 uses contact to correct a part's position/yaw; Compliant Assembly adjusts insertion
 under fixture displacement using contact feedback.
 
+## Linux server setup
+
+From a fresh clone on Linux x86_64 with Python 3.12 and `uv`:
+
+```bash
+bash scripts/setup_esr.sh install
+bash scripts/setup_esr.sh smoke
+```
+
+To install the optional ASPIRE simulator stack on an NVIDIA node:
+
+```bash
+bash scripts/setup_aspire.sh install
+bash scripts/setup_aspire.sh smoke
+```
+
+ASPIRE uses separate Python environments. See [server deployment](docs/SERVER_SETUP.md) for
+CUDA/EGL requirements, model downloads, starting the local providers, and verifying the setup.
+
 ## Quick start
 
 ```bash
