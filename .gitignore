@@ -222,3 +222,9 @@ __marimo__/
 
 private/
 .vscode/
+README_test.md
+/docs/*
+!/docs/EVALUATION_PROTOCOL.md
+!/docs/EVALUATION_V2_ACCEPTANCE.md
+!/docs/ASPIRE_PILOT.md
+!/docs/REFERENCE.md

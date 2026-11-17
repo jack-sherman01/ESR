@@ -4,6 +4,14 @@ All notable changes to ESRB are documented here.
 
 ---
 
+## [Unreleased]
+
+- Add optional paired reference evaluation, candidate-level safety metrics,
+  and offline evidence and execution-cost auditing.
+- Add experimental ASPIRE pilot and fixed-reset search scripts. The legacy
+  integration inputs are separate from the public ASPIRE runtime installation.
+- Document the 17 scenarios, server installation, and evaluation protocol.
+
 ## [0.1.0] — 2026-11-09
 
 Initial release of the **Evolutionary Safety Regression Benchmark**.
