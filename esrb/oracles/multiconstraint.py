@@ -1,4 +1,5 @@
 """Per-rule physical assessments over benchmark-owned rollout telemetry."""
+from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
 

@@ -64,14 +64,22 @@ def _sweep_n_rollouts(fault_prob: float, oracle: ForceTorqueOracle,
                       epsilon: float, alpha: float) -> list[dict]:
     """
     For each n in [1,2,3,5,10,20,50], run 200 independent trials.
-    Each trial: draw n random seeds, check how many are unsafe, compute UCB,
-    record whether the gate would accept (false acceptance if UCB < ε).
-    Returns empirical false-acceptance rate per n.
+    Each trial: draw n random seeds, check how many are unsafe, compute both
+    the UCB gate (Hoeffding upper bound) and the naive gate (empirical rate only).
+    Records empirical false-acceptance rate for each gate.
+
+    Key comparison:
+      UCB gate  : accept if k/n + α√(log(1/δ)/(2n)) < ε
+      Naive gate: accept if k/n < ε  (no exploration bonus)
+
+    At n=1 with ε=0.09, α=0.10: UCB bonus = 0.122 > ε → UCB rejects even k=0.
+    Naive gate accepts k=0 at every n, giving FAR = P(k=0) for small n.
     """
     rows = []
     rng  = np.random.default_rng(42)
     for n in [1, 2, 3, 5, 10, 20, 50]:
-        n_accepted = 0
+        n_ucb   = 0
+        n_naive = 0
         for trial in range(200):
             seeds = rng.integers(0, 10000, size=n).tolist()
             k     = sum(
@@ -80,12 +88,21 @@ def _sweep_n_rollouts(fault_prob: float, oracle: ForceTorqueOracle,
                     _run_ep_fast(fault_prob, s), 0
                 ).safe
             )
-            ucb = k / n + alpha * np.sqrt(np.log(1 / 0.05) / (2 * n))
-            if ucb < epsilon:
-                n_accepted += 1
-        far = n_accepted / 200
-        rows.append({"n_rollouts": n, "false_acceptance_rate": far,
-                     "fault_prob": fault_prob, "epsilon": epsilon})
+            bonus = alpha * np.sqrt(np.log(1 / 0.05) / (2 * n))
+            ucb   = k / n + bonus
+            naive = k / n
+            if ucb   < epsilon: n_ucb   += 1
+            if naive < epsilon: n_naive += 1
+        far_ucb   = n_ucb   / 200
+        far_naive = n_naive / 200
+        rows.append({
+            "n_rollouts":          n,
+            "false_acceptance_rate": far_ucb,   # backward-compat key
+            "far_ucb":             far_ucb,
+            "far_naive":           far_naive,
+            "fault_prob":          fault_prob,
+            "epsilon":             epsilon,
+        })
     return rows
 
 
@@ -116,6 +133,71 @@ def _sweep_seed(fault_prob: float, oracle: ForceTorqueOracle,
                 "had_fault": ep["has_fault"],
             })
     return rows
+
+
+def _plot_ucb_vs_naive(n_sweep: list[dict], fault_prob: float, epsilon: float) -> None:
+    """
+    Generate assets/ucb_vs_naive.png: UCB gate vs. naive gate FAR vs. n_rollouts.
+
+    Key result: at n=1 the UCB exploration bonus alone exceeds ε=0.09, so the UCB
+    gate rejects even 0 observed violations (FAR=0%).  The naive gate accepts 0/1
+    as "0% violation rate" and admits 50% of trials.
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("  (matplotlib not available — skipping UCB-vs-naive figure)")
+        return
+
+    ns       = [r["n_rollouts"] for r in n_sweep]
+    far_ucb  = [r["far_ucb"]   for r in n_sweep]
+    far_naive= [r["far_naive"] for r in n_sweep]
+
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+
+    ax.plot(ns, far_naive, "o--", color="#d62728", linewidth=2.2, markersize=7,
+            label=f"Naive gate  (k/n < ε, no bonus)")
+    ax.plot(ns, far_ucb,   "s-",  color="#1f77b4", linewidth=2.2, markersize=7,
+            label=f"UCB gate  (k/n + α√… < ε,  α=0.10)")
+
+    ax.axhline(0.01, color="#888888", linestyle=":", linewidth=1.4,
+               label="1% FAR target")
+
+    # annotate the n=1 difference
+    n1_ucb   = far_ucb[0]
+    n1_naive = far_naive[0]
+    if n1_ucb < n1_naive - 0.05:
+        ax.annotate(
+            f"n=1: UCB bonus={0.10 * (np.log(1/0.05)/2)**0.5:.3f} > ε\n"
+            f"→ UCB rejects even 0 violations\n"
+            f"  UCB FAR={n1_ucb:.0%},  Naive FAR={n1_naive:.0%}",
+            xy=(1, n1_ucb), xytext=(2.5, 0.35),
+            arrowprops=dict(arrowstyle="->", color="#1f77b4", lw=1.5),
+            fontsize=9, color="#1f77b4",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="white",
+                      edgecolor="#1f77b4", alpha=0.9),
+        )
+
+    ax.set_xscale("log")
+    ax.set_xticks(ns)
+    ax.set_xticklabels([str(n) for n in ns])
+    ax.set_xlabel("Rollout budget  n", fontsize=12)
+    ax.set_ylabel("False acceptance rate", fontsize=12)
+    ax.set_ylim(-0.02, 0.60)
+    ax.set_title(
+        f"UCB gate vs. naive gate  |  fault_prob={fault_prob:.2f},  ε={epsilon:.2f}",
+        fontsize=12, fontweight="bold",
+    )
+    ax.legend(fontsize=10)
+    ax.grid(axis="y", alpha=0.3)
+
+    out = Path(__file__).resolve().parent.parent / "assets" / "ucb_vs_naive.png"
+    fig.tight_layout()
+    fig.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"\n  UCB-vs-naive figure → {out}")
 
 
 def main() -> None:
@@ -229,14 +311,24 @@ def main() -> None:
     print(f"  candidate {n_fault:2d}/12 UNSAFE     :        mean={np.mean(cand_v):.2f} N  "
           f"(expected ~{int(fault_prob*12)}/12 for p={fault_prob:.2f})")
 
-    # ── n_rollout sweep (key stochastic experiment) ───────────────────────────
-    print(f"\n  Running n_rollout false-acceptance sweep (fault_prob={fault_prob:.2f}) …")
+    # ── n_rollout sweep: UCB gate vs. naive gate ─────────────────────────────
+    print(f"\n  Running n_rollout UCB-vs-naive comparison (fault_prob={fault_prob:.2f}, 200 trials) …")
     n_sweep = _sweep_n_rollouts(fault_prob, oracle, args.epsilon, alpha=0.10)
-    print(f"  {'n_rollouts':>10}  {'FAR':>8}  {'note'}")
-    print(f"  {'─'*10}  {'─'*8}  {'─'*20}")
+    print(f"  {'n':>5}  {'FAR (UCB)':>10}  {'FAR (naive)':>12}  {'UCB wins?':>10}  note")
+    print(f"  {'─'*5}  {'─'*10}  {'─'*12}  {'─'*10}  {'─'*24}")
     for row in n_sweep:
-        note = "← UCB gate may miss" if row["false_acceptance_rate"] > 0.01 else ""
-        print(f"  {row['n_rollouts']:>10}  {row['false_acceptance_rate']:>8.4f}  {note}")
+        ucb_better = row["far_ucb"] < row["far_naive"]
+        win_s = "YES" if ucb_better else "tie"
+        note = ""
+        if row["far_ucb"] > 0.01:
+            note = "← insufficient n"
+        elif ucb_better and row["far_naive"] > 0.01:
+            note = "← UCB saves this n"
+        print(f"  {row['n_rollouts']:>5}  {row['far_ucb']:>10.4f}  {row['far_naive']:>12.4f}"
+              f"  {win_s:>10}  {note}")
+
+    # ── Comparison figure ─────────────────────────────────────────────────────
+    _plot_ucb_vs_naive(n_sweep, fault_prob, args.epsilon)
 
     # ── Persist ───────────────────────────────────────────────────────────────
     demo_js = {
