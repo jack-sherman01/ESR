@@ -1,5 +1,5 @@
 """
-ESRB combined benchmark runner — all twelve hazard scenarios.
+ESRB combined benchmark runner — controlled manipulation and hazard scenarios.
 
 Scenarios
 ---------
@@ -49,6 +49,7 @@ import argparse
 import json
 import sys
 import time
+import uuid
 from dataclasses import asdict, replace
 from datetime import datetime
 from pathlib import Path
@@ -82,15 +83,9 @@ from esrb.detection.gate_audit import TASKS_BY_NAME, audit_gate
 from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.detection.risk_sampling import risk_cases, risk_summary, sampling_protocol
 from esrb.detection.risk_selection import CandidateEvaluation, RiskSensitiveSelector
-from esrb.metrics import (
-    capability_safety_pareto,
-    detection_recall_precision,
-    evaluator_integrity_failure_rate,
-    regression_discovery_cost,
-    safety_margin_degradation,
-    safety_regression_rate,
-    unsafe_false_acceptance_rate,
-)
+from esrb.metrics.protocol import load_protocol, freeze_evaluation, validate_frozen
+from esrb.metrics.reference import collect_reference
+from esrb.metrics.reporting import evaluate_report, print_metrics
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle, scenario_oracle, verdict_safety
 from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceTask
@@ -588,10 +583,22 @@ def _panel_safety(labels):
 def run_loop(instance, agent, selector, severity, n_rollouts, *,
              gate_planner="fixed", fresh_min=1, training_seed_stop=0, replay_all=False,
              peg_boundary_cases=0, peg_reduction_budget=0, boundary_cases=0, reduction_budget=0,
-             proposer: CandidateProposer | None = None, risk_protocol=None):
+             proposer: CandidateProposer | None = None, risk_protocol=None, evaluation_protocol=None):
     """Run the CE-EST loop, returning (EvolutionLoop, list[gen_dict])."""
     use_impact = gate_planner == "impact"
     task = instance.task
+    if evaluation_protocol is not None:
+        validate_frozen(evaluation_protocol)
+        frozen_settings=evaluation_protocol['settings']
+        require(use_impact and isinstance(instance.oracle,MultiConstraintOracle),
+                'reference evaluation requires multi-constraint impact execution')
+        require(frozen_settings['oracle']==instance.oracle.protocol()
+                and frozen_settings['generations']==instance.generation_protocol.num_generations
+                and frozen_settings['budgets']['candidate_per_generation']==n_rollouts
+                and frozen_settings['gate_sampling']==risk_protocol
+                and frozen_settings['gate_selector']['epsilon']==selector.epsilon
+                and frozen_settings['gate_selector']['alpha']==selector.alpha,
+                'runtime differs from frozen evaluation protocol')
     multi = instance.oracle if isinstance(instance.oracle, MultiConstraintOracle) else None
     if risk_protocol is not None and multi is None:
         raise ValueError("independent risk sampling requires the multi-constraint impact gate")
@@ -622,7 +629,23 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
         proto.seed + (proto.num_generations - 1) * 1000 + proto.rollouts_per_generation,
     )
 
+    clock_start = time.perf_counter()
+    execution_events = []
+
+    def record_event(result, role, case, *, task=task):
+        steps = control_steps(result.episode_data)
+        physics = None
+        if hasattr(task, '_model') and hasattr(task, '_data'):
+            physics = int(round(float(task._data.time) / float(task._model.opt.timestep)))
+        execution_events.append({
+            'generation': gen, 'role': role, 'phase': case.get('phase',role),
+            'seed': case['seed'], 'control_steps': steps, 'physics_steps': physics,
+            'safe': verdict_safety(result.oracle_verdict) if has_oracle_evidence(result) else None,
+            'elapsed_s': time.perf_counter()-clock_start,
+        })
+
     for gen in range(proto.num_generations):
+        event_start = len(execution_events)
         source = proposer
         if controlled:
             source = TrustedOperatorProposer(policy_profile, instance.update_operator, loop.agent, proto.seed, severity)
@@ -642,11 +665,14 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
 
         parent_seed = proto.seed + gen * 1000
         parent_seeds = range(parent_seed, parent_seed + proto.rollouts_per_generation)
-        if use_impact:
-            parent_cases = [gate_case(task, seed, "parent") for seed in parent_seeds]
-            results = [_run_structured_case(loop, loop.agent, case, gen) for case in parent_cases]
-        else:
-            results = [loop._run_rollout(loop.agent, seed, gen) for seed in parent_seeds]
+        parent_cases = [gate_case(task, seed, "parent") if use_impact else
+                        {'seed':seed,'phase':'parent'} for seed in parent_seeds]
+        results = []
+        for case in parent_cases:
+            measured = (_run_structured_case(loop, loop.agent, case, gen) if use_impact else
+                        loop._run_rollout(loop.agent, case['seed'], gen))
+            results.append(measured)
+            record_event(measured,'parent',case)
         mean_score = sum(r.task_score for r in results) / len(results)
         baseline_labels = [verdict_safety(r.oracle_verdict) for r in results]
         any_unsafe = False in baseline_labels
@@ -698,6 +724,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             def execute_case(case):
                 case.update(gate_case(task, case["seed"], case["phase"], case.get("disturbance")))
                 result = _run_structured_case(loop, candidate, case, gen)
+                record_event(result,'candidate',case)
                 cx_id = _record_gate_violation(
                     loop, result, case, gen, candidate_digest, candidate_config,
                 )
@@ -728,10 +755,12 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             try:
                 if candidate_config is not None:
                     task.configure(**candidate_config)
-                cand_results = [
-                    loop._run_rollout(candidate, parent_seed + r, gen)
-                    for r in range(loop.n_candidate_rollouts)
-                ]
+                cand_results = []
+                for r in range(loop.n_candidate_rollouts):
+                    case={'seed':parent_seed+r,'phase':'fixed'}
+                    measured=loop._run_rollout(candidate,case['seed'],gen)
+                    cand_results.append(measured)
+                    record_event(measured,'candidate',case)
             finally:
                 if parent_config is not None:
                     task.configure(**parent_config)
@@ -763,6 +792,15 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 generation=gen,
             )
             selected = selector.select([cand_eval])
+
+        # Gate selection is already fixed. These trials never enter its inputs.
+        reference_panel = None
+        if evaluation_protocol is not None:
+            reference_panel = collect_reference(
+                instance,loop.agent,candidate,gen,evaluation_protocol,profile=policy_profile,
+                receipt=receipt,parent_config=parent_config,candidate_config=candidate_config,
+                encode=_raw_gate_result,record_event=record_event,
+            )
 
         loop.lineage.record(GenerationRecord(
             generation=gen,
@@ -808,7 +846,7 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
                 for r in cand_results
             ],
         }
-        if multi is not None and use_impact:
+        if use_impact:
             baseline_raw = [
                 _raw_gate_result(result, case, parent_digest)
                 for result, case in zip(results, parent_cases, strict=True)
@@ -834,9 +872,13 @@ def run_loop(instance, agent, selector, severity, n_rollouts, *,
             "accepted": row["accepted"], "promoted": promoted,
             "active_version_after": active_version,
         }
+        row['execution_events'] = execution_events[event_start:]
+        if reference_panel is not None:
+            row['reference_evaluation'] = reference_panel
+        public_scores = ([item['raw_result']['task_score'] for item in reference_panel['development']]
+                         if reference_panel is not None else [r.task_score for r in feedback_results])
         public_history.append({
-            "generation": gen + 1, "slot": 0,
-            "task_scores": [result.task_score for result in feedback_results],
+            "generation": gen + 1, "slot": 0, "task_scores": public_scores,
         })
         gen_rows.append(row)
 
@@ -1331,61 +1373,10 @@ def _compute_metrics(
     signal_key: str,
     n_rollouts: int,
     elapsed_s: float,
+    *, report=None,
 ) -> dict:
-    """Compute all 7 ESRB metrics from loop data."""
-    # 1. Safety Regression Rate
-    srr = safety_regression_rate(records)
-
-    # 2. Unsafe False Acceptance Rate
-    evaluated = [r for r in gen_rows if r["candidate_safe"] is not None]
-    oracle_unsafe = [not r["candidate_safe"] for r in evaluated]
-    gate_accepted = [r["accepted"] for r in evaluated]
-    ufar = unsafe_false_acceptance_rate(oracle_unsafe, gate_accepted)
-
-    # 3. Evaluator Integrity Failure Rate (baseline rollouts: task success vs oracle safe)
-    baseline = [
-        (success, safe) for row in gen_rows
-        for success, safe in zip(row["baseline_rollout_success"], row["baseline_rollout_safe"], strict=True)
-        if safe is not None
-    ]
-    eifr = evaluator_integrity_failure_rate([success for success, _ in baseline], [safe for _, safe in baseline])
-
-    # 4. Detection Recall / Precision for known labels in the controlled scenarios
-    true_unsafe: list[bool] = []
-    detected: list[bool] = []
-    for row in gen_rows:
-        for label, key in ((False, "baseline_rollout_safe"), (True, "candidate_rollout_safe")):
-            for safe in row[key]:
-                if safe is not None:
-                    true_unsafe.append(label)
-                    detected.append(not safe)
-    det = detection_recall_precision(true_unsafe, detected)
-
-    # 5. Safety Margin Degradation (baseline gen-0 vs latest)
-    smd = safety_margin_degradation(signal_key, records)
-
-    # 6. Regression Discovery Cost
-    s_per_gen = elapsed_s / max(len(records), 1)
-    rdc = regression_discovery_cost(records, n_rollouts, s_per_gen)
-
-    # 7. Capability–Safety Pareto
-    pareto = capability_safety_pareto(records)
-
-    return {
-        "srr":          srr,
-        "ufar":         ufar,
-        "eifr":         eifr,
-        "recall":       det.recall,
-        "precision":    det.precision,
-        "f1":           det.f1,
-        "smd":          smd,
-        "rdc_rollouts": rdc.n_rollouts,
-        "rdc_wall_s":   round(rdc.wall_clock_s, 2),
-        "pareto":       [
-            {"gen": p.generation, "score": p.task_score, "violated": p.safety_violated}
-            for p in pareto
-        ],
-    }
+    """Version-2 reporting; generations without hidden references stay unlabelled."""
+    return evaluate_report(report or {'scenario':'unspecified','generations':gen_rows})
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -1393,6 +1384,7 @@ def _compute_metrics(
 def main() -> None:
     parser = argparse.ArgumentParser(description="ESRB combined benchmark runner")
     parser.add_argument("--config", help="Load an experiment profile (YAML).")
+    parser.add_argument('--evaluation-protocol', help='Optional frozen report-only paired reference trials (additional budget).')
     parser.add_argument("--scenarios",     nargs="+",
                         choices=ALL_SCENARIOS,
                         help="Which scenarios to run (default: all, or the list from --config).")
@@ -1556,11 +1548,34 @@ def main() -> None:
         except (OSError, ProposalError) as exc:
             parser.error(str(exc))
 
+    evaluation_settings = None
+    if args.evaluation_protocol:
+        try:
+            evaluation_settings = load_protocol(args.evaluation_protocol)
+        except (OSError,ValueError) as exc:
+            parser.error(str(exc))
+        if args.gate_planner != 'impact' or not args.multi_constraint:
+            parser.error('--evaluation-protocol requires impact with multi-constraint measurements')
+        unknown = evaluation_settings.bounds.keys() - set(ALL_SCENARIOS)
+        if unknown:
+            parser.error('unknown scenarios in evaluation bounds: '+', '.join(sorted(unknown)))
+        needed=2*evaluation_settings.reference_samples*args.generations*len(args.scenarios)
+        dev_needed=evaluation_settings.development_samples*args.generations*len(args.scenarios)
+        if dev_needed > evaluation_settings.max_development_rollouts:
+            parser.error(f'development rollout budget exceeded: need {dev_needed}, cap {evaluation_settings.max_development_rollouts}')
+        if needed > evaluation_settings.max_reference_rollouts:
+            parser.error(f'reference rollout budget exceeded: need {needed}, cap {evaluation_settings.max_reference_rollouts}')
+        if evaluation_settings.epsilon != args.epsilon:
+            parser.error('reference epsilon must match the gate epsilon; use a new protocol rather than relabel results')
+    run_id=uuid.uuid4().hex
+
     if args.out_dir:
         out_root = Path(args.out_dir)
     else:
         stamp    = datetime.now().strftime("%Y%m%d_%H%M%S")
         out_root = log_dir / f"{stamp}_benchmark"
+    if evaluation_settings is not None and (out_root.exists() or out_root.is_symlink()):
+        parser.error('frozen evaluation requires a new output directory')
     out_root.mkdir(parents=True, exist_ok=True)
 
     print("\n╔══════════════════════════════════════════════════════╗")
@@ -1648,6 +1663,20 @@ def main() -> None:
             instance = replace(instance, oracle=oracle)
             threshold = limits.get(sig_key, threshold)
 
+        frozen_evaluation = None
+        if evaluation_settings is not None:
+            try:
+                frozen_evaluation=freeze_evaluation(
+                    evaluation_settings,task=instance.task,oracle=instance.oracle,scenario=scenario,
+                    run_id=run_id,generations=args.generations,gate_budget=args.rollouts,
+                    parent_budget=instance.generation_protocol.rollouts_per_generation,
+                    run_seed=args.seed,gate_sampling=risk_protocols.get(scenario),gate_alpha=alpha,
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+            with (sc_dir/'evaluation_protocol.json').open('x') as handle:
+                json.dump(frozen_evaluation,handle,indent=2)
+
         # ── CE-EST loop ───────────────────────────────────────────────────
         print(f"\n  {'Gen':>4}  {'Score':>8}  {'Safe?':>6}  "
               f"{'Cx':>4}  {'Baseline':>12}  {'Candidate':>12}  Decision")
@@ -1674,6 +1703,7 @@ def main() -> None:
                     peg_reduction_budget=args.peg_reduction_budget,
                     boundary_cases=args.boundary_cases, reduction_budget=args.reduction_budget,
                     proposer=json_proposer, risk_protocol=risk_protocols.get(scenario),
+                    evaluation_protocol=frozen_evaluation,
                 )
             except ProposalError as exc:
                 parser.error(str(exc))
@@ -1698,31 +1728,15 @@ def main() -> None:
 
         elapsed_loop = time.time() - t0
         records = loop.lineage.all()
-        metrics = _compute_metrics(gen_rows, records, sig_key, args.rollouts, elapsed_loop)
-        if json_proposer is not None:
-            # The built-in sweep and detection labels assume every candidate is a fault injection.
-            for metric in ("recall", "precision", "f1"):
-                metrics[metric] = None
-        srr     = metrics["srr"]
-        print(f"\n  SRR={srr:.3f}  |  Counterexamples={len(loop.cx_library)}"
-              f"  |  Lineage={loop.lineage.digest()[:12]}…")
-        print(f"\n  ── All 7 metrics ──────────────────────────────────")
-        print(f"  1. SRR   (safety regression rate)      : {metrics['srr']:.3f}")
-        print(f"  2. UFAR  (unsafe false acceptance)     : {metrics['ufar']:.3f}")
-        print(f"  3. EIFR  (evaluator integrity failure) : {metrics['eifr']:.3f}")
-        if json_proposer is None:
-            print(f"  4. Detection  recall={metrics['recall']:.3f}  "
-                  f"precision={metrics['precision']:.3f}  F1={metrics['f1']:.3f}")
-        else:
-            print("  4. Detection  unavailable without controlled-fault labels")
-        print(f"  5. Safety margin Δ ({sig_key}): {metrics['smd']:+.4f} {sig_unit.strip()}")
-        print(f"  6. Discovery cost  : {metrics['rdc_rollouts']} rollouts  "
-              f"{metrics['rdc_wall_s']:.1f} s")
-        pareto_str = "  ".join(
-            f"g{p['gen']}:{p['score']:.3f}{'✗' if p['violated'] else '✓'}"
-            for p in metrics["pareto"]
-        )
-        print(f"  7. Pareto          : {pareto_str}")
+        metrics_input={'scenario':scenario,'instance_name':instance.name,'task_name':instance.task.name,
+                       'run_id':run_id,'generations':gen_rows,'selector_alpha':alpha,
+                       'args':vars(args).copy()}
+        if frozen_evaluation is not None:
+            metrics_input.update(evaluation_protocol=frozen_evaluation,
+                                 measurement_protocol=instance.oracle.protocol())
+        metrics = _compute_metrics(gen_rows,records,sig_key,args.rollouts,elapsed_loop,report=metrics_input)
+        srr = metrics['srr']
+        print_metrics(metrics)
 
         # ── 12-seed sweep ─────────────────────────────────────────────────
         if json_proposer is None and not args.skip_sweep:
@@ -1789,11 +1803,15 @@ def main() -> None:
         # ── Persist artifacts ─────────────────────────────────────────────
         demo_js = {
             "scenario": scenario, "args": vars(args).copy(),
+            "run_id": run_id, "instance_name": instance.name, "task_name": instance.task.name,
+            "selector_alpha": alpha,
             "srr": srr, "cx_count": len(loop.cx_library),
             "signal_key": sig_key, "threshold": threshold,
             "metrics": metrics,
             "generations": gen_rows,
         }
+        if frozen_evaluation is not None:
+            demo_js['evaluation_protocol']=frozen_evaluation
         if scenario in risk_protocols:
             demo_js["risk_sampling"] = risk_protocols[scenario]
         if isinstance(instance.oracle, MultiConstraintOracle) and args.gate_planner == "impact":
@@ -1939,7 +1957,8 @@ def main() -> None:
             sweep_s = "PASS" if r["sweep_pass"] else "FAIL"
             base_s = f"{r['base_mean']:.4f} {r['sig_unit']}"
             cand_s = f"{r['cand_mean']:.4f} {r['sig_unit']}"
-        print(f"  {r['scenario']:<18}  {r['srr']:>5.3f}  {r['cx_count']:>4}  "
+        srr_text='N/A' if r['srr'] is None else f"{r['srr']:.3f}"
+        print(f"  {r['scenario']:<18}  {srr_text:>5}  {r['cx_count']:>4}  "
               f"{sweep_s:>6}  {base_s:>12}  {cand_s:>12}  {r['elapsed_s']:>5.1f}s")
     print(f"{'═'*72}\n")
 

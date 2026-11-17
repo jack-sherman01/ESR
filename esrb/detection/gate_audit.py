@@ -91,8 +91,10 @@ def _audit_proposal(row, scenario, history, active_version, manifest_id):
              "proposal promotion record mismatch")
     history.append({
         "generation": row["generation"] + 1, "slot": 0,
-        "task_scores": [case["raw_result"]["task_score"] for case in plan["executed"]
-                        if case["phase"] not in {"reduction", "risk"}],
+        "task_scores": ([item['raw_result']['task_score'] for item in row['reference_evaluation']['development']]
+                        if 'reference_evaluation' in row else
+                        [case["raw_result"]["task_score"] for case in plan["executed"]
+                         if case["phase"] not in {"reduction", "risk"}]),
     })
     return expected_active, receipt["manifest_id"]
 
@@ -378,6 +380,17 @@ def audit_gate(report, archive):
             'total_control_steps':parent_steps+total_steps,'total_physics_steps':10*(parent_steps+total_steps),
             'scope':'gate_and_parent_panels_excluding_optional_diagnostic_sweep',
         }
+    frozen=report.get('evaluation_protocol')
+    _require((frozen is not None)==any('reference_evaluation' in row for row in report['generations']),
+             'reference panels require a frozen evaluation protocol')
+    if report.get('metrics',{}).get('schema')=='esrb.metrics/2':
+        from esrb.metrics.reporting import evaluate_report,audit_execution_events
+        audit_execution_events(report)
+        _require(report['metrics']==evaluate_report(report),'evaluation metrics do not match evidence')
+        result['metrics_schema']='esrb.metrics/2'
+    elif frozen is not None:
+        from esrb.metrics.reporting import audit_reference
+        audit_reference(report,task,PROPOSAL_INSTANCES[archive['scenario']])
     if has_proposals:
         result["proposals"] = len(history)
         result["active_version"] = active_version

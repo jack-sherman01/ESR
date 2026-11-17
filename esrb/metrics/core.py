@@ -1,3 +1,8 @@
+"""Legacy v1 metrics for standalone-script compatibility. New reports use reporting.py.
+
+These functions cannot infer independent candidate labels from GenerationRecord.
+Do not interpret their output as the v2 evaluation protocol.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

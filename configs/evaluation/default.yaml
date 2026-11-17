@@ -1,0 +1,16 @@
+# Optional report-only evaluation; --evaluation-protocol explicitly enables it.
+# Additional executions per run: 2 * samples * generations * selected scenarios.
+schema_version: esrb.evaluation/2
+purpose: engineering
+development_samples: 4
+development_seed: 826000
+max_development_rollouts: 1024
+reference_samples: 64
+reference_seed: 827000
+max_reference_rollouts: 8192
+alpha: 0.05
+epsilon: 0.09
+regression_tolerance: 0.02
+min_task_gain: 0.01
+min_reference_samples: 32
+bounds: {}
