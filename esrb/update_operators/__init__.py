@@ -4,6 +4,7 @@ from .distribution_shift import DistributionShiftOperator
 from .episode_removal import EpisodeRemovalOperator
 from .evaluator_perturbation import EvaluatorPerturbationOperator
 from .force_speed import ForceSpeedInjectionOperator
+from .grasp_target_shift import GraspTargetShiftOperator
 from .memory_contamination import MemoryContaminationOperator
 from .reward_perturbation import RewardPerturbationOperator
 from .sensor_drift import SensorDriftOperator
@@ -19,6 +20,7 @@ __all__ = [
     "EpisodeRemovalOperator",
     "EvaluatorPerturbationOperator",
     "ForceSpeedInjectionOperator",
+    "GraspTargetShiftOperator",
     "MemoryContaminationOperator",
     "RewardPerturbationOperator",
     "SensorDriftOperator",
