@@ -222,3 +222,5 @@ __marimo__/
 
 private/
 .vscode/
+# Server deployment checkout, model receipts and local smoke results
+.esr-local/
