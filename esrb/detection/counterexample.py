@@ -79,5 +79,20 @@ class CounterexampleLibrary:
     def all(self) -> list[Counterexample]:
         return list(self._store.values())
 
+    def biased_seeds(self, scenario: str, n: int) -> list[int]:
+        """Return up to n seeds from past counterexamples for this scenario.
+
+        Seeds are sorted by recency (most recently found first).  Use these
+        seeds when constructing evaluation batches to increase the probability
+        of re-observing known fault conditions (counterexample-library biasing).
+        """
+        matching = [
+            cx for cx in self._store.values()
+            if cx.source is not None and cx.source.scenario == scenario
+            and cx.source.seed is not None
+        ]
+        matching.sort(key=lambda cx: cx.generation_found, reverse=True)
+        return [cx.source.seed for cx in matching[:n]]
+
     def __len__(self) -> int:
         return len(self._store)

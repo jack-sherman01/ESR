@@ -93,7 +93,7 @@ class ToolTightenTask(BaseTask):
     @classmethod
     def disturbance_for_seed(cls, seed):
         xy = np.random.default_rng(seed).uniform(-0.005, 0.005, size=2)
-        return dict(zip(cls.reset_bounds, xy, strict=True))
+        return dict(zip(cls.reset_bounds, xy))
 
     def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
         point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(

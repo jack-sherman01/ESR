@@ -5,6 +5,7 @@ from .evolution_loop import EvolutionLoop
 from .grasp_force_policy import GraspForcePolicy
 from .mlp_policy import MLPInsertionPolicy
 from .pick_place_policy import PickPlacePolicy
+from .rl_grasp_policy import RLGraspPolicy
 from .scripted_policy import ScriptedInsertionPolicy
 from .sensor_drift_policy import SensorDriftPolicy
 from .stochastic_force_policy import StochasticForcePolicy
@@ -18,6 +19,7 @@ __all__ = [
     "GraspForcePolicy",
     "MLPInsertionPolicy",
     "PickPlacePolicy",
+    "RLGraspPolicy",
     "ScriptedInsertionPolicy",
     "SensorDriftPolicy",
     "StochasticForcePolicy",

@@ -101,7 +101,7 @@ class PegInsertionTask(BaseTask):
 
     @classmethod
     def disturbance_for_seed(cls, seed):
-        return dict(zip(cls.reset_bounds, cls.offset_for_seed(seed), strict=True))
+        return dict(zip(cls.reset_bounds, cls.offset_for_seed(seed)))
 
     def reset(self, seed: int = 0, *, xy_offset_m=None, disturbance=None) -> TaskObservation:
         if disturbance is not None:
@@ -139,7 +139,7 @@ class PegInsertionTask(BaseTask):
             ]
         if disturbance is not None:
             self._episode_log["reset_readback"] = dict(zip(
-                self.reset_bounds, self._episode_log["initial_xy_offset_m"], strict=True,
+                self.reset_bounds, self._episode_log["initial_xy_offset_m"],
             ))
         return self._observe()
 

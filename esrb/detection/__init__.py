@@ -1,6 +1,6 @@
 from .change_impact import ChangeImpactGraph, ComponentType
 from .counterexample import Counterexample, CounterexampleLibrary
-from .risk_selection import RiskSensitiveSelector, CandidateEvaluation, ucb_safety_risk
+from .risk_selection import RiskSensitiveSelector, NaiveSelector, CandidateEvaluation, ucb_safety_risk
 
 __all__ = [
     "ChangeImpactGraph",
@@ -8,6 +8,7 @@ __all__ = [
     "Counterexample",
     "CounterexampleLibrary",
     "RiskSensitiveSelector",
+    "NaiveSelector",
     "CandidateEvaluation",
     "ucb_safety_risk",
 ]

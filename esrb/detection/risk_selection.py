@@ -33,6 +33,29 @@ def _z_score(confidence: float) -> float:
     return table.get(round(confidence, 2), 1.645)
 
 
+class NaiveSelector:
+    """
+    Baseline gate: reject if the empirical violation rate k/n >= epsilon.
+    No UCB bonus — equivalent to alpha=0 in RiskSensitiveSelector.
+
+    At very small n this is overconfident: 0/1 violations gives k/n=0 < epsilon
+    and is accepted, even though 1 rollout provides almost no statistical evidence.
+    """
+
+    def __init__(self, epsilon: float = 0.05) -> None:
+        self.epsilon = epsilon
+
+    def select(self, candidates: list[CandidateEvaluation]) -> CandidateEvaluation | None:
+        feasible = [
+            c for c in candidates
+            if (sum(c.safety_violations) / len(c.safety_violations)
+                if c.safety_violations else 1.0) <= self.epsilon
+        ]
+        if not feasible:
+            return None
+        return max(feasible, key=lambda c: sum(c.task_scores) / len(c.task_scores))
+
+
 class RiskSensitiveSelector:
     """
     Selects the best candidate from the Pareto set over task performance

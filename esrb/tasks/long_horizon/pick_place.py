@@ -81,7 +81,7 @@ class PickPlaceTask(BaseTask):
         (-_XY_NOISE, _XY_NOISE),
         (float(_PLACE_XY_NOM[0] - _XY_NOISE), float(_PLACE_XY_NOM[0] + _XY_NOISE)),
         (-_XY_NOISE, _XY_NOISE),
-    ), strict=True))
+    )))
     _ACTION_LIMIT = _ACTION_LIMIT
 
     def __init__(self) -> None:
@@ -120,7 +120,7 @@ class PickPlaceTask(BaseTask):
     def disturbance_for_seed(cls, seed):
         noise = np.random.default_rng(seed).uniform(-_XY_NOISE, _XY_NOISE, size=(2, 2))
         xy = (*(_PICK_XY_NOM + noise[0]), *(_PLACE_XY_NOM + noise[1]))
-        return dict(zip(cls.reset_bounds, xy, strict=True))
+        return dict(zip(cls.reset_bounds, xy))
 
     def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
         point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(
@@ -150,7 +150,7 @@ class PickPlaceTask(BaseTask):
         }
         if disturbance is not None:
             values = (*self._pick_pos[:2], *self._place_pos[:2])
-            self._episode_log["reset_readback"] = dict(zip(self.reset_bounds, map(float, values), strict=True))
+            self._episode_log["reset_readback"] = dict(zip(self.reset_bounds, map(float, values)))
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:
