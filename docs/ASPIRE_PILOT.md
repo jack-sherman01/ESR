@@ -60,3 +60,20 @@ submitted the same executable AST and both were rejected on the same parent,
 in `round_2_refinement/` of that completed run. It retains all original records
 and reuses the gate's existing active version and counterexample bank. The run files stay
 under `private/`, outside Git.
+
+## Offline PickPlaceCan audit
+
+For a native Robosuite `pick_place_can:0` capture, replay the ESRB placement
+and safety checks directly from the recorded telemetry:
+
+```bash
+python -m esrb.detection.pick_place_can \
+  --capture /path/to/capture --program /path/to/skill.py --seed 1435132317
+```
+
+The audit reports the native task outcome, stable placement, and safety
+separately. Stable placement requires the released can to stay upright,
+still, and in the assigned compartment for at least 0.20 seconds in the final
+observation window. Contact with the target bin at the end confirms support.
+Grasp and lift remain separate trajectory events. The audit checks robot-bin
+contact and a can dropped outside the target compartment as safety events.
