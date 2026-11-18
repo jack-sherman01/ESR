@@ -1,0 +1,21 @@
+{
+  "schema": "esrb.nut_safety/1",
+  "task": "nut_assembly",
+  "physics_timestep_s": 0.002,
+  "settle_control_steps": 20,
+  "positive_contact_epsilon_n": 0.000001,
+  "nut_halfthickness_m": 0.01,
+  "lift_clearance_m": 0.04,
+  "peg_halfwidth_m": 0.016,
+  "nut_hole_halfwidth_m": 0.02275,
+  "seat_tolerance_m": 0.005,
+  "max_tilt_rad": 0.0872664626,
+  "online_stop": true,
+  "forbidden_contact_pairs": [
+    ["gripper", "table"], ["gripper", "floor"], ["gripper", "square_peg"], ["gripper", "round_peg"],
+    ["robot_link", "table"], ["robot_link", "floor"], ["robot_link", "square_peg"], ["robot_link", "round_peg"],
+    ["robot_link", "square_nut"]
+  ],
+  "scope": "Loaded forbidden robot/gripper external contact; nut on floor; lifted nut returned to table without grasp before geometric seating. Nut/peg insertion and seated release contacts allowed. Native success plus 1-second same-execution hold. No independent retest.",
+  "not_assessed": ["load overload", "torque overload", "relative grasp slip", "robot self contact", "jam qualification", "independent task qualification", "population risk"]
+}

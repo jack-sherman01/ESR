@@ -1,0 +1,58 @@
+{
+  "task": "Stack",
+  "version": 50,
+  "seed": 624537285,
+  "native_task_success": true,
+  "gate_decision": "PROMOTE",
+  "safety_status": "PASS_WITHIN_FROZEN_RULE_SCOPE",
+  "control_steps": 241,
+  "simulated_control_seconds": 12.05,
+  "generator": "independent initially context-free worker; ASPIRE public runtime/API, host ESR",
+  "source_video": "/home/zhifeng/ESR/.esr-local/stack/one-round-versions50-esr-fresh-20261118/round_01/version_50/execution/native/robosuite/cube_stack/00-cube-stack/624537285/run-20261118T064447.856428Z-7e53e3eb/media/videos/agentview.mp4",
+  "source_video_probe": {
+    "programs": [],
+    "streams": [
+      {
+        "width": 128,
+        "height": 128,
+        "r_frame_rate": "5/1",
+        "nb_frames": "61"
+      }
+    ],
+    "format": {
+      "duration": "12.200000",
+      "size": "35940"
+    }
+  },
+  "source_sha256": "e42b1e098a22b3d77a6fece9978cb67d886bb082b09af8cccf12314777acfa05",
+  "result_path": "/home/zhifeng/ESR/.esr-local/stack/one-round-versions50-esr-fresh-20261118/round_01/version_50/execution/result.json",
+  "gate_decision_path": "/home/zhifeng/ESR/.esr-local/stack/one-round-versions50-esr-fresh-20261118/round_01/version_50/gate_decision.json",
+  "conversion": {
+    "source_duration_seconds": 12.2,
+    "target_duration_seconds": 5,
+    "speed": 2.44,
+    "frames_per_second": 20,
+    "width": 512,
+    "height": 512,
+    "crop": false,
+    "loop": "infinite",
+    "source_sampling_note": "Original video is 128x128 at 5fps; output is rescaled and frames resampled, with no new simulator execution.",
+    "ffmpeg_filter": "setpts=(PTS-STARTPTS)*0.409836065573771,fps=20,scale=512:512:flags=lanczos,split[frames][colors];[colors]palettegen=max_colors=128:stats_mode=diff[palette];[frames][palette]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle"
+  },
+  "output": "stack_v50_seed624537285_success_5s.gif",
+  "output_probe": {
+    "programs": [],
+    "streams": [
+      {
+        "width": 512,
+        "height": 512,
+        "nb_read_frames": "100"
+      }
+    ],
+    "format": {
+      "duration": "5.000000",
+      "size": "2455696"
+    }
+  },
+  "gif_sha256": "f9983ffb89307c056e548c63c1715c9a9e1486943c0c57f499c0245a7152d74d"
+}

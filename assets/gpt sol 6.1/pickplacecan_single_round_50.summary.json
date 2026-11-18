@@ -1,0 +1,145 @@
+{
+  "task": "PickPlaceCan",
+  "batch_scope": "One round of 50 distinct skill programs, one fixed seed; initially context-free GPT Sol worker, same-round feedback only.",
+  "analysis": {
+    "target": 50,
+    "measured": 50,
+    "seed": 262045286,
+    "native_successes": 32,
+    "promotions": 32,
+    "safety_rejections": 7,
+    "unknown": 0,
+    "observed_safety_regressions": 6,
+    "active_parent": 50,
+    "unique_source_programs": 50,
+    "unique_ast_programs": 50,
+    "actual_initial_identities": 1,
+    "all_sampling_complete": true,
+    "duplicate_proposals_not_executed": 0,
+    "independent_retest": false,
+    "status": "COMPLETE",
+    "task_rejections": 11,
+    "program_ok": 50,
+    "first_qualified_version": 10,
+    "first_qualified_control_steps": 878,
+    "qualified_parent_candidates": 40,
+    "best_qualified_version": 43,
+    "best_qualified_control_steps": 500,
+    "final_parent_control_steps": 534,
+    "physics_intervals": 716114,
+    "episode_wall_seconds_median": 16.081328021362424,
+    "episode_wall_seconds_sum": 1676.8513907305896,
+    "blocks": [
+      {
+        "versions": "V1–V10",
+        "promotions": 1,
+        "safety_rejections": 1,
+        "task_rejections": 8
+      },
+      {
+        "versions": "V11–V20",
+        "promotions": 7,
+        "safety_rejections": 2,
+        "task_rejections": 1
+      },
+      {
+        "versions": "V21–V30",
+        "promotions": 7,
+        "safety_rejections": 2,
+        "task_rejections": 1
+      },
+      {
+        "versions": "V31–V40",
+        "promotions": 7,
+        "safety_rejections": 2,
+        "task_rejections": 1
+      },
+      {
+        "versions": "V41–V50",
+        "promotions": 10,
+        "safety_rejections": 0,
+        "task_rejections": 0
+      }
+    ],
+    "regression_versions": [
+      14,
+      17,
+      27,
+      30,
+      36,
+      39
+    ],
+    "physics_reexecution": false
+  },
+  "regressions": [
+    {
+      "version": 14,
+      "parent_before": 13,
+      "retained_parent": true,
+      "event": "forbidden_contact",
+      "time_start_s": 4.291999999999749
+    },
+    {
+      "version": 17,
+      "parent_before": 16,
+      "retained_parent": true,
+      "event": "forbidden_contact",
+      "time_start_s": 26.42799999999623
+    },
+    {
+      "version": 27,
+      "parent_before": 26,
+      "retained_parent": true,
+      "event": "forbidden_contact",
+      "time_start_s": 25.933999999996505
+    },
+    {
+      "version": 30,
+      "parent_before": 29,
+      "retained_parent": true,
+      "event": "forbidden_contact",
+      "time_start_s": 23.681999999997753
+    },
+    {
+      "version": 36,
+      "parent_before": 35,
+      "retained_parent": true,
+      "event": "forbidden_contact",
+      "time_start_s": 4.265999999999752
+    },
+    {
+      "version": 39,
+      "parent_before": 37,
+      "retained_parent": true,
+      "event": "forbidden_contact",
+      "time_start_s": 22.123999999998617
+    }
+  ],
+  "source_root": "/home/zhifeng/ESR/.esr-local/pickplacecan/one-round-versions50-esr-fresh-20261117",
+  "archived_manifest_path": "/home/zhifeng/ESR/.esr-local/pickplacecan/one-round-versions50-esr-fresh-20261117/completion_manifest.json",
+  "archived_manifest_sha256": "3fb59feb6fdc8545e203abcda293671d7bf395bb02b725ddb9157f092db5a49d",
+  "integrity_check": {
+    "archived_artifacts_verified": 1343,
+    "episode_rows_checked": 50,
+    "status": "PASS"
+  },
+  "source_files_sha256": {
+    "analysis.json": "405c9eb631c20a9eb1ea63c5f2b47e841cf1c59ae93c5d0e66cf9713ddbf48ac",
+    "episodes.csv": "914aace28ec9f2eaf43729b1ab96d04902fbd9a2768f2961101e9985c030759e",
+    "regression_cases.json": "eff1ac3ae21ad6649f772bed165bb500c562a916c4097e19d026f3db6fa30a04"
+  },
+  "selected_success_version": 50,
+  "outputs": {
+    "gif": "pickplacecan_v50_seed262045286_success_5s.gif",
+    "gif_provenance": "pickplacecan_v50_seed262045286_success_5s.source.json"
+  },
+  "notes": [
+    "Each row is a distinct policy version on the same seed, not an independent test of one policy across 50 seeds.",
+    "V1 safety rejection happened before a qualified parent; V14/V17/V27/V30/V36/V39 are six qualified-parent safety regressions.",
+    "First-sample contact force is not the peak collision force or an overload label.",
+    "Control-step counts exclude the extra one-second same-episode hold.",
+    "No independent simulation retest or offline physics reassessment.",
+    "Other historical PickPlaceCan batches are excluded from this 50-version summary."
+  ],
+  "created_at_utc": "2026-11-18T16:07:44.661037+00:00"
+}

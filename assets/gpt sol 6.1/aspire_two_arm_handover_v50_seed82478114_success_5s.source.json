@@ -1,0 +1,29 @@
+{
+  "task": "TwoArmHandover",
+  "version": 50,
+  "seed": 82478114,
+  "native_task_success": true,
+  "gate_decision": "PROMOTE",
+  "source_video": "/home/zhifeng/ESR/.esr-local/handover/one-round-versions50-esr-fresh-20261118/round_01/version_50/execution/native/robosuite/two_arm_handover/00-two-arm-handover/82478114/run-20261118T151741.408194Z-2dac0ff4/media/videos/agentview.mp4",
+  "source_video_sha256": "70d507cee0226431108c551827ae3b1470c70f9247cc2fc51d7403a48e431c01",
+  "source_result": "/home/zhifeng/ESR/.esr-local/handover/one-round-versions50-esr-fresh-20261118/round_01/version_50/execution/result.json",
+  "source_result_sha256": "3aeb9ea89a2558d38fd049e2e580a745f1f3dbe0fbf33b17c7fd7b726c941132",
+  "source_duration_s": 26.2,
+  "clip_source_start_s": 0,
+  "clip_source_end_s": 26.2,
+  "playback_speed": 5.24,
+  "gif_duration_s": 5.0,
+  "fps": 25,
+  "original_resolution": [
+    192,
+    192
+  ],
+  "output_resolution": [
+    576,
+    576
+  ],
+  "gif_sha256": "356b9ab40fd09f89559ad8bce3400c75ce3f5c65017cb1eb1ba91337a2a5b979",
+  "ffmpeg_filter": "[0:v]setpts=PTS-STARTPTS,setpts=PTS*5/26.2,fps=25,scale=576:576:flags=lanczos,split[a][b];[a]palettegen=stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a",
+  "method": "Entire existing recorded video accelerated to 5 seconds with ffmpeg; no simulation replay.",
+  "output": "aspire_two_arm_handover_v50_seed82478114_success_5s.gif"
+}

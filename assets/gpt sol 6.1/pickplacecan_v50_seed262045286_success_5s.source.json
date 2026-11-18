@@ -1,0 +1,54 @@
+{
+  "task": "PickPlaceCan",
+  "version": 50,
+  "seed": 262045286,
+  "native_task_success": true,
+  "gate_decision": "PROMOTE",
+  "control_steps": 534,
+  "settle_steps": 20,
+  "settle_success_steps": 20,
+  "source_video": ".esr-local/pickplacecan/one-round-versions50-esr-fresh-20261117/round_01/version_50/execution/native/robosuite/pickup_can/00-pickup-can/262045286/run-20261118T044907.818507Z-e42eed4b/media/videos/agentview.mp4",
+  "source_video_sha256": "a948dce629abf585ee8d7ddfec9c3a3dbaac87924939f3a16085b7a04021e11d",
+  "source_result": ".esr-local/pickplacecan/one-round-versions50-esr-fresh-20261117/round_01/version_50/execution/result.json",
+  "source_result_sha256": "8bee59235bfa88dbcccdcb455bcbb680a3c9d7e5c9e4a2caaf5b5231d313bf90",
+  "source_gate_decision": ".esr-local/pickplacecan/one-round-versions50-esr-fresh-20261117/round_01/version_50/gate_decision.json",
+  "source_gate_decision_sha256": "79eb9c7f1fbe900bc90d3ed3855eb1d2118cd6a80af044d7625d4106734b1b95",
+  "archived_native_run": "/home/zhifeng/ESR/.esr-local/pickup_can/one-round-versions50-esr-fresh-20261117/round_01/version_50/execution/native/robosuite/pickup_can/00-pickup-can/262045286/run-20261118T044907.818507Z-e42eed4b",
+  "source_video_probe": {
+    "programs": [],
+    "streams": [
+      {
+        "width": 128,
+        "height": 128,
+        "r_frame_rate": "5/1",
+        "nb_read_frames": "134"
+      }
+    ],
+    "format": {
+      "duration": "26.800000",
+      "size": "56138"
+    }
+  },
+  "source_duration_s": 26.8,
+  "gif_duration_s": 5.0,
+  "playback_speed": 5.36,
+  "output": "pickplacecan_v50_seed262045286_success_5s.gif",
+  "output_probe": {
+    "programs": [],
+    "streams": [
+      {
+        "width": 512,
+        "height": 512,
+        "r_frame_rate": "25/1",
+        "nb_read_frames": "125"
+      }
+    ],
+    "format": {
+      "duration": "5.000000",
+      "size": "3930537"
+    }
+  },
+  "gif_sha256": "5648c68d64b7c9a9924999a1d1ba1abb5d54ddc94ac8d9090a01e07b5327abf1",
+  "method": "Entire existing recorded video accelerated to 5 seconds; no simulation replay.",
+  "metadata_reconstructed_from_existing_artifacts": true
+}

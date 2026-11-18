@@ -40,7 +40,7 @@ When the supervisor reports ready, run from the current repository:
 ```bash
 cd /path/to/ESR
 LEGACY_ASPIRE=/path/to/ESR_benchmark
-python3 -B scripts/run_aspire_pilot.py --legacy "$LEGACY_ASPIRE" \
+python3 -B scripts/runners/run_aspire_pilot.py --legacy "$LEGACY_ASPIRE" \
   --baseline "$LEGACY_ASPIRE/runs/aspire_official_validation_20261103/campaign/libero-pro/libero_goal_swap/task_0/fix_code.py" \
   --model gpt-6.1-sol --out private/runs/aspire_pilot_new
 ```

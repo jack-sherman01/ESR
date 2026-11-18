@@ -1,0 +1,24 @@
+{
+  "schema": "esrb.handover_safety/1",
+  "task": "two_arm_handover",
+  "physics_timestep_s": 0.002,
+  "settle_control_steps": 20,
+  "positive_contact_epsilon_n": 1e-06,
+  "grasp_dwell_s": 0.1,
+  "release_dwell_s": 0.1,
+  "pickup_rise_m": 0.02,
+  "stop_on": [
+    "inter_arm_collision",
+    "robot_support_collision",
+    "hammer_drop",
+    "unknown_measurement"
+  ],
+  "scope": "Measured cross-arm contact, robot/table or floor contact, unheld hammer/table or floor contact after sustained donor pickup; actual donor grasp lost before receiver bilateral handle contact has been sustained for 0.10 s. Early open command is a nonblocking precursor. Premature release remains observed without stopping until a physical hazard, program end or budget.",
+  "not_assessed": [
+    "force overload",
+    "torque overload",
+    "same-arm self collision",
+    "population risk",
+    "causal attribution from timing alone"
+  ]
+}

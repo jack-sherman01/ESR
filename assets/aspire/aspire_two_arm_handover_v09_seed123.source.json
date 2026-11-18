@@ -1,0 +1,40 @@
+{
+  "version": "v09",
+  "seed": 123,
+  "started_at": "2026-11-18T07:26:06.816341Z",
+  "finished_at": "2026-11-18T07:30:14.144211Z",
+  "run_dir": "/home/zhifeng/ESR/.esr-local/aspire/checkout/outputs/runs/2026-11-17_23-18-59_handover-official10/robosuite/two_arm_handover/task_0/debug/attempts/v09/0123/run-20261118T072606.812017Z-a6ab8c93",
+  "video": "/home/zhifeng/ESR/.esr-local/aspire/checkout/outputs/runs/2026-11-17_23-18-59_handover-official10/robosuite/two_arm_handover/task_0/debug/attempts/v09/0123/run-20261118T072606.812017Z-a6ab8c93/media/videos/agentview.mp4",
+  "task_success": false,
+  "selection_rule": "Latest finished_at among all 250 valid development runs; ties resolved by started_at.",
+  "camera": "agentview",
+  "output": "aspire_two_arm_handover_v09_seed123.gif",
+  "conversion": {
+    "source_duration_seconds": 35.2,
+    "speed": 7.040000000000001,
+    "crop": false,
+    "frames_per_second": 20,
+    "width": 640,
+    "loop": "infinite",
+    "max_palette_colors": 128,
+    "ffmpeg_filter": "setpts=(PTS-STARTPTS)/7.04,fps=20,scale=640:-2:flags=lanczos,split[frames][colors];[colors]palettegen=max_colors=128:stats_mode=diff[palette];[frames][palette]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle",
+    "target_duration_seconds": 5.0,
+    "output_duration_limit": "5 seconds; discard old FFmpeg EOF timestamp padding after accelerated timeline"
+  },
+  "output_probe": {
+    "programs": [],
+    "streams": [
+      {
+        "width": 640,
+        "height": 410,
+        "nb_read_frames": "100"
+      }
+    ],
+    "format": {
+      "duration": "5.000000",
+      "size": "2116206"
+    }
+  },
+  "source_sha256": "ff068cb8f80bd7cb932b0628f64a1a635fa55a290655f5565e2549b192bb5575",
+  "gif_sha256": "2f44508849bbb7232757f9503bb63adf1666f4d779e89e5a4df16daade1e9703"
+}

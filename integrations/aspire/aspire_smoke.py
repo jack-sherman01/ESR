@@ -1,6 +1,6 @@
 """Check ASPIRE's real simulator; this is NOT an agent or task-success result.
 
-Run with the ASPIRE LIBERO interpreter; see scripts/setup_aspire.sh.
+Run with the ASPIRE LIBERO interpreter; see scripts/setup/setup_aspire.sh.
 No LLM calls, perception services, policy training, or ESRB safety claims.
 """
 from __future__ import annotations

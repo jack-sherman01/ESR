@@ -169,6 +169,6 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
 
 ## 8. 验收与尚未完成的研究工作
 
-`tests/test_evaluation_v2.py` 覆盖人工可算的安全改进、危险拒绝/接纳、安全误拒、UNKNOWN、上下限余量、真实非支配前沿、固定轨迹 EIF、成本计数、留出隔离、篡改拒绝及离线复算。
+`tests/core/test_evaluation_v2.py` 覆盖人工可算的安全改进、危险拒绝/接纳、安全误拒、UNKNOWN、上下限余量、真实非支配前沿、固定轨迹 EIF、成本计数、留出隔离、篡改拒绝及离线复算。
 验收结果和本机证据见 [工程验收记录](EVALUATION_V2_ACCEPTANCE.md)。
 这套实现不证明 CE-EST 优于基线。自然 Agent 更新、多种选择器的同预算比较、跨机制留出、运行级统计推断及硬件测量仍需独立完成。

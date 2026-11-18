@@ -59,15 +59,15 @@ under fixture displacement using contact feedback.
 From a fresh clone on Linux x86_64 with Python 3.12 and `uv`:
 
 ```bash
-bash scripts/setup_esr.sh install
-bash scripts/setup_esr.sh smoke
+bash scripts/setup/setup_esr.sh install
+bash scripts/setup/setup_esr.sh smoke
 ```
 
 To install the optional ASPIRE simulator stack on an NVIDIA node:
 
 ```bash
-bash scripts/setup_aspire.sh install
-bash scripts/setup_aspire.sh smoke
+bash scripts/setup/setup_aspire.sh install
+bash scripts/setup/setup_aspire.sh smoke
 ```
 
 ASPIRE uses separate Python environments. See [server deployment](docs/SERVER_SETUP.md) for
@@ -253,12 +253,33 @@ ESR/
 │   └── utils/             Hashing and version utilities
 ├── experiments/
 │   └── run_benchmark.py   Main benchmark CLI
-├── configs/experiment/    YAML run settings and JSON proposal fixtures
+├── configs/              Deployment, evaluation and experiment settings
+├── integrations/aspire/   Pinned ASPIRE setup, services and public API descriptions
+├── examples/aspire/       Public RGB-D skill examples
 ├── tests/                Unit and simulation integration tests
-├── scripts/              Replay verification, offline audits and rendering
+│   ├── core/             Framework, safety gates, evaluation and config
+│   ├── tasks/            In-house tasks, policies and update operators
+│   ├── aspire/           ASPIRE scene interfaces, capture and gates
+│   ├── workflows/        Agent feedback, long chains and recovery
+│   └── fixtures/         Shared static test data
+├── scripts/              Tools grouped by function
+│   ├── runners/          Scene batches, long chains and execution coordinators
+│   ├── gates/            Physics capture, rule loading and admission history
+│   ├── feedback/         Public task feedback and API error filtering
+│   ├── adapters/         Runtime and tool-coordinate adapters
+│   ├── reports/          Export recorded experiment results
+│   ├── analysis/         Analysis, evidence audits and replay verification
+│   ├── recovery/         Interrupted experiment recovery
+│   ├── render/           GIF and image rendering
+│   └── setup/            Environment installation and provider setup
 ├── assets/               README figures, GIFs and animation provenance
 └── docs/                 Detailed usage, protocols and acceptance reports
 ```
+
+Directory guides: [scripts](scripts/README.md), [tests](tests/README.md),
+and [assets](assets/README.md). Local experiment traces and environments live
+under `.esr-local/`; private research notes live under `private/`.
+Both directories are excluded from Git.
 
 ## Evaluation protocol v2
 

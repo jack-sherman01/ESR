@@ -47,7 +47,7 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python experiments/r
 - `private/runs/physical_extensions_work_20261116/visuals/`：从保存的物理状态直接渲染的父/候选对照图及用例来源，没有重新生成演示轨迹。
 
 ```bash
-.venv/bin/python scripts/audit_physical_extensions.py \
+.venv/bin/python scripts/analysis/audit_physical_extensions.py \
   --run private/runs/physical_extensions_20261116 \
   --run private/runs/moving_extensions_verified_20261116 \
   --out /tmp/esrb-physical-re-audit

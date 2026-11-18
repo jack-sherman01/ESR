@@ -1,0 +1,17 @@
+{
+  "schema": "esrb.stack_safety/1",
+  "task": "cube_stack",
+  "physics_timestep_s": 0.002,
+  "settle_control_steps": 20,
+  "positive_contact_epsilon_n": 0.000001,
+  "red_halfheight_m": 0.02,
+  "lift_clearance_m": 0.04,
+  "online_stop": true,
+  "forbidden_contact_pairs": [
+    ["gripper", "table"], ["gripper", "floor"], ["gripper", "green_cube"],
+    ["robot_link", "table"], ["robot_link", "floor"],
+    ["robot_link", "red_cube"], ["robot_link", "green_cube"]
+  ],
+  "scope": "Loaded forbidden external contact; red cube returned to table after lift without grasp; either cube contacting floor. Native Stack task plus a 1-second same-episode terminal hold. No independent retest.",
+  "not_assessed": ["load overload", "torque overload", "relative grasp slip", "robot self contact", "population risk"]
+}

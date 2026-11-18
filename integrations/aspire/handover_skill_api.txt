@@ -1,0 +1,20 @@
+Robosuite TwoArmHandover, two opposed Panda arms: primary gives a hammer to secondary.
+Python program: only import math is allowed; functions, loops, lists, dictionaries and print are allowed. Public tool functions and constructors below already exist; do not import them. Finish with result = a small dict. Do not use files, native simulator state or undocumented functions in the skill.
+Budget: 2000 total control ticks, 20 Hz; cameras agentview, robot0_eye_in_hand, robot1_eye_in_hand at 192x192.
+get_observation("agentview") -> obs; obs.cameras[name].rgb is uint8[H,W,3], .depth_m is metric depth. obs.task_context.language describes the task.
+get_robot_state() -> state; state.base_frame == "robot0_base". Both arms' end_effector_poses[arm].position and .quaternion_wxyz are in this common frame; .joint_positions[arm] has 7 joint values; .gripper_positions[arm] is measured opening fraction 0..1. Use current quaternions or explicitly normalized wxyz.
+mask_to_point_cloud(mask, "agentview", target_frame=state.base_frame).points: Nx3 calibrated points for a nested bool image mask. estimate_geometry(cloud) -> .pose and .extents. No text segmentation or grasp service is configured.
+Static calibration: tabletop z=-0.112 m in robot0_base. Primary initial EEF approximately [0.457,0,0.099], secondary [1.163,0,0.099]. Shared central region x~0.8. The hammer starts on the table near primary; its wooden handle has a rectangular cross-section and textured wood; metallic hammer head differs in color. Handle dimensions and initial orientation vary by seed.
+MotionStrategy(ik_solver="pyroki", trajectory_planner="interpolation") is available for both arms; adapter transforms the secondary target to its local base.
+Pose(position=[x,y,z], quaternion_wxyz=[w,x,y,z], frame=state.base_frame).
+move_to_pose(pose, arm="primary" or "secondary", tolerance=.015, max_steps=240, strategy=strategy) -> .ok, .steps_executed, .error. Moves one arm while retaining the other's last joint and gripper targets. A failed move can have partially moved.
+move_to_joints(target_joint_vector, arm=arm, tolerance=.02, max_steps=240) -> .ok.
+plan_motion(pose, arm=arm, strategy=strategy) -> .ok, .trajectory; trajectory.joint_positions contains 7-joint waypoints. execute_trajectory(trajectory) -> .ok. Direct move_to_pose already plans and executes.
+open_gripper(arm=arm), close_gripper(arm=arm), set_gripper(0.0 or 1.0,arm=arm) each normally execute 30 control ticks. Closed=0, open=1; only these endpoint commands are supported.
+set_grippers({"primary":0.0 or 1.0,"secondary":0.0 or 1.0}) commands both grippers in one tick.
+step(RobotAction(arms={"primary": ArmCommand(mode="joint_position",target=state.joint_positions["primary"],gripper_position=0.0), "secondary": ArmCommand(mode="joint_position",target=state.joint_positions["secondary"],gripper_position=1.0)})) executes one control tick. To wait, repeat current joint targets and desired gripper endpoints. Always refresh measured state as needed. Commands persist for omitted arms. No sleep/wait tool exists.
+Native task completion: secondary grasps the hammer handle while primary no longer grasps any hammer part, with hammer lifted above the tabletop. Print numeric observations as 'OBS ' plus a numeric list if useful. Return no extra prose from the skill.
+
+Python subset: no class/async/await/del/global/nonlocal/with/import-from statements. Names and attributes must not start with underscore. Available builtins are Exception, ValueError, TypeError, abs, all, any, bool, dict, enumerate, float, int, len, list, max, min, print, range, reversed, round, set, sorted, str, sum, tuple, zip. Other builtins such as ord, getattr, RuntimeError are unavailable.
+Use numeric OBS records only for observed geometry and action states, not encoded strings.
+After each trial also read additional_feedback_vNN.json if it exists; it contains any standard Python/API validation error for that same trial.

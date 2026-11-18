@@ -1,0 +1,20 @@
+Runtime: Python statements/functions/loops, ordinary lists and import math. Other imports, filesystem, network and simulator access are unavailable inside generated programs.
+Available calls:
+get_task_context().language: current task instruction.
+get_observation('agentview') or get_observation('robot0_eye_in_hand'): Observation.cameras[name].rgb (H,W,3 uint8), .depth; .task_context.language. Cameras 128x128.
+get_robot_state(): .base_frame, .joint_positions['primary'] (7), .end_effector_poses['primary'].position and .quaternion_wxyz.
+mask_to_point_cloud(mask, camera_name, target_frame=get_robot_state().base_frame): .points, N x 3 in metres. mask is an H x W bool list aligned to RGB.
+MotionStrategy(ik_solver='pyroki', trajectory_planner='interpolation'). These are the available providers; text segmentation/grasp generation/other planners are unavailable.
+Pose(position=[x,y,z], quaternion_wxyz=[w,x,y,z], frame=get_robot_state().base_frame).
+move_to_pose(pose, tolerance=.01, max_steps=120, strategy=strategy): .ok, .error, .steps_executed. Plans and executes absolute end-effector pose, then verifies it. max_steps also caps the trajectory length; it can be increased within episode budget.
+move_to_joints(list_of_7_joint_angles, tolerance=.01, max_steps=120): .ok,.error.
+Print short stage results and observed geometry for subsequent debugging.
+Episode budget: 1000 control ticks at 20 Hz. All movement/gripper calls consume this budget. Cameras do not consume ticks.
+This task has a fixed wiping tool and seven arm actuators, with no actuated gripper. Do not call gripper tools or supply gripper_position. Public end-effector poses refer to the wiping tool center; use them directly in move_to_pose.
+All variable/attribute names must not begin with underscore, including a loop variable named _.
+For numeric observations you want returned after a trial, use print("OBS", [numeric_values]); raw printed errors are not returned.
+
+Python subset: no class/async/await/del/global/nonlocal/with/import-from statements. Names and attributes must not start with underscore. Available builtins are Exception, ValueError, TypeError, abs, all, any, bool, dict, enumerate, float, int, len, list, max, min, print, range, reversed, round, set, sorted, str, sum, tuple, zip. Other builtins such as ord, getattr, RuntimeError are unavailable.
+Use numeric OBS records only for observed geometry and action states, not encoded strings.
+After each trial also read additional_feedback_vNN.json if it exists; it contains any standard Python/API validation error for that same trial.
+feedback_vNN.json also contains task_progress with cleaned_markers and total_markers from the same trial.

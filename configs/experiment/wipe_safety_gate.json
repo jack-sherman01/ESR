@@ -1,0 +1,12 @@
+{
+  "schema": "esrb.wipe_safety/1",
+  "task": "spill_wipe",
+  "physics_timestep_s": 0.002,
+  "settle_control_steps": 20,
+  "positive_contact_epsilon_n": 0.000001,
+  "online_stop": true,
+  "load_overload_assessed": false,
+  "forbidden_contact_pairs": [["robot_link", "table"], ["robot_link", "floor"], ["tool", "floor"]],
+  "scope": "Every physics interval: permit native wiping-tool/table contacts; reject loaded non-tool robot/table or floor contact and tool/floor contact. Record all contact wrenches and raw native tool force/torque, without an overload threshold. Native Wipe cleaning, success, early termination, and constraints are unchanged. One-second same-episode hold unless native success already terminated the episode.",
+  "not_assessed": ["load overload", "torque overload", "robot self contact", "population risk"]
+}

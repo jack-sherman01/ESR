@@ -210,7 +210,7 @@ MUJOCO_GL=egl python experiments/run_benchmark.py \
 python -m esrb.detection.gate_audit /tmp/esrb-assembly/long_horizon_assembly
 
 # Save one complete carry-then-jam witness and execute an exact replay.
-MUJOCO_GL=egl python scripts/verify_assembly_replay.py \
+MUJOCO_GL=egl python scripts/analysis/verify_assembly_replay.py \
   --out-dir /tmp/esrb-assembly-witness
 ```
 
@@ -225,7 +225,7 @@ Intentional finger release during verification ends the carrying-retention
 window; contact force/torque and final assembly stability remain measured.
 
 To regenerate the comparison image with Pillow installed, run
-`MUJOCO_GL=egl python scripts/render_tool_handling.py --assembly-witness /tmp/esrb-assembly-witness`.
+`MUJOCO_GL=egl python scripts/render/render_tool_handling.py --assembly-witness /tmp/esrb-assembly-witness`.
 [Image provenance](../assets/long_horizon_assembly_preview.json) binds the rendered
 states to their recorded trace and model digests.
 

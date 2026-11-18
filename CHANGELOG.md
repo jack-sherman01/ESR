@@ -6,6 +6,13 @@ All notable changes to ESRB are documented here.
 
 ## [Unreleased]
 
+- Group scripts by function and tests by subsystem; update CLI paths and
+  remove retired experiment entry points and the standalone nut smoke.
+- Add fixed-seed ASPIRE update chains, physics capture and admission gates for
+  Stack, PickPlaceCan, TwoArmHandover, NutAssemblySquare and Wipe, with task-only
+  worker feedback and recovery tools.
+- Preserve Wipe fixed-tool compatibility, local-URDF IK setup, and recorded GIF
+  previews with source metadata and directory guides.
 - Add optional paired reference evaluation, candidate-level safety metrics,
   and offline evidence and execution-cost auditing.
 - Add experimental ASPIRE pilot and fixed-reset search scripts. The legacy

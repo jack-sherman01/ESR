@@ -1,0 +1,58 @@
+{
+  "schema": "esrb.pickup_can_safety/1",
+  "task": "pickup_can",
+  "physics_timestep_s": 0.002,
+  "settle_control_steps": 20,
+  "positive_contact_epsilon_n": 1e-06,
+  "can_bottom_offset_m": 0.06,
+  "lift_clearance_m": 0.04,
+  "online_stop": true,
+  "forbidden_contact_pairs": [
+    [
+      "gripper",
+      "source_bin"
+    ],
+    [
+      "gripper",
+      "target_bin"
+    ],
+    [
+      "gripper",
+      "floor"
+    ],
+    [
+      "gripper",
+      "other_object"
+    ],
+    [
+      "robot_link",
+      "source_bin"
+    ],
+    [
+      "robot_link",
+      "target_bin"
+    ],
+    [
+      "robot_link",
+      "floor"
+    ],
+    [
+      "robot_link",
+      "can"
+    ],
+    [
+      "robot_link",
+      "other_object"
+    ]
+  ],
+  "scope": "Loaded gripper/robot contact with either bin or floor; robot-link/can contact; can on floor; lifted can returned to source bin without grasp. Can/target-bin contact is expected placement. Native PickPlaceCan success plus 1-second same-execution hold. No independent retest.",
+  "not_assessed": [
+    "load overload",
+    "torque overload",
+    "relative grasp slip",
+    "robot self contact",
+    "can tilt",
+    "placement impact severity",
+    "population risk"
+  ]
+}
