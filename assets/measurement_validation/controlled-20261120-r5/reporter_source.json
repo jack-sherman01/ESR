@@ -1,0 +1,18 @@
+{
+  "sha256": "569fc950d49922f7b6d94add258a677612b134b996f296b48fddab31c80b6eb2",
+  "path": "/home/zhifeng/ESR/esrb/measurement/reporting.py",
+  "physical_rollouts_started": 0,
+  "scene_computation_source_sha256": "ac9008b08338e86698c25456cee2d5c6817d03dabf6f1733b34ca6079f84edc3",
+  "core_scene_functions_unchanged": true,
+  "scope": "Reuse independently verified scene computations; refresh execution provenance, explanatory text and plot only",
+  "metadata_processor_sha256": "1c2beb43f2f4123c95273ad4b2b16a7e0c79f33521f96ab080f00038e5fd63f0",
+  "plot_only_revision": {
+    "change": "Remove blue group shading; use a uniform white background",
+    "previous_files": {
+      "report/combined.png": "7b1968f32c4f21830adae3aa914805b1d8621912fdea7c889fed7d6572a5147b",
+      "report/reporter_source.json": "46f35383d25aa3e7439b69a3f4f77b43db92ae636104a1c65c6fca51127c2894"
+    },
+    "physical_rollouts_started": 0,
+    "metrics_unchanged": true
+  }
+}

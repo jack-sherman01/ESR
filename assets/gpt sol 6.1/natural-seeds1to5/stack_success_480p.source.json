@@ -1,0 +1,113 @@
+{
+  "task": "Stack",
+  "campaign": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/campaign",
+  "chain": 1,
+  "version": 50,
+  "seed": 1,
+  "program_ok": true,
+  "native_task_success": true,
+  "all_five_development_cases_successful": true,
+  "safety_audited": false,
+  "source_execution": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution",
+  "source_result_sha256": "c8db8692efa0825ffe1a810f7c4c4995152b632cee2af3e49465d240f0d06281",
+  "source_program": "/home/zhifeng/ESR/.esr-local/stack/natural-seeds1to5-20261118-r3-v50/chain_01/candidates/v50/program.py",
+  "source_program_sha256": "38cfe3b59617c96c1171ea00dd1ab91fba65dceaec4c4d42d9f2ad0e618e09e7",
+  "model_sha256": "caabe82f1c24dda0b007fbe09740d3a9d99d7d79b1cd41872bd018a6f8c55617",
+  "initial_state_id": "2c982e608b66418e2dc8adcab13616e436a2c4764ed3e34300444bfb3231dd76",
+  "source_initial_state_sha256": "396ac457a1aad8ab535aa5962986dd09edbdf5c5a990054879aea699ae6963b6",
+  "source_final_state_sha256": "d93575f19875b37263a5da29ec685baf337c7e1153f79d8c25d477bb8bf15f34",
+  "source_actions": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/native/robosuite/cube_stack/00-cube-stack/0001/run-20261119T105238.797116Z-93d141cd/episode/steps.jsonl",
+  "source_actions_sha256": "de120d97dd1afe40970b07920318c4ff99ef361e0bfdd954f8e2ddc9efab096e",
+  "source_physics": [
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000000.npz",
+      "sha256": "8ca6c603b04feafd2cb418d3b41afd80ae1df9ee849ee84e75d14ac852fcbcbb"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000001.npz",
+      "sha256": "a7b2d447925f9416181a97463910fb570211f6ab9bee201cf226ac57df80b7ef"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000002.npz",
+      "sha256": "3522aa98f3de624e355950e2a1c8f3d768e620b84ee129cb44360cade37acdb1"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000003.npz",
+      "sha256": "6d8beea5905daa6c93d991f935479b088049ef9ec2b3ec71f61e859cdac993e0"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000004.npz",
+      "sha256": "4da014ecf516555772848800ba82e158210919d6d8bf239c9e4cb31c5bffba1b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000005.npz",
+      "sha256": "b18e2e52a1688611604661012e1806153ad0ba33b45d48e6e5b1e1c658e30b17"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000006.npz",
+      "sha256": "c77093af5db09b825f3ab05300f363532112452279660a3cb74c0b5096793933"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000007.npz",
+      "sha256": "a291ae4dd026b39e754669a7e0b6c21aed8cf53fa6ef362901202150fcd3da06"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000008.npz",
+      "sha256": "45d710a3cbdce2e8fda20ec3e0c4f9943752c4123299aa37e658c45f0909ba8b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000009.npz",
+      "sha256": "a4b29390989c5eef22e0e39b5a55cc3cca8965ccfbcfac36b385bf2f249160c2"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000010.npz",
+      "sha256": "abcda06d00c7ac9302b5a0ae7083550e841c8dfa5d32e2e5f388c7e41a310f71"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000011.npz",
+      "sha256": "a059fdba5184cb5fa6e67ddab87a406200914d36dbb9d93b4e101bcff6a744d5"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000012.npz",
+      "sha256": "b5ed7fb970584a2023906a6fa4fa106bf699f0d514c141d438fd649187b0667d"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000013.npz",
+      "sha256": "1d946f7d0fadd2c0722151ccc9fd15d4a4fd4ef164f6eab425e13a1acebf28d0"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000014.npz",
+      "sha256": "36db0de7c35d437fc4e53b78d361c30e586549a91b5c90e79d413bd275b6c7d1"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/stack/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000015.npz",
+      "sha256": "3082a756774d3497632956b02b619c9b0501235e2c620989fcc20b65006cb20c"
+    }
+  ],
+  "control_steps": 308,
+  "physics_timestep_s": 0.002,
+  "control_frequency_hz": 20,
+  "source_duration_s": 15.4,
+  "output_duration_s": 5.0,
+  "playback_speed": 3.08,
+  "size_px": [
+    640,
+    480
+  ],
+  "output_frames": 125,
+  "camera": "agentview",
+  "max_control_boundary_qpos_error": 0.0,
+  "max_control_boundary_qvel_error": 0.0,
+  "max_final_integration_state_error": 0.0,
+  "replayed_terminal_task_success": true,
+  "render_only_overrides": [
+    "framebuffer dimensions",
+    "disabled camera observation updates",
+    "temporal sampling",
+    "GIF palette"
+  ],
+  "method": "Replay archived native actions without model/API planning; verify every control-boundary state and the full final integration state against raw records.",
+  "renderer_source_sha256": "da1a6dba41d16408c158772080a95ff88c4cc345ec6634e9f6879e86c149f914",
+  "output": "stack_success_480p.gif",
+  "gif_sha256": "1bc53af6236d59a6597b1b1bce8ad7990727461717802b66f6c3b90150a86d5e"
+}

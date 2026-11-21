@@ -1,18 +1,7 @@
 {
-  "scope": "measured_assembly_witness_states",
-  "camera_only_override": true,
-  "states": [
-    {
-      "role": "parent",
-      "trace_digest": "191007848d2a854d2e1f76aaee648dd685a2ec05fe9e45ee454877d43ebe27d6",
-      "model_digest": "58b73889380194b38e2759b90173ed2387bd9eb827c7acfb47dbc6d724152fb2",
-      "step": 295
-    },
-    {
-      "role": "candidate",
-      "trace_digest": "adcaca1bc72db5511a32c6ba9f2ec8894da8cc08158d0527435b6a58465c64ba",
-      "model_digest": "58b73889380194b38e2759b90173ed2387bd9eb827c7acfb47dbc6d724152fb2",
-      "step": 234
-    }
-  ]
+  "file": "long_horizon_assembly.png",
+  "seed": 0,
+  "raw_source": "/home/zhifeng/ESR/.esr-local/_checks/panda-production-20261118/delivery/assembly-0-baseline.json.gz",
+  "raw_source_sha256": "1aed943168011c0ce55cec05691a060404ba8f5612137f7c32242db287b8bea8",
+  "inset": false
 }

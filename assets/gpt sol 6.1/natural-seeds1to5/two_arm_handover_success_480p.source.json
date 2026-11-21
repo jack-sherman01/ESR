@@ -1,0 +1,349 @@
+{
+  "task": "TwoArmHandover",
+  "campaign": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/campaign",
+  "chain": 1,
+  "version": 50,
+  "seed": 1,
+  "program_ok": true,
+  "native_task_success": true,
+  "all_five_development_cases_successful": true,
+  "safety_audited": false,
+  "source_execution": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution",
+  "source_result_sha256": "0815b574fb251bfd402b7e3c8b02613750cff01f72a39035f262b125d1c2781e",
+  "source_program": "/home/zhifeng/ESR/.esr-local/handover/natural-seeds1to5-20261118-r3-v50/chain_01/candidates/v50/program.py",
+  "source_program_sha256": "175e20c2eb9ee950ff9327da3fc557f8d8a85ba81a7a42379a9af5a499ebea3d",
+  "model_sha256": "b9f6543819db35e7a8a797f439780d6334fd7729b8c681262d7a4265245eaecc",
+  "initial_state_id": "1ae007187b0e23854da3161ebec78660e50adb1b90d5868f6a24b7c8e95efb71",
+  "source_initial_state_sha256": "346b1c1c5e2cdae628c02c9fd9e4fb7ee87c69b3f3044ab1728882ef07244d5d",
+  "source_final_state_sha256": "48f59d935c0ced3bc5216306f878f77165d6a3159622b4fe2b608627cc21ba2d",
+  "source_actions": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/native/robosuite/two_arm_handover/00-two-arm-handover/0001/run-20261119T123255.628603Z-5d3dfc53/episode/steps.jsonl",
+  "source_actions_sha256": "4a40906e5fe06636edaf3fb5d53fa2a13353d37b3958677733a6d62e353278a4",
+  "source_physics": [
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000000.npz",
+      "sha256": "27ad9b828e4d735626f29815299b6dce5d1d8074b63e5a1e39aa19809339e472"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000001.npz",
+      "sha256": "5f3def60826d165254282f77cfb9379b6ddcf982d0b9b5b4104e5dc60abe71d0"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000002.npz",
+      "sha256": "2cadbdcb8a5bc48924b98259d1f7562e78d54ca319533bbd785713b0ea6abfa2"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000003.npz",
+      "sha256": "ed72ff5afb2f83d7da073497656ee0b9a763569b662632c1b4c0a2e63af1b987"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000004.npz",
+      "sha256": "d6d7a89ba19150baef8c2c7db4ce7e286470f127353318fc1cbb438a23b79569"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000005.npz",
+      "sha256": "a984b04fabc0ebf9dc95d06c457292d4bd205466b6b51875e4f671816b0c558b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000006.npz",
+      "sha256": "72a68fd0ff3ef083b7cc0319246e6d121b29576a22dd1cca6fc011a74505b129"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000007.npz",
+      "sha256": "8752166ced5585c34a32a5ff38ee202b2f0b3e8d8a685705c5858009ff8c0933"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000008.npz",
+      "sha256": "086db83de472d26b2d98841c11885a9695d7b0f3a091133c1fcbca1b911a94d7"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000009.npz",
+      "sha256": "d951d3b1c086a723110a220e01de21f715bff83158fe8c80fd32bbc200030815"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000010.npz",
+      "sha256": "03fadbad4570740a811bc18b45eb35198ca9432b5f88333a8c01134db6140030"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000011.npz",
+      "sha256": "90c0654942458d7722c54b0b8dc2633f74e5e6c538d58869affd83d43bf05a79"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000012.npz",
+      "sha256": "f69dd0a46ec52aa841528d86f869cb3350bdadb17c2184dabaa040a309013e96"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000013.npz",
+      "sha256": "a54ff9f51a3d315b01572808a56058c19e9a6eca964355363850dd48d17e05e2"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000014.npz",
+      "sha256": "18a33fe4bfcebabdcb9c3ee090ff2cf0051916e7f4f49301bd7be32f67f0c928"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000015.npz",
+      "sha256": "488182a19d8639c507a31bdb1be26e9850f6bcb9ae145f6fa1cdafb521d5716c"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000016.npz",
+      "sha256": "0949d1773eb695d3af5b010413aa902ead6ba0e9db06c35cb2ac8e464757543f"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000017.npz",
+      "sha256": "a23f8ac98f876b8ea978950060b238196bf2633f535097c0e014832936d1b72d"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000018.npz",
+      "sha256": "732da521a708396da19fd4ba6bad08bd90fb72a05201fe14a383cfa0d6c7fa4b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000019.npz",
+      "sha256": "b3545d5a04ee555b56504f149ce4560533be827d971f04e23945906d1abb5719"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000020.npz",
+      "sha256": "a2f91da64d51cac5b81f2081d768e8e0eac0034d16861473e1097b6b4b526139"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000021.npz",
+      "sha256": "ec60fe3b72bf1ca9d1491f35068b5f9c092eba1633167dbbfee10eb3722d387e"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000022.npz",
+      "sha256": "7a399c471ca19c05eb2cc7b780c6bc2d87dd212e17eaf5762f28b8a5806ab5ea"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000023.npz",
+      "sha256": "ca9d46eb06a67dfbba3a07d7f0cd15bd780605fd22691b5b1b3a806b8f8fa08b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000024.npz",
+      "sha256": "1e383967744a7a0e58aef37dbf155500b521e02482808f38601c9e9533616708"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000025.npz",
+      "sha256": "c2366840c60289b2ce9fd378451485311c225e1255b842bbd73c17514660d601"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000026.npz",
+      "sha256": "232ead3ba1c1d22767d01201dbed6fd50c6a44fd719d4773afc879d7ae76ad74"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000027.npz",
+      "sha256": "3d15f13400e101f47fbe227b1442c5e141a49a22c59c47b8260952cad9cf1765"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000028.npz",
+      "sha256": "8f60aaadc501749617ea4640580fbad76bc6516197e1b2a1baf806b0fd601014"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000029.npz",
+      "sha256": "fb121f74983f9ee21ebff92202050a432468a481ea84d4bcfb4819a7391d4042"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000030.npz",
+      "sha256": "1c5a9c00e77afaa29c99a5aa4e4112c80141c46920f005f762f27298bc2c8e6f"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000031.npz",
+      "sha256": "dc5664afdad240d8c0bc4b5297e7b50fa10b3cc472d24c5d3f792d1d1ed6e139"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000032.npz",
+      "sha256": "24a034edb72fe6ad29956341eb9fb0ccc5cf5921591a7c842c62a471727fb37b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000033.npz",
+      "sha256": "d97364f56f9a77027f6d60f0bee1d902e518939793e9ec0d5e7268c471e58588"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000034.npz",
+      "sha256": "138cfa949602d327cac4093d027ff173b57d01c2730759380f6b95678d09f43d"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000035.npz",
+      "sha256": "673a252705990a75a4ae578d212975bf3e58804bd91363f0da3414b4b09ad852"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000036.npz",
+      "sha256": "4d3ccd3eb0feed986209427bec4969a8fff7d484650698c010d65a4d6eac010f"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000037.npz",
+      "sha256": "cf1aa7ceeebe8db4d44e9410d859b3f0636a142985addcec6abbce9cd4f4bef5"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000038.npz",
+      "sha256": "8f56f5efa831e9bfe74be3f410f88cf8384b13360a0b025c45df39c431990258"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000039.npz",
+      "sha256": "f4d6bcc2344c22c609966e0650b8baa9f292b90d4c90cec0567fd8a969eee354"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000040.npz",
+      "sha256": "3cc40b78d9fd9c93bd9bf5ffdbb68be62e4980589ada27389fc91baa0530d541"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000041.npz",
+      "sha256": "8052a90cc05717cbacaf85895b013997b029077d8ddabfa8ae7fbd16ac8cf0d1"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000042.npz",
+      "sha256": "c06ad6f272ef26fd72a0181dfab38e6ee52c25b69e5ddbfe318e850c14e6d6fd"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000043.npz",
+      "sha256": "5588afe68a301520c96c4e55fce856921c6b8f62f4a83c2b9d347187cc70d2c2"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000044.npz",
+      "sha256": "fd66765850ebafd6811c11ff95c2bf6356e16cc6f63b18ceae5abb4a20133350"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000045.npz",
+      "sha256": "d54310ed2bce98807064609658a1aad1e700c84095ebf3187303c1d30c9b526d"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000046.npz",
+      "sha256": "f4e6b4d823e9e081c6b51de7776d214cf223f8cd262f0acb5574875bdb26f039"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000047.npz",
+      "sha256": "1810193881d0c90794b6212d8bd5cb2bd452727b87d4cba20364d289bc308389"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000048.npz",
+      "sha256": "bd2b7375a69d6caf3ec341f8381c95e321ff075e1db5c34e83cb04c650b8bc6f"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000049.npz",
+      "sha256": "fb5602484f961c8aab7a2d992e45cde52a26a8255d69700a535afa5625845039"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000050.npz",
+      "sha256": "e8547e11429e0ed7390052244daceda73ae195f3f68402b04fc454bda9f2480a"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000051.npz",
+      "sha256": "4c3fe35c95e61d895de04aec8f2af1191a1d52b2e011298524dde4f183bbb3ae"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000052.npz",
+      "sha256": "46882a0c9658d1976579f31d9e876881901a57adb1922a8924796093db12128f"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000053.npz",
+      "sha256": "81860e900d0c8f8acf8a0f6ca608833b091c738d532d28d82dce6a405018bc2f"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000054.npz",
+      "sha256": "7a496f6523c248d109d31e4e3984b762b7d14e9b817f589901285792b2470910"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000055.npz",
+      "sha256": "cfaf7186bdf726732fabff8fa3ca09326a04d82411b0cceb176c6c8de967f105"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000056.npz",
+      "sha256": "c6119bcdd178cc9e304d8465ab972d09e19c1fd387bb52d672871790acb4ad52"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000057.npz",
+      "sha256": "76c5223c70beb3dc834f9fcd511331e71e70748e9aae4ffa0cf2d27e5d48f11b"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000058.npz",
+      "sha256": "c6215ce6dc5daed94101973fd4b5b7265b5a217c267f2480da56e9bb43c1373a"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000059.npz",
+      "sha256": "4476b1c7ddc11df3644679036b9a307d32f3b6b697248dcbf2f7a48484df9f29"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000060.npz",
+      "sha256": "eeea55b5d8ad123e78329de846e2fd76fea0b2fde7d1f88c6abb9f44d95cf2ae"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000061.npz",
+      "sha256": "05e7edeceae5d7f1938cb33b79ae65fc7d1e9d8411f9e8529d53931dc0c86bf8"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000062.npz",
+      "sha256": "cdf9bfd1b34ea26b9491e097d04852bc5b20e4bfdb9d47d3c0e4a11ee30d904e"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000063.npz",
+      "sha256": "0b9bf88e9289c7f466ad5fca0fc10c872da8aca71ff15d2e34fe1b853c963702"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000064.npz",
+      "sha256": "ab9e9604d353717bf51a1fc320f4cc0ba36d302c26754166eb4d901a2de43919"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000065.npz",
+      "sha256": "83b42e8e43db4d1beb3eadc438975bb5e1a557a778fb36809e53ee85229c96b2"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000066.npz",
+      "sha256": "c9afbe25a44d0e77b98ddaef4da02e898cf4906d1e4a3cb7e3c5c6517cf08451"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000067.npz",
+      "sha256": "6cedff05352c93c02ffaf32b0d743f8bb7723cb18fc8eef8b17e4d8e29799f7c"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000068.npz",
+      "sha256": "72103c6c74644f9502a3b8abc8b98c9c6ebc9ec4278c879e9e658daea4389654"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000069.npz",
+      "sha256": "9fedc5f4bd3b676c9d1d80e7e1af811f50f6ac5bf57a9dd46d2a4030883296dc"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000070.npz",
+      "sha256": "8beceec86d2b38157094153539314dc0bafa15f826a4c7083fe57fe835aaaa23"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000071.npz",
+      "sha256": "3352610852c3ee93756c66f8986f1cf955a87259d92eca81623c33d87674f1d7"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000072.npz",
+      "sha256": "3b70d8ca06b25e621b4f6f9d76e429c80324cc516484376716dacd085217e207"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000073.npz",
+      "sha256": "f11558bb5a90c3562a1ecfd1ef31cbbaa5154f8c49737009f4e458e41fa0cc0d"
+    },
+    {
+      "file": "/mnt/data1/zhifeng/ESR-natural/20261118-r3-v50/two-arm-handover/chain_01/candidates/v50/seed_1/attempt_01/execution/physics/chunk_000074.npz",
+      "sha256": "717f0855eaeaf9f8b21774503cfe6e678a65ececd11ddfaef53a1f278128141d"
+    }
+  ],
+  "control_steps": 1520,
+  "physics_timestep_s": 0.002,
+  "control_frequency_hz": 20,
+  "source_duration_s": 76.0,
+  "output_duration_s": 5.0,
+  "playback_speed": 15.2,
+  "size_px": [
+    640,
+    480
+  ],
+  "output_frames": 125,
+  "camera": "agentview",
+  "max_control_boundary_qpos_error": 0.0,
+  "max_control_boundary_qvel_error": 0.0,
+  "max_final_integration_state_error": 0.0,
+  "replayed_terminal_task_success": true,
+  "render_only_overrides": [
+    "framebuffer dimensions",
+    "disabled camera observation updates",
+    "temporal sampling",
+    "GIF palette"
+  ],
+  "method": "Replay archived native actions without model/API planning; verify every control-boundary state and the full final integration state against raw records.",
+  "renderer_source_sha256": "953358c476155ac8001db0c51c70b22adf67045ac1a84062a0893333c6ab9e48",
+  "output": "two_arm_handover_success_480p.gif",
+  "gif_sha256": "7b0378a5283b322ff5cb0c3cabc243a78bd971347d7640f4a860fd7254bce5f9"
+}

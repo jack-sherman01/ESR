@@ -1,3 +1,5 @@
+> Historical record: the old-workspace pilot has been retired. Its commands are not supported by the current checkout. Reproduction requires the original frozen source and environment. Current entrypoints are documented in [SERVER_SETUP.md](SERVER_SETUP.md).
+
 # ASPIRE + ESRB: two-round simulation pilot
 
 For installing the public ASPIRE runtime, see [server setup](SERVER_SETUP.md).

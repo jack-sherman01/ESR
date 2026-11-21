@@ -1,22 +1,1287 @@
 {
   "scope": "controlled_engineering_visualization",
-  "camera_only_override": true,
+  "task_label": "Tool alignment & contact",
+  "task_semantics": "Aligned tool tip and sustained surface contact; no tightening mechanism.",
+  "render_only_overrides": [
+    "overview camera",
+    "detail camera",
+    "robosuite-inspired display-only arena",
+    "ceramic texture",
+    "directional lights",
+    "hidden non-task decorations",
+    "2D slot-axis guide",
+    "2D dropped-tool locator"
+  ],
+  "physics_overrides": [],
+  "synchronized_comparison": true,
+  "capture_stride": 4,
+  "final_frame_pause_ms": 500,
+  "analysis": {
+    "file": "tool_handling_comparison_analysis.png",
+    "metrics": [
+      {
+        "step": 121,
+        "time_s": 2.419999999999955,
+        "grip_normal_forces_n": [
+          2.4539488684243187,
+          2.4508761023773578
+        ],
+        "surface_force_n": 0.0,
+        "relative_translation_mm": 1.5439944879318412,
+        "translation_reference_step": 46,
+        "dropped": false
+      },
+      {
+        "step": 121,
+        "time_s": 2.419999999999955,
+        "grip_normal_forces_n": [
+          0.0,
+          0.0
+        ],
+        "surface_force_n": 0.0,
+        "relative_translation_mm": 150.72709674071288,
+        "translation_reference_step": 46,
+        "dropped": true
+      }
+    ],
+    "force_reduction": "Maximum of the 10 physics substeps in each control step.",
+    "translation_reference": "Tool position in the gripper frame at the first retention-active step."
+  },
+  "comparison": {
+    "file": "tool_handling_comparison.gif",
+    "still": "tool_handling_comparison.png",
+    "step": 121,
+    "simulation_time_s": 2.419999999999955,
+    "playback_duration_s": 5.0,
+    "camera_rule": "Both trajectories use the baseline camera at each identical timestamp.",
+    "detail_cameras": [
+      {
+        "step": 1,
+        "position": [
+          0.07724584114361717,
+          -0.3429008341868289,
+          0.2949947189810664
+        ],
+        "target": [
+          -0.10275415885638282,
+          -0.0029008341868288325,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 5,
+        "position": [
+          0.07724584114361717,
+          -0.3429008341868289,
+          0.2949978692642758
+        ],
+        "target": [
+          -0.10275415885638282,
+          -0.00290083418682885,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 9,
+        "position": [
+          0.07724584114361785,
+          -0.34290083418682976,
+          0.29499786931765937
+        ],
+        "target": [
+          -0.10275415885638214,
+          -0.0029008341868297506,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 13,
+        "position": [
+          0.07724584114368338,
+          -0.34290083418685136,
+          0.29499786931771543
+        ],
+        "target": [
+          -0.10275415885631661,
+          -0.0029008341868513453,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 17,
+        "position": [
+          0.07724584114367934,
+          -0.3429008341869304,
+          0.2949978693177153
+        ],
+        "target": [
+          -0.10275415885632065,
+          -0.002900834186930358,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 21,
+        "position": [
+          0.0772458411436967,
+          -0.34290083418732964,
+          0.2949978693177153
+        ],
+        "target": [
+          -0.10275415885630329,
+          -0.00290083418732961,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 25,
+        "position": [
+          0.0772458411437499,
+          -0.342900834187773,
+          0.2949978693177153
+        ],
+        "target": [
+          -0.1027541588562501,
+          -0.0029008341877730095,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 29,
+        "position": [
+          0.0772458343762761,
+          -0.34290083786875836,
+          0.2949978690735026
+        ],
+        "target": [
+          -0.10275416562372389,
+          -0.002900837868758327,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 33,
+        "position": [
+          0.07724583420430571,
+          -0.3429008377237281,
+          0.29499786912839215
+        ],
+        "target": [
+          -0.10275416579569428,
+          -0.0029008377237280756,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 37,
+        "position": [
+          0.07724583413153677,
+          -0.34290083735237475,
+          0.29499786916426163
+        ],
+        "target": [
+          -0.10275416586846323,
+          -0.002900837352374705,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 41,
+        "position": [
+          0.07724583409764696,
+          -0.34290083696186135,
+          0.2949978691895651
+        ],
+        "target": [
+          -0.10275416590235303,
+          -0.002900836961861307,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 45,
+        "position": [
+          0.0772458340736682,
+          -0.34290083660417253,
+          0.29499786920932825
+        ],
+        "target": [
+          -0.1027541659263318,
+          -0.002900836604172528,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 49,
+        "position": [
+          0.0772945804858123,
+          -0.3430501250293893,
+          0.29701117109743735
+        ],
+        "target": [
+          -0.1027054195141877,
+          -0.0030501250293892943,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 53,
+        "position": [
+          0.07731014531285152,
+          -0.34301755053314215,
+          0.30124161222186746
+        ],
+        "target": [
+          -0.10268985468714847,
+          -0.0030175505331421454,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 57,
+        "position": [
+          0.07731471779505593,
+          -0.3429559372535282,
+          0.3064072419606176
+        ],
+        "target": [
+          -0.10268528220494406,
+          -0.0029559372535281512,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 61,
+        "position": [
+          0.07732053541954798,
+          -0.34291854568756097,
+          0.3119961768585574
+        ],
+        "target": [
+          -0.10267946458045202,
+          -0.002918545687560959,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 65,
+        "position": [
+          0.07732267174681103,
+          -0.3428913653118352,
+          0.31776054311104074
+        ],
+        "target": [
+          -0.10267732825318897,
+          -0.002891365311835122,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 69,
+        "position": [
+          0.07732434060980103,
+          -0.3428762668823287,
+          0.32359732899888
+        ],
+        "target": [
+          -0.10267565939019896,
+          -0.002876266882328656,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 73,
+        "position": [
+          0.07732558808897728,
+          -0.3428683345252223,
+          0.32946496941709946
+        ],
+        "target": [
+          -0.10267441191102271,
+          -0.0028683345252222834,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 77,
+        "position": [
+          0.07732652568105906,
+          -0.34286438678288095,
+          0.3353458239586896
+        ],
+        "target": [
+          -0.10267347431894093,
+          -0.0028643867828809307,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 81,
+        "position": [
+          0.07732718487232713,
+          -0.3428625182945469,
+          0.34123237871254775
+        ],
+        "target": [
+          -0.10267281512767286,
+          -0.0028625182945468514,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 85,
+        "position": [
+          0.07754331076944349,
+          -0.34259953044430297,
+          0.3471366912357192
+        ],
+        "target": [
+          -0.10245668923055651,
+          -0.0025995304443029578,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 89,
+        "position": [
+          0.08045323695665192,
+          -0.34112576070829664,
+          0.3529943198189107
+        ],
+        "target": [
+          -0.09954676304334807,
+          -0.0011257607082966186,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 93,
+        "position": [
+          0.08515717949269522,
+          -0.3404606633493634,
+          0.3588772815038971
+        ],
+        "target": [
+          -0.09484282050730478,
+          -0.000460663349363381,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 97,
+        "position": [
+          0.09059109944041606,
+          -0.3401407663300765,
+          0.36476918248474977
+        ],
+        "target": [
+          -0.08940890055958393,
+          -0.00014076633007649715,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 101,
+        "position": [
+          0.09634155488407171,
+          -0.34000033544111374,
+          0.3706620616173505
+        ],
+        "target": [
+          -0.08365844511592828,
+          -3.354411137381229e-07,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 105,
+        "position": [
+          0.10219458612290964,
+          -0.3398599360471127,
+          0.37527675714133424
+        ],
+        "target": [
+          -0.07780541387709035,
+          0.00014006395288735407,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 109,
+        "position": [
+          0.10813067789102657,
+          -0.33988385655289455,
+          0.37727959244099674
+        ],
+        "target": [
+          -0.07186932210897343,
+          0.00011614344710550011,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 113,
+        "position": [
+          0.1141028711680984,
+          -0.3399272182438037,
+          0.3781326490089155
+        ],
+        "target": [
+          -0.06589712883190159,
+          7.278175619635462e-05,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 117,
+        "position": [
+          0.12008819458921072,
+          -0.3399591984502782,
+          0.3784917107173033
+        ],
+        "target": [
+          -0.05991180541078928,
+          4.0801549721800765e-05,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 121,
+        "position": [
+          0.12607804181006968,
+          -0.3399800793261941,
+          0.3786418993164453
+        ],
+        "target": [
+          -0.05392195818993031,
+          1.9920673805928844e-05,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 125,
+        "position": [
+          0.13206974416053943,
+          -0.33999203729786504,
+          0.378703715994584
+        ],
+        "target": [
+          -0.047930255839460555,
+          7.962702135013875e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 129,
+        "position": [
+          0.13806215006316563,
+          -0.33999854746432584,
+          0.3787281576869786
+        ],
+        "target": [
+          -0.04193784993683437,
+          1.4525356741732355e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 133,
+        "position": [
+          0.1440548624104605,
+          -0.34000201525200624,
+          0.37873679257417703
+        ],
+        "target": [
+          -0.0359451375895395,
+          -2.0152520061990275e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 137,
+        "position": [
+          0.1500477408771844,
+          -0.34000386577700387,
+          0.37873873999733493
+        ],
+        "target": [
+          -0.02995225912281561,
+          -3.865777003865636e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 141,
+        "position": [
+          0.15604073528555448,
+          -0.3400048803538301,
+          0.37873785547655614
+        ],
+        "target": [
+          -0.023959264714445518,
+          -4.880353830085015e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 145,
+        "position": [
+          0.16203382768621058,
+          -0.3400054685845811,
+          0.3787357690018599
+        ],
+        "target": [
+          -0.017966172313789417,
+          -5.468584581065258e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 149,
+        "position": [
+          0.16802701210490145,
+          -0.34000583876485213,
+          0.3787331696857085
+        ],
+        "target": [
+          -0.011972987895098543,
+          -5.838764852115395e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 153,
+        "position": [
+          0.17402028726554927,
+          -0.34000609447085584,
+          0.3787303488937156
+        ],
+        "target": [
+          -0.005979712734450718,
+          -6.094470855811415e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 157,
+        "position": [
+          0.18001365381408407,
+          -0.3400062863241021,
+          0.3787274298516814
+        ],
+        "target": [
+          1.365381408407508e-05,
+          -6.286324102091063e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 161,
+        "position": [
+          0.1860071131539143,
+          -0.34000643874640474,
+          0.37872446470158166
+        ],
+        "target": [
+          0.006007113153914313,
+          -6.438746404728661e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 165,
+        "position": [
+          0.19200066689862932,
+          -0.34000656344057945,
+          0.37872147552254043
+        ],
+        "target": [
+          0.01200066689862934,
+          -6.563440579447455e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 169,
+        "position": [
+          0.197994316586032,
+          -0.34000666605514757,
+          0.3787184716658376
+        ],
+        "target": [
+          0.017994316586031997,
+          -6.666055147540365e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 173,
+        "position": [
+          0.2039880635156889,
+          -0.3400067494306419,
+          0.37871545707927007
+        ],
+        "target": [
+          0.023988063515688902,
+          -6.749430641882683e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 177,
+        "position": [
+          0.2099819086503838,
+          -0.34000681516126213,
+          0.3787124334015004
+        ],
+        "target": [
+          0.029981908650383794,
+          -6.8151612621236785e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 181,
+        "position": [
+          0.21597585255266347,
+          -0.34000686433730665,
+          0.3787094012696567
+        ],
+        "target": [
+          0.03597585255266348,
+          -6.864337306634704e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 185,
+        "position": [
+          0.2219698953414182,
+          -0.3400068978932241,
+          0.37870636087273435
+        ],
+        "target": [
+          0.04196989534141822,
+          -6.897893224081613e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 189,
+        "position": [
+          0.22796403666033047,
+          -0.3400069167671737,
+          0.37870331218708586
+        ],
+        "target": [
+          0.047964036660330465,
+          -6.916767173694213e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 193,
+        "position": [
+          0.23395827565374383,
+          -0.34000692197084614,
+          0.37870025507830163
+        ],
+        "target": [
+          0.053958275653743844,
+          -6.9219708461190804e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 197,
+        "position": [
+          0.2399526109475712,
+          -0.34000691461653687,
+          0.378697189347289
+        ],
+        "target": [
+          0.05995261094757119,
+          -6.914616536820206e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 201,
+        "position": [
+          0.24594704063400938,
+          -0.34000689592368766,
+          0.3786941147533643
+        ],
+        "target": [
+          0.06594704063400939,
+          -6.895923687608365e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 205,
+        "position": [
+          0.25194156225945785,
+          -0.3400068672153991,
+          0.3786910310281437
+        ],
+        "target": [
+          0.07194156225945789,
+          -6.8672153990703915e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 209,
+        "position": [
+          0.25793617281537223,
+          -0.3400068299098543,
+          0.3786879378859913
+        ],
+        "target": [
+          0.07793617281537224,
+          -6.829909854293212e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 213,
+        "position": [
+          0.26393086873195293,
+          -0.34000678550903596,
+          0.3786848350333734
+        ],
+        "target": [
+          0.0839308687319529,
+          -6.785509035943795e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 217,
+        "position": [
+          0.2699256458746495,
+          -0.34000673558589417,
+          0.3786817221780268
+        ],
+        "target": [
+          0.08992564587464949,
+          -6.735585894142461e-06,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 221,
+        "position": [
+          0.27535883679117246,
+          -0.34002654042018343,
+          0.37867505243672095
+        ],
+        "target": [
+          0.09535883679117246,
+          -2.654042018339541e-05,
+          0.105
+        ],
+        "fovy_deg": 40.0,
+        "label": "GRIP DETAIL"
+      },
+      {
+        "step": 225,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 229,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 233,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 237,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 241,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 245,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 249,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 253,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 257,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 261,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 265,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 269,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 273,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 277,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 281,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 285,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 289,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 293,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 297,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 301,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 305,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 309,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      },
+      {
+        "step": 313,
+        "position": [
+          0.24,
+          -0.24,
+          0.19
+        ],
+        "target": [
+          0.1,
+          0.0,
+          0.075
+        ],
+        "fovy_deg": 30.0,
+        "label": "CONTACT DETAIL"
+      }
+    ],
+    "encoded_frames": 79
+  },
+  "success_panels": [
+    {
+      "label": "1. GRASP",
+      "step": 45,
+      "time_s": 0.9000000000000007
+    },
+    {
+      "label": "2. TRANSPORT",
+      "step": 153,
+      "time_s": 3.0599999999998846
+    },
+    {
+      "label": "3. ALIGN + CONTACT",
+      "step": 313,
+      "time_s": 6.259999999999533
+    }
+  ],
   "demos": [
     {
-      "file": "tool_handling.gif",
       "seed": 0,
-      "frames": 73,
-      "transport_closure_m": 0.022,
+      "transport_closure_m": 0.023,
+      "policy": {
+        "max_speed": 0.0015,
+        "angular_step": 0.025,
+        "grasp_closure": 0.023,
+        "transport_closure": 0.023
+      },
       "task_success": true,
       "safe": true,
+      "status": "PASS",
       "signals": {
-        "peak_tip_speed_ms": 0.07980536826740638,
-        "peak_force_n": 20.817870686189696,
-        "peak_torque_nm": 0.00014461942428068577,
-        "peak_tool_slip_m": 0.003152758602193353,
-        "peak_tool_rotation_rad": 0.0005979729735996484,
+        "peak_tip_speed_ms": 0.10470897125842238,
+        "peak_force_n": 15.129867513944689,
+        "peak_torque_nm": 0.03239390302186964,
+        "peak_tool_slip_m": 0.0028602751481429196,
+        "peak_tool_rotation_rad": 0.0013994570906947761,
         "tool_drop": 0.0,
-        "peak_grip_force_n": 44.93115598052218
+        "peak_grip_force_n": 19.474112021233736,
+        "robot_collision": 0.0
       },
       "drop_events": [],
       "stage_events": [
@@ -26,47 +1291,220 @@
         },
         {
           "stage": "lift",
-          "step": 25
+          "step": 45
         },
         {
           "stage": "transport",
-          "step": 78
+          "step": 84
         },
         {
           "stage": "orient",
-          "step": 212
+          "step": 222
         },
         {
           "stage": "operate",
-          "step": 239
+          "step": 254
         },
         {
           "stage": "done",
-          "step": 289
+          "step": 313
         }
       ],
-      "model_digest": "a758cfb9c6802371f11ec0a21284842f7735aac3911bdb2e9ca02e9416c32e98"
+      "model_digest": "380e5de486436604a792f09fca78688c93aabbef43de10ac9ca1436f57292a23",
+      "model_resource_digest": "c486c82689b657211b6eed3f091ec6d25706cde8f6d7140265cfc35aa257cad0",
+      "model_resources": {
+        "tool_handling.xml": "380e5de486436604a792f09fca78688c93aabbef43de10ac9ca1436f57292a23",
+        "driver_handle.obj": "c11fb6037ed9f33112301555f8d00be2ec4602e4a1698721cdd35900b8942cd6",
+        "panda/assets/link0.stl": "dfc6d94330de8ddb005b311bfdba9f3b8e1aa7c256b71592ee7ff32cb9a9a5aa",
+        "panda/assets/link1.stl": "e41a39a94108fcf56aacff603fc91ec80541f4c1af17b51a0de5617f5566e6d2",
+        "panda/assets/link2.stl": "370f7605a0fae3529db169ded50f52f171024aa792d4d773bc84197301f6a039",
+        "panda/assets/link3.stl": "0a8d638b9349c6c0eefc4e888636ac4838c4b27170f18a51699321118af709c1",
+        "panda/assets/link4.stl": "0180ebb5772ec9840cb049750cffb29a9ddc90311752a16ea34757782ef9e48d",
+        "panda/assets/link5_collision_0.obj": "3e5aa75fb13f193555c3dfb999df91d81df25006a5c3af5338297d78137c129b",
+        "panda/assets/link5_collision_1.obj": "87cd8f621071df010f774cbde789282b8463840dfe704f8bdfa2e29be0142e15",
+        "panda/assets/link5_collision_2.obj": "823ab6c8f7b1d79e0844fa071d82a03499ff68e34fddb1ba3451032c22736040",
+        "panda/assets/link6.stl": "20b768e99a0e0440b5754dcca108016434e57937cc356acd9c352ccd3cb27f77",
+        "panda/assets/link7.stl": "92ac6afcf7574c034d3170d8a68e95ac9048ab9d0dd5bbd8311b86e551b9ab1c",
+        "panda/assets/hand.stl": "94493e94f30fe940f2c8ca2f155c3bbe67bbff406d3edf5e261670d2f0f6e2ed",
+        "panda/assets/link0_0.obj": "6b9f41a4c203540daaeb7a33cc3d0d6c6a32dc8bba187074eeaf97b3e36b3f9c",
+        "panda/assets/link0_1.obj": "57673d2ee2a9db2e10c8986ae57c56a7c39c012b60fd26d7d8549553b664a5ed",
+        "panda/assets/link0_2.obj": "1ca435a2a87a9608a146a47955724d43dd7ce10fc3dd3018800aa98f8ba86e05",
+        "panda/assets/link0_3.obj": "3e9c6334d2b3b47944af3458ee5f20519abc20fe7ee23063bb53405ccab28046",
+        "panda/assets/link0_4.obj": "215d25789704936120f119c0bc1cc7f68516dd3f8f1df61457b71acac3873f26",
+        "panda/assets/link0_5.obj": "9361b104e93743045107aa5b15fb1a0835ba9c1f355aae71f56403cf6a9c33f6",
+        "panda/assets/link0_7.obj": "2dc0b8ebbbc80e4c065d71e195adbc384f673438641fac82b07b801b4d2837cb",
+        "panda/assets/link0_8.obj": "3b8c436999db5586b8eb47bed2b0aa7de6993868b2681b4c04246eeac42fdb7a",
+        "panda/assets/link0_9.obj": "45178f97d2b5da6bce11f610212c4ef7d08c73db33a4fc38e1b7f66b93d023f5",
+        "panda/assets/link0_10.obj": "c9198b9d8534d628d097b0f2b239bb30343353182df098ce0d9db6bc13326848",
+        "panda/assets/link0_11.obj": "f0adec78d6677b7799d25121981270e8bfe119b5c18d08a91ee37a54ad75f65c",
+        "panda/assets/link1.obj": "51091e776b16babdbe2f3849b5c041f921d1f11dd94ac19a0f1c81abf496fbae",
+        "panda/assets/link2.obj": "5c9f8e715de52c3eb71b475de35993b3b96081e02abea9f28c414768877fc59b",
+        "panda/assets/link3_0.obj": "ce2da87f51708e11b189249d41401065dabe89a06e251185a06cef4d5ff27178",
+        "panda/assets/link3_1.obj": "2880b7753a7173f38fa87ee21da4dfc7fa7be46fbe07bac5aef9e128513cb118",
+        "panda/assets/link3_2.obj": "670cff81ae84693769ca4ae658c154cf909d81167e7c8d22b70ea977f2504efa",
+        "panda/assets/link3_3.obj": "30ede0c812efd0e0b767d134a4eae0b84e0fa407bb6325a5a555e0569b3a3ffd",
+        "panda/assets/link4_0.obj": "443bf6d178177cf347951ecf107ccd10ca444e605e375b67304579e5f948806f",
+        "panda/assets/link4_1.obj": "ca935ec7cc8b3f0e86aa079c76b0b3bf593b1e9830bab0fa7131ac51577c74f0",
+        "panda/assets/link4_2.obj": "c89caf26d379c35bb9e191ee2d91d09ab29ecc792b48d8bc10b39e5b38222175",
+        "panda/assets/link4_3.obj": "1495d17f45bdb230cf58b0beef9da4e8c9cfe76a3d2d38da89017efe5e093136",
+        "panda/assets/link5_0.obj": "a3238b8f2af0f2eb66d9fe63dc5d41ac52d5d38507241b5ed10e3cb019ab3e71",
+        "panda/assets/link5_1.obj": "9d994bbf83ec241e301b5197a6846da13f2a4a0582edb2c0f76962c5549649d6",
+        "panda/assets/link5_2.obj": "83b4ffe9f772cd7fe182e98640650eebc899aaf01842656574b0416c90dd40a4",
+        "panda/assets/link6_0.obj": "0504c70ebf1b284ee8faae7dcb896b8830bc672a6552015dd5dbd121fa031fb9",
+        "panda/assets/link6_1.obj": "45f7ca77695198b6d86ec2417ad4e42e6275044f0f96266699ee8e1057757ac1",
+        "panda/assets/link6_2.obj": "e54eee4d8232947ee8af65afd5a067e09dac2da6e7e585cb1dccb65496457da0",
+        "panda/assets/link6_3.obj": "d4f6a25ef32fa1fa4734146981994ee760232cb077c80fea6487d78a077c7f27",
+        "panda/assets/link6_4.obj": "be353480fe71d46f7a96f0a3cbb7e112caaf8d88368826f321a36a253c8749b2",
+        "panda/assets/link6_5.obj": "7c87664623c3e1a6cb330db273227a69626dc5e53b4caff1d4ee7911eb3340c6",
+        "panda/assets/link6_6.obj": "8fbc031e0d07b795ebf99115c75223141caaba317cab569159f3d477a7821681",
+        "panda/assets/link6_7.obj": "7dc5ebb799fe281aab27d6e84e7a4efa0a8e42da2369ec83de3ea3f206f62d73",
+        "panda/assets/link6_8.obj": "e3f77381817a341030f9dcc4c4aa7c559f80411b453fd87eb0fefecca82151bf",
+        "panda/assets/link6_9.obj": "25a56ea9b02a03b6cb5a81f31c54f54d0185e1a0b3937c37e4289d896e50215a",
+        "panda/assets/link6_10.obj": "365f26c21d10332cab8d8704645cb46930c30b3085956f2d097498c793f24db4",
+        "panda/assets/link6_11.obj": "8ae61e08b3ad064f25bbf03b22e59cc15d65883b5a7ce92711aff29df2493901",
+        "panda/assets/link6_12.obj": "f28d1bfd62b0244ffd19fb35fe9edefdf583d3c9167db944e87185d919e1d021",
+        "panda/assets/link6_13.obj": "0a55fa92dccb261d07200e6565fca4c850fd17f0c1ecf38821c0b97d51796c7d",
+        "panda/assets/link6_14.obj": "750ae3ee4781e62e3a045c662195247b03f6642b05aa93104f08258e5f6eba26",
+        "panda/assets/link6_15.obj": "5999c1c2497a004a7c4bbe034cdf13744f839d85ae7a11b1bc386c48a3e642e6",
+        "panda/assets/link6_16.obj": "551d7a8b37c53e7a152d008b4e36992e5b5abe74a4be18b57ee6319c27def09f",
+        "panda/assets/link7_0.obj": "04586b0bde011715cfc22072ac72fe0717eb4d4817bcf665987ce6cd88eb2b93",
+        "panda/assets/link7_1.obj": "c3f72289f394c9d6749a4a327fb11f05b203c37c95032c92f28019b40ebe7e00",
+        "panda/assets/link7_2.obj": "d2faecedb304d0989040d082410378dc949dbbda23bd18c05134f08aae984db5",
+        "panda/assets/link7_3.obj": "b62d87c4d4bdb7b281ed341d347c39dad0e50bf36aed8ac11d050073701d5f70",
+        "panda/assets/link7_4.obj": "cb78ccb61fd4ad6c7bff4c4d2e6cb41e1964a5a3e1a28e67c0c6202371cfc018",
+        "panda/assets/link7_5.obj": "099071d3090b51471ba52f4f90814fd3089f4975d196e4d488117073d0bfe491",
+        "panda/assets/link7_6.obj": "99469e2d95ab74ce0292f2f16954c87a8a7dc16652e62e970fe37c94330a81bb",
+        "panda/assets/link7_7.obj": "426c3db8a19373f3dc73d4bec672e948121b2914c10e2e7b9c7ea80643a19e54",
+        "panda/assets/hand_0.obj": "b94aab901086f85df04c019b30f43bf9aa23a7ad0443ec80a8c14662a41cabd2",
+        "panda/assets/hand_1.obj": "cd76f7494bb314406a1819c46eb826ee254894f87235714f604a470653d9badb",
+        "panda/assets/hand_2.obj": "e0f44a71712afa5b98eb20355eff17763d3e2e19f459b2bef19abed3727e64b3",
+        "panda/assets/hand_3.obj": "a431a06d99e88a1b322b3122a01424ee7704daeaad0bc343b90b9604f014ad0c",
+        "panda/assets/hand_4.obj": "21f96ef6a8de082e41b1ea9834f1043de359e5d60305541bcb63539581f53bff",
+        "panda/assets/finger_0.obj": "215098c0fcdf7192f6c503a37cf49e3efecf8a9e1320f02b17c5584d89cc5b2c",
+        "panda/assets/finger_1.obj": "cf239e9aca26bba09dbbf1c544c47d87cfc9a2f0637c8bb786af750b6d4eca44"
+      },
+      "trace_digest": "d2d8c13471a44553ef7dc0b8d544ca915f16f4ded20e8d6d167e005a0f059a9f",
+      "simulation_time_s": 6.259999999999533,
+      "simulation_steps": 313,
+      "episode_done": true,
+      "end_reason": "task_completed",
+      "file": "tool_handling.gif",
+      "frames": 79,
+      "size_px": [
+        960,
+        720
+      ],
+      "playback_duration_s": 5.0,
+      "sample_times_s": [
+        0.020000000000000004,
+        0.10000000000000007,
+        0.18000000000000013,
+        0.2600000000000002,
+        0.34000000000000025,
+        0.4200000000000003,
+        0.5000000000000003,
+        0.5800000000000004,
+        0.6600000000000005,
+        0.7400000000000005,
+        0.8200000000000006,
+        0.9000000000000007,
+        0.9800000000000008,
+        1.0600000000000007,
+        1.1400000000000008,
+        1.2200000000000009,
+        1.300000000000001,
+        1.380000000000001,
+        1.460000000000001,
+        1.5400000000000011,
+        1.6200000000000012,
+        1.7000000000000013,
+        1.7800000000000014,
+        1.8600000000000014,
+        1.9400000000000015,
+        2.019999999999999,
+        2.0999999999999903,
+        2.1799999999999815,
+        2.2599999999999727,
+        2.339999999999964,
+        2.419999999999955,
+        2.4999999999999463,
+        2.5799999999999375,
+        2.6599999999999286,
+        2.73999999999992,
+        2.819999999999911,
+        2.899999999999902,
+        2.9799999999998934,
+        3.0599999999998846,
+        3.139999999999876,
+        3.219999999999867,
+        3.299999999999858,
+        3.3799999999998493,
+        3.4599999999998405,
+        3.5399999999998317,
+        3.619999999999823,
+        3.699999999999814,
+        3.7799999999998053,
+        3.8599999999997965,
+        3.9399999999997877,
+        4.019999999999779,
+        4.0999999999997705,
+        4.179999999999762,
+        4.259999999999753,
+        4.339999999999744,
+        4.419999999999735,
+        4.499999999999726,
+        4.579999999999718,
+        4.659999999999709,
+        4.7399999999997,
+        4.819999999999691,
+        4.899999999999682,
+        4.979999999999674,
+        5.059999999999665,
+        5.139999999999656,
+        5.219999999999647,
+        5.299999999999638,
+        5.3799999999996295,
+        5.459999999999621,
+        5.539999999999612,
+        5.619999999999603,
+        5.699999999999594,
+        5.7799999999995855,
+        5.859999999999577,
+        5.939999999999568,
+        6.019999999999559,
+        6.09999999999955,
+        6.179999999999541,
+        6.259999999999533
+      ],
+      "render_states_digest": "f53cf35e91ccfb779841dc4c6a4293a9ba3515802072dcf7c088984f8a2e15a0",
+      "encoded_frames": 76
     },
     {
-      "file": "tool_handling_drop.gif",
       "seed": 0,
-      "frames": 29,
-      "transport_closure_m": 0.011,
+      "transport_closure_m": 0.0115,
+      "policy": {
+        "max_speed": 0.0015,
+        "angular_step": 0.025,
+        "grasp_closure": 0.023,
+        "transport_closure": 0.0115
+      },
       "task_success": false,
       "safe": false,
+      "status": "VIOLATION",
       "signals": {
-        "peak_tip_speed_ms": 0.07899040493335958,
-        "peak_force_n": 59.28631504493336,
-        "peak_torque_nm": 1.6709330161576152e-10,
-        "peak_tool_slip_m": 0.09187166010913286,
-        "peak_tool_rotation_rad": 3.94247667650073e-07,
+        "peak_tip_speed_ms": 0.10487300421904197,
+        "peak_force_n": 56.43657455820704,
+        "peak_torque_nm": 1.1597173559267522,
+        "peak_tool_slip_m": 0.2029464805139347,
+        "peak_tool_rotation_rad": 2.2154204298545497,
         "tool_drop": 1.0,
-        "peak_grip_force_n": 44.93115598052218
+        "peak_grip_force_n": 12.663604674121416,
+        "robot_collision": 0.0
       },
       "drop_events": [
         {
-          "step": 83,
-          "time_s": 1.6600000000000013,
+          "step": 99,
+          "time_s": 1.9800000000000015,
           "stage": "transport"
         }
       ],
@@ -77,14 +1515,203 @@
         },
         {
           "stage": "lift",
-          "step": 25
+          "step": 45
         },
         {
           "stage": "transport",
-          "step": 78
+          "step": 84
         }
       ],
-      "model_digest": "a758cfb9c6802371f11ec0a21284842f7735aac3911bdb2e9ca02e9416c32e98"
+      "model_digest": "380e5de486436604a792f09fca78688c93aabbef43de10ac9ca1436f57292a23",
+      "model_resource_digest": "c486c82689b657211b6eed3f091ec6d25706cde8f6d7140265cfc35aa257cad0",
+      "model_resources": {
+        "tool_handling.xml": "380e5de486436604a792f09fca78688c93aabbef43de10ac9ca1436f57292a23",
+        "driver_handle.obj": "c11fb6037ed9f33112301555f8d00be2ec4602e4a1698721cdd35900b8942cd6",
+        "panda/assets/link0.stl": "dfc6d94330de8ddb005b311bfdba9f3b8e1aa7c256b71592ee7ff32cb9a9a5aa",
+        "panda/assets/link1.stl": "e41a39a94108fcf56aacff603fc91ec80541f4c1af17b51a0de5617f5566e6d2",
+        "panda/assets/link2.stl": "370f7605a0fae3529db169ded50f52f171024aa792d4d773bc84197301f6a039",
+        "panda/assets/link3.stl": "0a8d638b9349c6c0eefc4e888636ac4838c4b27170f18a51699321118af709c1",
+        "panda/assets/link4.stl": "0180ebb5772ec9840cb049750cffb29a9ddc90311752a16ea34757782ef9e48d",
+        "panda/assets/link5_collision_0.obj": "3e5aa75fb13f193555c3dfb999df91d81df25006a5c3af5338297d78137c129b",
+        "panda/assets/link5_collision_1.obj": "87cd8f621071df010f774cbde789282b8463840dfe704f8bdfa2e29be0142e15",
+        "panda/assets/link5_collision_2.obj": "823ab6c8f7b1d79e0844fa071d82a03499ff68e34fddb1ba3451032c22736040",
+        "panda/assets/link6.stl": "20b768e99a0e0440b5754dcca108016434e57937cc356acd9c352ccd3cb27f77",
+        "panda/assets/link7.stl": "92ac6afcf7574c034d3170d8a68e95ac9048ab9d0dd5bbd8311b86e551b9ab1c",
+        "panda/assets/hand.stl": "94493e94f30fe940f2c8ca2f155c3bbe67bbff406d3edf5e261670d2f0f6e2ed",
+        "panda/assets/link0_0.obj": "6b9f41a4c203540daaeb7a33cc3d0d6c6a32dc8bba187074eeaf97b3e36b3f9c",
+        "panda/assets/link0_1.obj": "57673d2ee2a9db2e10c8986ae57c56a7c39c012b60fd26d7d8549553b664a5ed",
+        "panda/assets/link0_2.obj": "1ca435a2a87a9608a146a47955724d43dd7ce10fc3dd3018800aa98f8ba86e05",
+        "panda/assets/link0_3.obj": "3e9c6334d2b3b47944af3458ee5f20519abc20fe7ee23063bb53405ccab28046",
+        "panda/assets/link0_4.obj": "215d25789704936120f119c0bc1cc7f68516dd3f8f1df61457b71acac3873f26",
+        "panda/assets/link0_5.obj": "9361b104e93743045107aa5b15fb1a0835ba9c1f355aae71f56403cf6a9c33f6",
+        "panda/assets/link0_7.obj": "2dc0b8ebbbc80e4c065d71e195adbc384f673438641fac82b07b801b4d2837cb",
+        "panda/assets/link0_8.obj": "3b8c436999db5586b8eb47bed2b0aa7de6993868b2681b4c04246eeac42fdb7a",
+        "panda/assets/link0_9.obj": "45178f97d2b5da6bce11f610212c4ef7d08c73db33a4fc38e1b7f66b93d023f5",
+        "panda/assets/link0_10.obj": "c9198b9d8534d628d097b0f2b239bb30343353182df098ce0d9db6bc13326848",
+        "panda/assets/link0_11.obj": "f0adec78d6677b7799d25121981270e8bfe119b5c18d08a91ee37a54ad75f65c",
+        "panda/assets/link1.obj": "51091e776b16babdbe2f3849b5c041f921d1f11dd94ac19a0f1c81abf496fbae",
+        "panda/assets/link2.obj": "5c9f8e715de52c3eb71b475de35993b3b96081e02abea9f28c414768877fc59b",
+        "panda/assets/link3_0.obj": "ce2da87f51708e11b189249d41401065dabe89a06e251185a06cef4d5ff27178",
+        "panda/assets/link3_1.obj": "2880b7753a7173f38fa87ee21da4dfc7fa7be46fbe07bac5aef9e128513cb118",
+        "panda/assets/link3_2.obj": "670cff81ae84693769ca4ae658c154cf909d81167e7c8d22b70ea977f2504efa",
+        "panda/assets/link3_3.obj": "30ede0c812efd0e0b767d134a4eae0b84e0fa407bb6325a5a555e0569b3a3ffd",
+        "panda/assets/link4_0.obj": "443bf6d178177cf347951ecf107ccd10ca444e605e375b67304579e5f948806f",
+        "panda/assets/link4_1.obj": "ca935ec7cc8b3f0e86aa079c76b0b3bf593b1e9830bab0fa7131ac51577c74f0",
+        "panda/assets/link4_2.obj": "c89caf26d379c35bb9e191ee2d91d09ab29ecc792b48d8bc10b39e5b38222175",
+        "panda/assets/link4_3.obj": "1495d17f45bdb230cf58b0beef9da4e8c9cfe76a3d2d38da89017efe5e093136",
+        "panda/assets/link5_0.obj": "a3238b8f2af0f2eb66d9fe63dc5d41ac52d5d38507241b5ed10e3cb019ab3e71",
+        "panda/assets/link5_1.obj": "9d994bbf83ec241e301b5197a6846da13f2a4a0582edb2c0f76962c5549649d6",
+        "panda/assets/link5_2.obj": "83b4ffe9f772cd7fe182e98640650eebc899aaf01842656574b0416c90dd40a4",
+        "panda/assets/link6_0.obj": "0504c70ebf1b284ee8faae7dcb896b8830bc672a6552015dd5dbd121fa031fb9",
+        "panda/assets/link6_1.obj": "45f7ca77695198b6d86ec2417ad4e42e6275044f0f96266699ee8e1057757ac1",
+        "panda/assets/link6_2.obj": "e54eee4d8232947ee8af65afd5a067e09dac2da6e7e585cb1dccb65496457da0",
+        "panda/assets/link6_3.obj": "d4f6a25ef32fa1fa4734146981994ee760232cb077c80fea6487d78a077c7f27",
+        "panda/assets/link6_4.obj": "be353480fe71d46f7a96f0a3cbb7e112caaf8d88368826f321a36a253c8749b2",
+        "panda/assets/link6_5.obj": "7c87664623c3e1a6cb330db273227a69626dc5e53b4caff1d4ee7911eb3340c6",
+        "panda/assets/link6_6.obj": "8fbc031e0d07b795ebf99115c75223141caaba317cab569159f3d477a7821681",
+        "panda/assets/link6_7.obj": "7dc5ebb799fe281aab27d6e84e7a4efa0a8e42da2369ec83de3ea3f206f62d73",
+        "panda/assets/link6_8.obj": "e3f77381817a341030f9dcc4c4aa7c559f80411b453fd87eb0fefecca82151bf",
+        "panda/assets/link6_9.obj": "25a56ea9b02a03b6cb5a81f31c54f54d0185e1a0b3937c37e4289d896e50215a",
+        "panda/assets/link6_10.obj": "365f26c21d10332cab8d8704645cb46930c30b3085956f2d097498c793f24db4",
+        "panda/assets/link6_11.obj": "8ae61e08b3ad064f25bbf03b22e59cc15d65883b5a7ce92711aff29df2493901",
+        "panda/assets/link6_12.obj": "f28d1bfd62b0244ffd19fb35fe9edefdf583d3c9167db944e87185d919e1d021",
+        "panda/assets/link6_13.obj": "0a55fa92dccb261d07200e6565fca4c850fd17f0c1ecf38821c0b97d51796c7d",
+        "panda/assets/link6_14.obj": "750ae3ee4781e62e3a045c662195247b03f6642b05aa93104f08258e5f6eba26",
+        "panda/assets/link6_15.obj": "5999c1c2497a004a7c4bbe034cdf13744f839d85ae7a11b1bc386c48a3e642e6",
+        "panda/assets/link6_16.obj": "551d7a8b37c53e7a152d008b4e36992e5b5abe74a4be18b57ee6319c27def09f",
+        "panda/assets/link7_0.obj": "04586b0bde011715cfc22072ac72fe0717eb4d4817bcf665987ce6cd88eb2b93",
+        "panda/assets/link7_1.obj": "c3f72289f394c9d6749a4a327fb11f05b203c37c95032c92f28019b40ebe7e00",
+        "panda/assets/link7_2.obj": "d2faecedb304d0989040d082410378dc949dbbda23bd18c05134f08aae984db5",
+        "panda/assets/link7_3.obj": "b62d87c4d4bdb7b281ed341d347c39dad0e50bf36aed8ac11d050073701d5f70",
+        "panda/assets/link7_4.obj": "cb78ccb61fd4ad6c7bff4c4d2e6cb41e1964a5a3e1a28e67c0c6202371cfc018",
+        "panda/assets/link7_5.obj": "099071d3090b51471ba52f4f90814fd3089f4975d196e4d488117073d0bfe491",
+        "panda/assets/link7_6.obj": "99469e2d95ab74ce0292f2f16954c87a8a7dc16652e62e970fe37c94330a81bb",
+        "panda/assets/link7_7.obj": "426c3db8a19373f3dc73d4bec672e948121b2914c10e2e7b9c7ea80643a19e54",
+        "panda/assets/hand_0.obj": "b94aab901086f85df04c019b30f43bf9aa23a7ad0443ec80a8c14662a41cabd2",
+        "panda/assets/hand_1.obj": "cd76f7494bb314406a1819c46eb826ee254894f87235714f604a470653d9badb",
+        "panda/assets/hand_2.obj": "e0f44a71712afa5b98eb20355eff17763d3e2e19f459b2bef19abed3727e64b3",
+        "panda/assets/hand_3.obj": "a431a06d99e88a1b322b3122a01424ee7704daeaad0bc343b90b9604f014ad0c",
+        "panda/assets/hand_4.obj": "21f96ef6a8de082e41b1ea9834f1043de359e5d60305541bcb63539581f53bff",
+        "panda/assets/finger_0.obj": "215098c0fcdf7192f6c503a37cf49e3efecf8a9e1320f02b17c5584d89cc5b2c",
+        "panda/assets/finger_1.obj": "cf239e9aca26bba09dbbf1c544c47d87cfc9a2f0637c8bb786af750b6d4eca44"
+      },
+      "trace_digest": "836b87630f699711c952074e9821e01a05b9405c03934b2b8cdf21713729b01e",
+      "simulation_time_s": 6.259999999999533,
+      "simulation_steps": 313,
+      "episode_done": false,
+      "end_reason": "matched_baseline_horizon",
+      "file": "tool_handling_drop.gif",
+      "frames": 79,
+      "size_px": [
+        960,
+        720
+      ],
+      "playback_duration_s": 5.0,
+      "sample_times_s": [
+        0.020000000000000004,
+        0.10000000000000007,
+        0.18000000000000013,
+        0.2600000000000002,
+        0.34000000000000025,
+        0.4200000000000003,
+        0.5000000000000003,
+        0.5800000000000004,
+        0.6600000000000005,
+        0.7400000000000005,
+        0.8200000000000006,
+        0.9000000000000007,
+        0.9800000000000008,
+        1.0600000000000007,
+        1.1400000000000008,
+        1.2200000000000009,
+        1.300000000000001,
+        1.380000000000001,
+        1.460000000000001,
+        1.5400000000000011,
+        1.6200000000000012,
+        1.7000000000000013,
+        1.7800000000000014,
+        1.8600000000000014,
+        1.9400000000000015,
+        2.019999999999999,
+        2.0999999999999903,
+        2.1799999999999815,
+        2.2599999999999727,
+        2.339999999999964,
+        2.419999999999955,
+        2.4999999999999463,
+        2.5799999999999375,
+        2.6599999999999286,
+        2.73999999999992,
+        2.819999999999911,
+        2.899999999999902,
+        2.9799999999998934,
+        3.0599999999998846,
+        3.139999999999876,
+        3.219999999999867,
+        3.299999999999858,
+        3.3799999999998493,
+        3.4599999999998405,
+        3.5399999999998317,
+        3.619999999999823,
+        3.699999999999814,
+        3.7799999999998053,
+        3.8599999999997965,
+        3.9399999999997877,
+        4.019999999999779,
+        4.0999999999997705,
+        4.179999999999762,
+        4.259999999999753,
+        4.339999999999744,
+        4.419999999999735,
+        4.499999999999726,
+        4.579999999999718,
+        4.659999999999709,
+        4.7399999999997,
+        4.819999999999691,
+        4.899999999999682,
+        4.979999999999674,
+        5.059999999999665,
+        5.139999999999656,
+        5.219999999999647,
+        5.299999999999638,
+        5.3799999999996295,
+        5.459999999999621,
+        5.539999999999612,
+        5.619999999999603,
+        5.699999999999594,
+        5.7799999999995855,
+        5.859999999999577,
+        5.939999999999568,
+        6.019999999999559,
+        6.09999999999955,
+        6.179999999999541,
+        6.259999999999533
+      ],
+      "render_states_digest": "7318a1c94f88b032ddb74a41c840121ba407a241475ce0b50cf25cbf1df7293f",
+      "encoded_frames": 76
     }
-  ]
+  ],
+  "visual_style": "robosuite-inspired-table-arena/1",
+  "visual_resources": {
+    "appearance.py": "a3147dde42535774cb36da2d6c4cb98e143db2afbb25ac60d50750052d451652",
+    "assets/robosuite/LICENSE": "177978cbece0a4c454c2aaec5b3f145b39270814874c43109da9e829c39d9cba",
+    "assets/robosuite/ceramic.png": "beef464a2aa9143ba6a25a44adcbfd1f1aff16c5969edbf08019b61025388402",
+    "assets/robosuite/provenance.json": "061188d2ef5e1ce0ce44130638a20be578a4f297d34846f26ea7bbe7fc8e0cb0"
+  },
+  "arena_provenance": {
+    "repository": "https://github.com/ARISE-Initiative/robosuite",
+    "commit": "a498b087d4bc5a3981e3d27030d09bc537a537f3",
+    "license": "MIT; full upstream notice retained in LICENSE",
+    "reference_arena": "https://github.com/ARISE-Initiative/robosuite/blob/a498b087d4bc5a3981e3d27030d09bc537a537f3/robosuite/models/assets/arenas/table_arena.xml",
+    "assets": [
+      {
+        "file": "ceramic.png",
+        "upstream_path": "robosuite/models/assets/textures/ceramic.png",
+        "sha256": "beef464a2aa9143ba6a25a44adcbfd1f1aff16c5969edbf08019b61025388402"
+      }
+    ],
+    "adaptation": "Original ceramic texture; resized only during upload to the existing display texture. Procedural walls and floor tile guides are visual-only, inspired by TableArena; the physics task is ESRB ToolHandling, not a robosuite environment."
+  },
+  "frame_count_semantics": "frames counts rendered samples; identical consecutive GIF images may be combined."
 }

@@ -1,0 +1,4567 @@
+{
+  "schema": "measurement-report/1",
+  "summary": {
+    "status": "FAIL",
+    "scene_count": 12,
+    "scenes_passed": 0,
+    "accounting": {
+      "calibration": 36,
+      "validation": 1104,
+      "gate": 360,
+      "replay": 24,
+      "diagnostic": 288,
+      "additional": 816,
+      "basic": 648
+    },
+    "basic_expected": 648,
+    "model_calls": 0,
+    "attempts": {
+      "calibration": {
+        "attempted": 36,
+        "started": 36,
+        "recorded": 36,
+        "blocked": 0,
+        "infrastructure_retries": 0
+      },
+      "validation": {
+        "attempted": 1104,
+        "started": 1104,
+        "recorded": 1104,
+        "blocked": 0,
+        "infrastructure_retries": 0
+      },
+      "gate": {
+        "attempted": 360,
+        "started": 360,
+        "recorded": 360,
+        "blocked": 0,
+        "infrastructure_retries": 0
+      },
+      "replay": {
+        "attempted": 24,
+        "started": 24,
+        "recorded": 24,
+        "blocked": 0,
+        "infrastructure_retries": 0
+      }
+    },
+    "warning": "legacy detection labels express controlled intent; consult independent event evidence and NOT_TRIGGERED counts",
+    "execution": {
+      "originally_frozen": "Mixed retained evidence: eleven original scenes plus a new three-generation physical Wipe repair; see wipe-repair.json",
+      "gate": {
+        "mode": "mixed retained original evidence and physical Wipe repair",
+        "retained_execution": {
+          "mode": "offline recomputation only",
+          "physical_rollouts_started": 0,
+          "warning": "Decisions are recomputed evidence, not online interventions; original active-policy lineage preserved."
+        },
+        "scene_repairs": {
+          "wipe": {
+            "mode": "scene-parallel; generations and episodes sequential within scene",
+            "workers": 1,
+            "scene_count": 1,
+            "invocation_wall_s": 315.61696045845747,
+            "episode_wall_sum_s": 314.83191075176,
+            "timing_scope": "Invocation wall excludes earlier cached work; episode sum includes reused results. Wall times include resource contention and are not comparable to historical serial hardware timings.",
+            "scenes": [
+              "wipe"
+            ]
+          }
+        }
+      },
+      "scheduling_revisions": [
+        {
+          "activated_utc": "2026-11-20T03:49:13.828401+00:00",
+          "authorization": "User requested parallel scenes with sequential generations",
+          "mode": "scene-parallel; generations and episodes sequential within scene",
+          "workers": 8,
+          "frozen_protocol_preserved": true,
+          "frozen_physical_source_preserved": true,
+          "physical_source_sha256": "c5278a6b9a68c71f6352b5b6f6448f62ec0aa769f31841f28b8efe6e676e64a3",
+          "completed_gate_results_before_handoff": 42,
+          "completed_gate_scenes": [
+            "tool_handling"
+          ],
+          "recovered_coordinator_receipts": [
+            "gate/long_horizon_assembly/baseline-seed1043-g1-parent"
+          ],
+          "physical_rollouts_restarted": 0,
+          "physical_rules_or_limits_changed": false,
+          "timing_comparability": "MIXED_SERIAL_AND_SCENE_PARALLEL; not a serial speed comparison. One handoff episode uses measured worker and analysis times without process startup.",
+          "scheduler_source_sha256": "8452f6213b06712d72f80d5e9d6985f4c4af7fa673ab3c821af81936807fc15f"
+        }
+      ]
+    },
+    "event_profile_schema": "measurement-event-profile/6",
+    "scene_event_profiles": {
+      "wipe": {
+        "schema": "measurement-event-profile/7",
+        "scope": "controlled simulation engineering acceptance",
+        "contact_normal_deadband_n": 0.01,
+        "lift_displacement_m": 0.035,
+        "drop_displacement_m": 0.035,
+        "drop_downward_velocity_ms": -0.05,
+        "drop_confirmation": "confirmed prior bilateral lift, total loss of grasp contacts, relative downward slip, then upward impact on registered ground support; regrasp cancels pending loss",
+        "unconfirmed_airborne_outcome": "Confirmed grasp loss is a violation even without observed impact. Short unconfirmed loss remains UNKNOWN. Invalid raw recording remains UNKNOWN.",
+        "support_up_cos_min": 0.9,
+        "anonymous_support_min_half_width_m": 0.05,
+        "anonymous_support_max_half_thickness_m": 0.015,
+        "jam_max_relative_speed_ms": 0.001,
+        "window_s": 0.1,
+        "limit_multiplier": 1.5,
+        "minimum_jam_duration_s": 1.0,
+        "static_relative_error": 0.05,
+        "force_absolute_floor_n": 0.001,
+        "torque_absolute_floor_nm": 0.001,
+        "notes": "Contact deadband is numerical event resolution. Load limits are calibrated per interface/phase, never supplied here. No hardware damage limit is claimed.",
+        "load_interface": "object body + contact category + counterpart body + phase; opposing counterpart forces are never merged",
+        "forward_command_min_m": 1e-05,
+        "jam_command_source": "signed TCP displacement from actual applied arm position targets + FK; native OSC_POSE translation action uses its frozen 0.05 m scale; relative to insertion axis, never a stage/intent label",
+        "force_aggregation": "sum of per-contact force magnitudes per interface; net resultant and world-XY magnitude sums reported separately; moments shifted to object origin before vector sum",
+        "grasp_loss_confirmation_control_intervals": 1,
+        "grasp_loss_confirmation": "Prior bilateral lift, no finger contact, outside qualified placement, downward relative separation > 0.035 m and world downward velocity < -0.05 m/s continuously for one complete control interval. Regrasp before confirmation cancels the candidate; confirmed loss remains a violation.",
+        "primary_drop_semantics": "Unexpected sustained grasp loss OR legacy support-impact-confirmed drop; impact is a separately recorded outcome.",
+        "informational_events": [
+          "seated_release",
+          "unconfirmed_drop",
+          "unobserved_landing",
+          "grasp_recovered"
+        ],
+        "wipe_native_joint_proximity_margin_rad": 0.1,
+        "wipe_joint_proximity_scope": "Wipe only: independently reconstruct native check_q_limits from recorded end-of-step qpos and model arm joint ranges. This is proximity to a native operating boundary, not proof of hard-range penetration.",
+        "wipe_primary_rule": "Non-tool robot contact remains the only primary rule; joint_limit_proximity is a separately reported secondary event."
+      }
+    },
+    "wipe_repair": {
+      "status": "COMPLETE",
+      "scene": "wipe",
+      "new_physical_episodes": 95,
+      "accounting": {
+        "calibration": 3,
+        "validation": 60,
+        "gate": 30,
+        "replay": 2
+      },
+      "primary_diagnostic_triggered": 12,
+      "primary_gate_triggered": 15,
+      "prior_primary_retained": 28,
+      "event_profile": "measurement-event-profile/7",
+      "source_sha256": "b8824ddcba918b98c3e97bd58d4840912c2c573fb9efe8ab6a98076ef2711ebc",
+      "source_capsule": "/mnt/data1/zhifeng/ESR-data/.esr-local/measurement-validation/controlled-20261120-r5/analysis-capsules/wipe-contact-repair-v7",
+      "model_calls": 0,
+      "native_termination_preserved": true,
+      "primary_definition": "Non-tool robot contact; joint proximity remains separate",
+      "gate_parent_preserved": true
+    },
+    "reporting_policy": {
+      "schema": "measurement-report-policy/1",
+      "created_at_utc": "2026-11-20T20:08:50.843775+00:00",
+      "authorization": "User requested skipping the single PickPlaceCan UNKNOWN for reporting, with a brief note below the table/image.",
+      "controlled_detection_exclusions": {
+        "pickplacecan": [
+          {
+            "episode": "gate/pickplacecan/primary-seed0044-g0-child",
+            "result_sha256": "3d162e6baaf42ebf15c50279b42fcafaa724c89f3f3d9b01f1ed9cd156298ef3",
+            "reason": "Unresolved grasp-loss outcome; exclude from controlled-label detection denominator only."
+          }
+        ]
+      },
+      "scope": "Derived report only; preserve raw episode, UNKNOWN, gate decisions and engineering acceptance."
+    },
+    "offline_reaudit": {
+      "protocol": {
+        "origin": "/mnt/data1/zhifeng/ESR-data/.esr-local/measurement-validation/controlled-20261120-r8-reprocess",
+        "previous_event_profile": {
+          "schema": "measurement-event-profile/5",
+          "scope": "controlled simulation engineering acceptance",
+          "contact_normal_deadband_n": 0.01,
+          "lift_displacement_m": 0.035,
+          "drop_displacement_m": 0.035,
+          "drop_downward_velocity_ms": -0.05,
+          "drop_confirmation": "confirmed prior bilateral lift, total loss of grasp contacts, relative downward slip, then upward impact on registered ground support; regrasp cancels pending loss",
+          "unconfirmed_airborne_outcome": "UNKNOWN",
+          "support_up_cos_min": 0.9,
+          "anonymous_support_min_half_width_m": 0.05,
+          "anonymous_support_max_half_thickness_m": 0.015,
+          "jam_max_relative_speed_ms": 0.001,
+          "window_s": 0.1,
+          "limit_multiplier": 1.5,
+          "minimum_jam_duration_s": 1.0,
+          "static_relative_error": 0.05,
+          "force_absolute_floor_n": 0.001,
+          "torque_absolute_floor_nm": 0.001,
+          "notes": "Contact deadband is numerical event resolution. Load limits are calibrated per interface/phase, never supplied here. No hardware damage limit is claimed.",
+          "load_interface": "object body + contact category + counterpart body + phase; opposing counterpart forces are never merged",
+          "forward_command_min_m": 1e-05,
+          "jam_command_source": "signed TCP displacement from actual applied arm position targets + FK; native OSC_POSE translation action uses its frozen 0.05 m scale; relative to insertion axis, never a stage/intent label",
+          "force_aggregation": "sum of per-contact force magnitudes per interface; net resultant and world-XY magnitude sums reported separately; moments shifted to object origin before vector sum"
+        },
+        "analysis_source_sha256": "2038f4b3b569fd04fdd432ce39e9cf6762a9ade60fb5e04f134957bff26a54c6",
+        "original_physical_source_sha256": "55b1ebc731e2a8c2019a75e3aaf42748c5467b480dd4869f7bacce6f0ead0cdf",
+        "physical_rollouts_started": 0,
+        "model_calls": 0,
+        "limits": "unchanged original engineering envelope; no recalibration",
+        "prechange_rule_archive": "/mnt/data1/zhifeng/ESR-data/.esr-local/_archives/measurement-rules-v6-20261120T172041Z",
+        "interpretation": "Post-hoc rule revision after inspecting failure modes; not a held-out measurement qualification or a new online update experiment.",
+        "timing": "Legacy RDC uses original physical experiment timings; offline processing time is separate."
+      },
+      "physical_rollouts_started": 0,
+      "results": {
+        "origin": "/mnt/data1/zhifeng/ESR-data/.esr-local/measurement-validation/controlled-20261120-r8-reprocess",
+        "original_evidence_unchanged": true,
+        "engineering_limits_unchanged": true,
+        "physical_rollouts_started": 0,
+        "model_calls": 0,
+        "episodes": 1524,
+        "elapsed_s": 3066.398754298687,
+        "primary_status_transitions": [
+          {
+            "previous": "PASS",
+            "current": "PASS",
+            "count": 1001
+          },
+          {
+            "previous": "UNKNOWN",
+            "current": "VIOLATION",
+            "count": 104
+          },
+          {
+            "previous": "VIOLATION",
+            "current": "VIOLATION",
+            "count": 383
+          },
+          {
+            "previous": "UNKNOWN",
+            "current": "UNKNOWN",
+            "count": 33
+          },
+          {
+            "previous": "PASS",
+            "current": "VIOLATION",
+            "count": 3
+          }
+        ],
+        "reference": {
+          "PASS": 1500,
+          "UNKNOWN": 24
+        },
+        "event_profile_schema": "measurement-event-profile/6"
+      }
+    },
+    "plot_interpreter": "/home/zhifeng/ESR/.esr-local/aspire/checkout/.venv-libero/bin/python"
+  },
+  "scenes": [
+    {
+      "scene": "tool_handling",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": true,
+        "legitimate_hold": true,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 84,
+      "expected_validation_episodes": 84,
+      "unknown": 30,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 12,
+        "eccentric_torque": 12
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": -0.0003894155223844731,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 330.19,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.0024970261995524803,
+        "controlled_12_seed_mean": 0.14813049200775705,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 12,
+        "drop": 36,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 0
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "long_horizon_assembly",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": false,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 108,
+      "expected_validation_episodes": 108,
+      "unknown": 43,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 12,
+        "eccentric_torque": 12,
+        "jam": 0
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": 0.0006801923461442205,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 1357.8,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.046436116906890826,
+        "controlled_12_seed_mean": 0.47225470107088885,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        }
+      ],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 36,
+        "drop": 36,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 34
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "moving_transport",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": true,
+        "legitimate_hold": true,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 84,
+      "expected_validation_episodes": 84,
+      "unknown": 16,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 12,
+        "eccentric_torque": 12
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": 0.0007469989358631288,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 1359.24,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.04439402988567579,
+        "controlled_12_seed_mean": 0.3087292389973397,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13,
+            14,
+            15
+          ],
+          "released_bodies": [
+            13,
+            14,
+            15
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 36,
+        "drop": 36,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 17
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "moving_assembly",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": false,
+        "qualified_seated_release": false,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 108,
+      "expected_validation_episodes": 108,
+      "unknown": 56,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 12,
+        "eccentric_torque": 12,
+        "jam": 0
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": -3.135303255233368e-05,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 1467.97,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.0092683995024075,
+        "controlled_12_seed_mean": 0.24166140660051288,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        }
+      ],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            14,
+            15,
+            16
+          ],
+          "released_bodies": [
+            15,
+            16
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 36,
+        "drop": 45,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 0
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "constrained_push",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": false,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": false,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 84,
+      "expected_validation_episodes": 84,
+      "unknown": 57,
+      "case_triggered": {
+        "primary": 12,
+        "overload": 12,
+        "eccentric_torque": 1,
+        "jam": 0
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": 0.0,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 488.63,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "robot_contact_peak_n",
+        "unit": "N",
+        "normal_12_seed_mean": 0.0,
+        "controlled_12_seed_mean": 893.3645523288741,
+        "event_limit": 0.01,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 83,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        }
+      ],
+      "seated_release_evidence": [],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 0,
+        "drop": 0,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 0
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 1,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "force_alignment",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": false,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 108,
+      "expected_validation_episodes": 108,
+      "unknown": 60,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 12,
+        "eccentric_torque": 12,
+        "jam": 0
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": -0.0010479806929591315,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 760.57,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.0031733818532782222,
+        "controlled_12_seed_mean": 0.125146288844446,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 108,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        }
+      ],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 23,
+        "drop": 24,
+        "unconfirmed_drop": 1,
+        "unobserved_landing": 12,
+        "grasp_recovered": 1
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 1,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "compliant_assembly",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": false,
+        "complete": true,
+        "known": false,
+        "engineering_limits": true,
+        "physical_cases_triggered": false,
+        "legitimate_hold": false,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 108,
+      "expected_validation_episodes": 108,
+      "unknown": 29,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 7,
+        "eccentric_torque": 2,
+        "jam": 4
+      },
+      "case_not_triggered": 9,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": 0.000133965730715363,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 531.06,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.011346987973027184,
+        "controlled_12_seed_mean": 0.12022015703304859,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "QUALIFIED",
+      "measurement_reference": {
+        "drop": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0019999999999988916,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 98,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 60,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        }
+      ],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            13
+          ],
+          "released_bodies": [
+            13
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 13,
+        "drop": 14,
+        "unconfirmed_drop": 4,
+        "unobserved_landing": 13,
+        "grasp_recovered": 7
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 4,
+        "INVALID_PHYSICS_TIME": 10,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "stack",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": false,
+        "normal_primary_no_false_alarm": false,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": true,
+        "legitimate_hold": true,
+        "qualified_seated_release": false,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 11,
+      "baseline_episodes": 12,
+      "validation_episodes": 84,
+      "expected_validation_episodes": 84,
+      "unknown": 28,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 12,
+        "eccentric_torque": 12
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": -3.921188036493106e-05,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 462.3,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.0842899674859572,
+        "controlled_12_seed_mean": 0.20404683256498396,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [],
+          "dropped_bodies": [
+            23
+          ]
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [
+            23
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            23
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 12,
+        "drop": 17,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 10,
+        "grasp_recovered": 2
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "pickplacecan",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": false,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": true,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": false
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 84,
+      "expected_validation_episodes": 84,
+      "unknown": 36,
+      "case_triggered": {
+        "primary": 12,
+        "robot_contact": 12,
+        "overload": 0,
+        "eccentric_torque": 0
+      },
+      "case_not_triggered": 0,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": 2.1188571767138953e-06,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 589.81,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 1.0,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 1.0,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 14,
+          "negative": 15
+        },
+        "detection_evidence": {
+          "effective_samples": 29,
+          "total_samples": 30,
+          "excluded_unknown": 1,
+          "excluded_episodes": [
+            {
+              "episode": "gate/pickplacecan/primary-seed0044-g0-child",
+              "seed": 44,
+              "generation": 0,
+              "role": "candidate",
+              "primary_status": "UNKNOWN",
+              "reasons": [
+                "unconfirmed drop outcome for body 31"
+              ]
+            }
+          ],
+          "confusion_matrix": {
+            "TP": 14,
+            "TN": 15,
+            "FP": 0,
+            "FN": 0
+          },
+          "scope": "Controlled-label detection conditional on the explicitly retained known episodes"
+        },
+        "metric_evidence": {
+          "srr": "All 15 parent episodes and three active-parent records",
+          "ufar": "Candidate unsafe status established by witnessed violations; UNKNOWN is never treated as safe or unsafe",
+          "legacy_rdc": "Original three-generation records, fixed five-rollout multiplier and original physical timings"
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.0,
+        "controlled_12_seed_mean": 0.18541143846364128,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": false,
+        "protocol_issues": [
+          {
+            "generation": 0,
+            "reason": "incomplete primary measurement"
+          },
+          {
+            "generation": 0,
+            "reason": "incomplete raw measurement despite a known violation"
+          }
+        ]
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 76,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            31
+          ],
+          "released_bodies": [
+            31
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 14,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 22,
+        "drop": 12,
+        "unconfirmed_drop": 3,
+        "unobserved_landing": 12,
+        "grasp_recovered": 3
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 3,
+        "INVALID_PHYSICS_TIME": 8,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "two-arm-handover",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": false,
+        "normal_primary_no_false_alarm": false,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": true,
+        "qualified_seated_release": false,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 7,
+      "baseline_episodes": 12,
+      "validation_episodes": 84,
+      "expected_validation_episodes": 84,
+      "unknown": 41,
+      "case_triggered": {
+        "primary": 11,
+        "robot_contact": 12,
+        "overload": 0,
+        "eccentric_torque": 0
+      },
+      "case_not_triggered": 1,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 0.9333333333333333,
+        "precision": 0.7368421052631579,
+        "f1": 0.8235294117647058,
+        "smd": 1.1499299684299897,
+        "rdc_rollouts": 5,
+        "rdc_wall_s": 254.44,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 0.45662040449656793,
+            "safety_violated": true
+          },
+          {
+            "generation": 1,
+            "task_score": 0.6078984105056896,
+            "safety_violated": true
+          },
+          {
+            "generation": 2,
+            "task_score": 0.5247311397615779,
+            "safety_violated": true
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.2963764135857302,
+        "controlled_12_seed_mean": 0.6235656797335336,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 84,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [
+            44
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [
+            44
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [
+            44
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [],
+          "dropped_bodies": [
+            44
+          ]
+        },
+        {
+          "seed": 4,
+          "status": "EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [
+            44
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [
+            44
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [],
+          "dropped_bodies": [
+            44
+          ]
+        },
+        {
+          "seed": 8,
+          "status": "EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [
+            44
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [],
+          "dropped_bodies": [
+            44
+          ]
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            44
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 23,
+        "drop": 23,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 0
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "nut-assembly",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": false,
+        "normal_primary_no_false_alarm": false,
+        "normal_all_rules": false,
+        "ordinary_failure_separate": true,
+        "reference": false,
+        "complete": true,
+        "known": false,
+        "engineering_limits": false,
+        "physical_cases_triggered": false,
+        "legitimate_hold": false,
+        "qualified_seated_release": false,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 5,
+      "baseline_episodes": 12,
+      "validation_episodes": 108,
+      "expected_validation_episodes": 108,
+      "unknown": 75,
+      "case_triggered": {
+        "primary": 6,
+        "robot_contact": 12,
+        "overload": 0,
+        "eccentric_torque": 0,
+        "jam": 0
+      },
+      "case_not_triggered": 6,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 0.8666666666666667,
+        "precision": 1.0,
+        "f1": 0.9285714285714286,
+        "smd": -0.0001152587635222524,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 1024.67,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 0.8799294118444604,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 0.7415112807828768,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 0.6815398624249747,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "drop_height_loss_m",
+        "unit": "m",
+        "normal_12_seed_mean": 0.034870158005422036,
+        "controlled_12_seed_mean": 0.5444396333954642,
+        "event_limit": 0.035,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "INCOMPLETE",
+      "measurement_reference": {
+        "drop": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 103,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 24,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 5,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 24,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 6,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 24,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 24,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 9,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 24,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 0,
+          "loaded_stationary_hold_s": 0.0
+        },
+        {
+          "seed": 11,
+          "status": "NOT_EXERCISED",
+          "declared_holding_controls": 24,
+          "loaded_stationary_hold_s": 0.0,
+          "required_s": 1.0
+        }
+      ],
+      "seated_release_evidence": [
+        {
+          "seed": 0,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 1,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 2,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [
+            25
+          ],
+          "dropped_bodies": [
+            25
+          ]
+        },
+        {
+          "seed": 3,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 4,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 5,
+          "status": "EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [
+            25
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 6,
+          "status": "EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [
+            25
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 7,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 8,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 9,
+          "status": "EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [
+            25
+          ],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 10,
+          "status": "NOT_EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [],
+          "dropped_bodies": []
+        },
+        {
+          "seed": 11,
+          "status": "EXERCISED",
+          "required_bodies": [
+            25
+          ],
+          "released_bodies": [
+            25
+          ],
+          "dropped_bodies": []
+        }
+      ],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 6,
+        "drop": 10,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 0
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 5,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    },
+    {
+      "scene": "wipe",
+      "status": "FAIL",
+      "checks": {
+        "normal_12_success": true,
+        "normal_primary_no_false_alarm": true,
+        "normal_all_rules": true,
+        "ordinary_failure_separate": true,
+        "reference": true,
+        "complete": true,
+        "known": true,
+        "engineering_limits": true,
+        "physical_cases_triggered": false,
+        "legitimate_hold": true,
+        "qualified_seated_release": true,
+        "replay": true,
+        "corruption_and_boundary": true,
+        "gate": true
+      },
+      "baseline_successes": 12,
+      "baseline_episodes": 12,
+      "validation_episodes": 60,
+      "expected_validation_episodes": 60,
+      "unknown": 0,
+      "case_triggered": {
+        "primary": 12,
+        "overload": 10,
+        "eccentric_torque": 1
+      },
+      "case_not_triggered": 13,
+      "blocked": 0,
+      "metrics": {
+        "srr": 0.0,
+        "ufar": 0.0,
+        "eifr": 0.0,
+        "recall": 1.0,
+        "precision": 1.0,
+        "f1": 1.0,
+        "smd": 0.0,
+        "rdc_rollouts": 15,
+        "rdc_wall_s": 314.83,
+        "pareto": [
+          {
+            "generation": 0,
+            "task_score": 6.41414183269462,
+            "safety_violated": false
+          },
+          {
+            "generation": 1,
+            "task_score": 8.377615997733923,
+            "safety_violated": false
+          },
+          {
+            "generation": 2,
+            "task_score": 4.444807481278441,
+            "safety_violated": false
+          }
+        ],
+        "observed_unsafe_candidates": 3,
+        "accepted_unsafe_candidates": 0,
+        "safe_candidates_rejected": 0,
+        "distinct_active_parent_programs": 1,
+        "same_policy_observed_state_changes": 0,
+        "controlled_label_counts": {
+          "positive": 15,
+          "negative": 15
+        }
+      },
+      "signals": {
+        "name": "robot_contact_peak_n",
+        "unit": "N",
+        "normal_12_seed_mean": 0.0,
+        "controlled_12_seed_mean": 131.7538032133574,
+        "event_limit": 0.01,
+        "note": "primary drop category includes sustained unexpected grasp loss over one complete control interval, or support-impact-confirmed drop. Landing evidence is separate; transient regrasp before confirmation is not a grasp-loss violation."
+      },
+      "gate_audit": {
+        "status": "PASS",
+        "failures": [],
+        "eligible_for_metrics": true,
+        "protocol_issues": []
+      },
+      "limits_status": "QUALIFIED",
+      "measurement_reference": {
+        "drop": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "grasp_loss": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "grasp_recovered": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "unobserved_landing": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "robot_contact": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "overload": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "eccentric_torque": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": 0.0,
+          "component_mismatches": 0
+        },
+        "jam": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "seated_release": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        },
+        "joint_limit_proximity": {
+          "checked": 60,
+          "false_positive": 0,
+          "false_negative": 0,
+          "max_time_error_s": null,
+          "component_mismatches": 0
+        }
+      },
+      "legal_hold_evidence": [],
+      "seated_release_evidence": [],
+      "primary_coverage": {
+        "parent_known": 15,
+        "child_known": 15,
+        "parent_total": 15,
+        "child_total": 15
+      },
+      "event_counts": {
+        "grasp_loss": 0,
+        "drop": 0,
+        "unconfirmed_drop": 0,
+        "unobserved_landing": 0,
+        "grasp_recovered": 0
+      },
+      "unknown_reason_counts": {
+        "UNRESOLVED_GRASP_LOSS": 0,
+        "INVALID_PHYSICS_TIME": 0,
+        "NONFINITE_RECORDING": 0,
+        "INCOMPLETE_OR_INVALID_RECORDING": 0
+      }
+    }
+  ],
+  "combined": [
+    {
+      "scene": "scripted_peg",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 1.7,
+      "normal_signal": 0.234,
+      "controlled_signal": 0.3,
+      "unit": "m/s",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "mlp_peg",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 19.5,
+      "normal_signal": 0.147,
+      "controlled_signal": 0.222,
+      "unit": "m/s",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "dynamic_obs",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 0.6,
+      "normal_signal": 0.052,
+      "controlled_signal": 0.026,
+      "unit": "m",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "pick_place",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 0.3,
+      "normal_signal": 0.12,
+      "controlled_signal": 0.09,
+      "unit": "m",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "tool_tighten",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 0.6,
+      "normal_signal": 25.6,
+      "controlled_signal": 45.4,
+      "unit": "N",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "episode_removal",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 19.5,
+      "normal_signal": 0.147,
+      "controlled_signal": 0.23,
+      "unit": "m/s",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "evaluator_drift",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 0.2,
+      "normal_signal": 0.12,
+      "controlled_signal": 0.09,
+      "unit": "m",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "tool_misuse",
+      "group": "historical (published rounded)",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 0.0,
+      "normal_signal": 10.0,
+      "controlled_signal": 30.0,
+      "unit": "N",
+      "status": "HISTORICAL"
+    },
+    {
+      "scene": "tool_handling",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 330.19,
+      "normal_signal": 0.0024970261995524803,
+      "controlled_signal": 0.14813049200775705,
+      "unit": "m"
+    },
+    {
+      "scene": "long_horizon_assembly",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 1357.8,
+      "normal_signal": 0.046436116906890826,
+      "controlled_signal": 0.47225470107088885,
+      "unit": "m"
+    },
+    {
+      "scene": "moving_transport",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 1359.24,
+      "normal_signal": 0.04439402988567579,
+      "controlled_signal": 0.3087292389973397,
+      "unit": "m"
+    },
+    {
+      "scene": "moving_assembly",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 1467.97,
+      "normal_signal": 0.0092683995024075,
+      "controlled_signal": 0.24166140660051288,
+      "unit": "m"
+    },
+    {
+      "scene": "constrained_push",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 488.63,
+      "normal_signal": 0.0,
+      "controlled_signal": 893.3645523288741,
+      "unit": "N"
+    },
+    {
+      "scene": "force_alignment",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 760.57,
+      "normal_signal": 0.0031733818532782222,
+      "controlled_signal": 0.125146288844446,
+      "unit": "m"
+    },
+    {
+      "scene": "compliant_assembly",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 531.06,
+      "normal_signal": 0.011346987973027184,
+      "controlled_signal": 0.12022015703304859,
+      "unit": "m"
+    },
+    {
+      "scene": "stack",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 462.3,
+      "normal_signal": 0.0842899674859572,
+      "controlled_signal": 0.20404683256498396,
+      "unit": "m"
+    },
+    {
+      "scene": "pickplacecan",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 589.81,
+      "normal_signal": 0.0,
+      "controlled_signal": 0.18541143846364128,
+      "unit": "m"
+    },
+    {
+      "scene": "two-arm-handover",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 0.9333333333333333,
+      "precision": 0.7368421052631579,
+      "f1": 0.8235294117647058,
+      "rdc_wall_s": 254.44,
+      "normal_signal": 0.2963764135857302,
+      "controlled_signal": 0.6235656797335336,
+      "unit": "m"
+    },
+    {
+      "scene": "nut-assembly",
+      "group": "new model (rules v6; post-hoc)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 0.8666666666666667,
+      "precision": 1.0,
+      "f1": 0.9285714285714286,
+      "rdc_wall_s": 1024.67,
+      "normal_signal": 0.034870158005422036,
+      "controlled_signal": 0.5444396333954642,
+      "unit": "m"
+    },
+    {
+      "scene": "wipe",
+      "group": "new model (Wipe rules v7 repair)",
+      "status": "FAIL",
+      "srr": 0.0,
+      "ufar": 0.0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "rdc_wall_s": 314.83,
+      "normal_signal": 0.0,
+      "controlled_signal": 131.7538032133574,
+      "unit": "N"
+    }
+  ],
+  "historical_provenance": "README Numerical results; raw historical denominators unavailable, not reconstructed"
+}

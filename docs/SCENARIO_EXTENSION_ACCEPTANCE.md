@@ -1,3 +1,7 @@
+> Current contact-model notice: `constrained_push`, `force_alignment`, and `compliant_assembly` now use full Panda workcells. The old pusher/insertion results below remain historical evidence. See [current contact tasks and demos](PANDA_CONTACT_WORKCELLS.md).
+
+> Current-model notice: `moving_transport` and `moving_assembly` now use full Panda conveyor workcells. The moving-sphere results in this document are historical frozen evidence. See [current task and acceptance documentation](PANDA_PRODUCTION_WORKCELLS.md).
+
 # 第三、四批仿真工程验收
 
 范围：确定性受控工程验收；不是论文样本、自然 agent 更新或真机安全认证。
@@ -31,10 +35,10 @@
 ## 复现与证据
 
 ```bash
-MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python experiments/run_benchmark.py \
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python -m esrb benchmark run \
   --config configs/experiment/physical_extensions.yaml --skip-sweep \
   --out-dir /tmp/esrb-physical
-.venv/bin/python -m esrb.detection.gate_audit /tmp/esrb-physical/moving_assembly
+.venv/bin/python -m esrb tools analyze gate-audit /tmp/esrb-physical/moving_assembly
 ```
 
 配置默认执行两代；加 `--generations 1 --fresh-min 1 --reduction-budget 4` 可复现本次单代面板的预算结构。请使用新的输出目录。
@@ -47,7 +51,7 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python experiments/r
 - `private/runs/physical_extensions_work_20261116/visuals/`：从保存的物理状态直接渲染的父/候选对照图及用例来源，没有重新生成演示轨迹。
 
 ```bash
-.venv/bin/python scripts/analysis/audit_physical_extensions.py \
+.venv/bin/python -m esrb tools analyze audit-physical-extensions \
   --run private/runs/physical_extensions_20261116 \
   --run private/runs/moving_extensions_verified_20261116 \
   --out /tmp/esrb-physical-re-audit

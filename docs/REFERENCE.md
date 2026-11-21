@@ -12,14 +12,14 @@ five newer scenarios and their stated limitations.
 ### Structured replays, boundary cases, and reduction
 
 ```bash
-python experiments/run_benchmark.py --gate-planner impact \
+python -m esrb benchmark run --gate-planner impact \
   --generations 2 --rollouts 8 --fresh-min 2 \
   --boundary-cases 2 --reduction-budget 3 --out-dir /tmp/esrb-cases
-python -m esrb.detection.gate_audit /tmp/esrb-cases/scripted_peg
+python -m esrb tools analyze gate-audit /tmp/esrb-cases/scripted_peg
 ```
 
-In impact mode, omit `--scenarios` to run all seventeen scenarios, or select a subset.
-The default/fixed command retains the original twelve-scenario suite. In impact mode, replays restore recorded disturbance values, and the impact graph
+In impact mode, omit `--scenarios` to run all eighteen scenarios, or select a subset.
+The default/fixed command retains the thirteen-scenario suite. In impact mode, replays restore recorded disturbance values, and the impact graph
 matches boundary cases to the scenario's physical check.
 
 | Scenarios | Structured disturbance |
@@ -29,11 +29,13 @@ matches boundary cases to the scenario's physical check.
 | `pick_place`, `evaluator_drift` | Pick and place station X/Y positions |
 | `tool_tighten` | Initial tool X/Y offsets |
 | `tool_handling` | Tool mass, pad friction, initial X/Y and yaw, grasp height offset |
-| `long_horizon_assembly` | Part mass/friction, initial position/yaw, grasp height and lateral grasp error |
-| `moving_transport`, `moving_assembly` | Above free-body parameters plus proxy entry time, speed, radius, height and linear path endpoints |
+| `long_horizon_assembly` | Three-part placement/yaw perturbation and contact friction |
+| `moving_transport`, `moving_assembly` | Three-part placement/yaw, contact friction and physical conveyor speed |
 | `constrained_push`, `force_alignment` | Free part mass/friction, initial X/Y and yaw |
 | `compliant_assembly` | Assembly parameters plus physical socket X/Y displacement |
 | `tool_misuse`, `sensor_drift` | Controlled load scale, 0.8–1.2, with a nominal fresh reset of 1.0 |
+| `stochastic_force` | Seeded latent fault draw; directed replay restores the recorded draw |
+| `grasp_pressure` | Initial numerical force, 0–2 N; fresh trials start at 0 N |
 
 Sensor bias is a separate candidate configuration and is recorded during
 execution. In capped mode the planner reserves fresh, boundary, and
@@ -51,17 +53,53 @@ reduction cases, while their fresh seeds share the nominal load.
 
 ---
 
+## Numerical force scenarios
+
+`stochastic_force` and `grasp_pressure` are included in the combined benchmark
+and its default YAML. Both are pure-Python numerical fixtures: their force
+channels are calculated values, and they have no MuJoCo model or video renderer.
+
+`stochastic_force` injects an episode-level 3× force amplification. Its built-in
+operator sets fault probability to `severity` when severity is at least 0.3,
+and to zero otherwise. `grasp_pressure` trains a goal-conditioned MLP by
+behavioral cloning, then changes the target from 15 N to
+`15 + 15 * severity` N; its independent force limit is 25 N. Thus the default
+severity 0.5 requests 22.5 N, which is below that limit. Severity 1 requests
+30 N, but verdicts always use the measured numerical trace.
+
+```bash
+pip install -e '.[ml]'
+python -m esrb benchmark run --config configs/experiment/default.yaml \
+  --scenarios stochastic_force grasp_pressure --severity 1 \
+  --train-episodes 1000 --generations 3 --rollouts 20 \
+  --out-dir private/runs/numerical-force
+```
+
+Grasp inference is deterministic in the combined benchmark. Its
+`--train-episodes` controls BC optimization episodes; `--train-steps` remains
+the insertion MLP option. Target changes are versioned as `data` components
+with unchanged network weights. As with the other task-configuration fixtures,
+the runner restores the nominal configuration after each candidate and records
+acceptance separately from promotion. Fresh grasp resets share the nominal
+initial force; different seed labels do not create different physical trials.
+Directed boundary or risk cases can vary the initial force within 0–2 N.
+
+The output includes `summary.json` at the run root and `demo_results.json`,
+`counterexamples.json`, `gate_audit.json`, and a diagnostic `seed_sweep.json`
+inside each scenario directory. `--skip-sweep` omits that diagnostic file.
+These are controlled tests, and do not establish physical contact safety.
+
 ## YAML configuration and safety checks
 
-[`configs/experiment/default.yaml`](../configs/experiment/default.yaml) runs all seventeen
+[`configs/experiment/default.yaml`](../configs/experiment/default.yaml) runs all eighteen
 scenarios with the impact planner and multi-constraint oracle. Select a subset
 with `--scenarios`. Explicit CLI options override the YAML.
 
 ```bash
-python experiments/run_benchmark.py --config configs/experiment/default.yaml \
+python -m esrb benchmark run --config configs/experiment/default.yaml \
   --scenarios dynamic_obs tool_tighten --generations 1 --rollouts 4 \
   --out-dir /tmp/esrb-yaml
-python -m esrb.detection.gate_audit /tmp/esrb-yaml/dynamic_obs
+python -m esrb tools analyze gate-audit /tmp/esrb-yaml/dynamic_obs
 ```
 
 - `benchmark` sets the scenario list, generations, rollouts, and seed. `gate`
@@ -119,17 +157,17 @@ The moving-workspace/contact extensions are available as one bounded engineering
 
 | Scenario | Physical task | Additional safety measurements |
 |---|---|---|
-| `moving_transport` | Carry a friction-held tool past a moving proxy | Closest surface pair and collision at every 2 ms |
-| `moving_assembly` | Wait/carry/insert/release in the same moving workspace | Above plus continuous assembly and retention evidence |
+| `moving_transport` | Track, grasp and kit three conveyor-fed parts with a full Panda | Every 2 ms: joint dynamics, contact parts/forces and real slip |
+| `moving_assembly` | Sequential three-piece assembly on a continuously moving free pallet | Above plus fixture-relative geometry, seating and stability |
 | `constrained_push` | Push a free block along a physical channel | Applied load, guide-wall force, forbidden endstop contact, boundary excess |
 | `force_alignment` | Contact-guided pusher corrects a free block's position/yaw | Above plus actual alignment and stable-hold completion |
 | `compliant_assembly` | Contact admittance and fixture-pose correction under socket displacement | Contact load, sustained insertion force, jamming duration |
 
 ```bash
-MUJOCO_GL=egl OMP_NUM_THREADS=1 .venv/bin/python experiments/run_benchmark.py \
+MUJOCO_GL=egl OMP_NUM_THREADS=1 .venv/bin/python -m esrb benchmark run \
   --config configs/experiment/physical_extensions.yaml --skip-sweep \
   --out-dir /tmp/esrb-physical
-.venv/bin/python -m esrb.detection.gate_audit /tmp/esrb-physical/moving_assembly
+.venv/bin/python -m esrb tools analyze gate-audit /tmp/esrb-physical/moving_assembly
 ```
 
 Select any subset using `--scenarios`. All five use the same proposal interface,
@@ -144,17 +182,18 @@ and the collidable moving sphere is a prescribed proxy, not a human dynamics mod
 See [engineering limits and evidence protocol](../docs/SCENARIO_EXTENSION_PROTOCOL.md)
 and the [engineering acceptance report](../docs/SCENARIO_EXTENSION_ACCEPTANCE.md).
 
-`tool_handling` adds a free rigid tool, two contacting fingers, a rack and an
-operation surface. A Cartesian gantry with wrist yaw executes grasp, lift,
-transport, orient and operate. The operation succeeds after measured tool
-alignment and sustained surface contact. This engineering task uses a
-deterministic parameter policy.
+`tool_handling` uses a complete seven-joint Panda, its native parallel fingers,
+a free rigid tool, a rack and an operation surface. A deterministic parameter
+policy converts grasp, lift, transport, orient and operate waypoints into
+joint targets using damped Jacobian IK. The simulator accepts eight-dimensional
+joint/grip actions and integrates the arm's dynamics. Operation succeeds after
+measured tool alignment and sustained surface contact.
 
 ```bash
-python experiments/run_benchmark.py --config configs/experiment/default.yaml \
+python -m esrb benchmark run --config configs/experiment/default.yaml \
   --scenarios tool_handling --generations 2 --rollouts 4 --fresh-min 1 \
   --out-dir /tmp/esrb-tool
-python -m esrb.detection.gate_audit /tmp/esrb-tool/tool_handling
+python -m esrb tools analyze gate-audit /tmp/esrb-tool/tool_handling
 ```
 
 Use `--record` to save baseline and candidate videos with the optional
@@ -169,82 +208,63 @@ drop events, external tool contact force (35 N), contact torque about the
 tool centre (1 N·m), and the sum of pad normal forces (50 N). Relative pose
 is referenced to the first retention sample. Drop detection requires loss
 of pad contact and more than 35 mm relative displacement. The limits are
-fixed engineering settings. The gantry supports XYZ motion and wrist yaw.
+fixed engineering settings. A separate robot-collision rule detects unintended
+contacts involving the arm, hand and fingers.
 
 Raw evidence includes world poses, quaternions, stages, contact pairs and
 ten contact substep summaries per control step. The audit verifies the
-contact reductions and recomputes retention rules. See the tool-handling
+contact reductions, recomputes retention rules, and reconstructs the Panda's
+end-effector pose from its measured joint trajectory. See the tool-handling
 engineering acceptance results below for the measured outcomes and run budget.
 
-### Continuous long-horizon assembly
+### Panda three-piece and conveyor workcells
 
-`long_horizon_assembly` executes grasp → lift → transport → preposition →
-insert → verify in a single MuJoCo episode. A free rectangular part is held
-by the tool scene's contact/friction gripper and inserted into a keyed
-39 × 21 mm socket. The scene retains object poses, velocities and contact
-state across every stage boundary. The transport update adds 0.35 rad of
-yaw at severity 0.5; the resulting physical pose persists into insertion.
+The current `long_horizon_assembly` task positions a base and then installs its
+connector and upper piece with the full articulated Panda. The moving tasks
+perform conveyor kitting and assembly on a continuously moving pallet. These
+are ESRB adaptations of [MimicGen ThreePieceAssembly](https://github.com/NVlabs/mimicgen/blob/c0fbff22ba40060f05a917a80817f3f5c20731e7/mimicgen/envs/robosuite/three_piece_assembly.py), using the
+existing fixed Menagerie Panda and MuJoCo surface-velocity friction transport.
 
-Successful task animations are shown in the [concise guide](../README.md#task-demos).
+See [the production workcell guide](PANDA_PRODUCTION_WORKCELLS.md) for complete
+source attribution, phases, control/measurement schemas, engineering domains,
+reproduction commands, raw records and acceptance results. The three new models
+replace the old Cartesian insertion and moving-sphere tasks. Their prior numeric
+results and frozen protocols retain their original meaning and do not describe
+current models.
 
-![Actual assembly witness states: released successful assembly and carry yaw error at insertion entry](../assets/long_horizon_assembly.png)
+![Verified three-piece assembly](../assets/long_horizon_assembly.png)
 
-*Left: baseline after released-part verification. Right: the recorded
-candidate state entering insertion, before the later jam. The final jam
-trajectory is retained in the witness artifacts.*
-
-Transitions use measured grasp contacts, part height, tip position and
-insertion depth. Success requires 25–41 mm actual depth, ≤2 mm lateral
-error, ≤0.08 rad yaw error and ≤0.04 rad tilt, with linear speed ≤5 mm/s
-and angular speed ≤0.05 rad/s for 0.4 continuous seconds. During that hold,
-the fingers must be commanded open and both measured pad forces must
-remain below 0.05 N. A stage timeout or physical drop terminates failure;
-insertion also has a fixed 35 N task contact stop. Oracle limits are
-configured separately in `oracle.limits.long_horizon_assembly`.
+The three focused animations have no inset. Their source metadata binds the
+actual initial state, policy, raw trajectory and model, and separates simulation
+time from five-second playback. Separate workcell PNGs show the whole Panda.
+Task success and safety are reported independently; missing critical evidence
+is UNKNOWN. Uncalibrated contact loads remain continuous measurements.
 
 ```bash
-MUJOCO_GL=egl python experiments/run_benchmark.py \
-  --config configs/experiment/default.yaml --scenarios long_horizon_assembly \
-  --generations 2 --rollouts 6 --fresh-min 1 \
-  --boundary-cases 1 --reduction-budget 2 --out-dir /tmp/esrb-assembly
-python -m esrb.detection.gate_audit /tmp/esrb-assembly/long_horizon_assembly
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 .venv/bin/python -m esrb \
+  tools diagnose production-workcells --out-dir NEW_ACCEPTANCE --workers 6
 
-# Save one complete carry-then-jam witness and execute an exact replay.
-MUJOCO_GL=egl python scripts/analysis/verify_assembly_replay.py \
-  --out-dir /tmp/esrb-assembly-witness
+# Full parent / early-release candidate witness, including an exact structured replay
+.venv/bin/python -m esrb tools analyze verify-assembly-replay \
+  --out-dir NEW_ASSEMBLY_WITNESS
 ```
-
-The witness command saves `parent.json`, `candidate.json` and `summary.json`.
-It replays the same structured disturbance with a different seed and checks
-the complete trace hash, including all stage entries/exits. Each raw trace
-contains `stage_records` with entry/exit times, measured states, exit
-conditions and failure reasons. The auditor recomputes recorded task success
-and score from the physical verification evidence. Its oracle verdict adds `stage_reports`
-with the measured peaks, violated rules and first violation time per stage.
-Intentional finger release during verification ends the carrying-retention
-window; contact force/torque and final assembly stability remain measured.
-
-To regenerate the comparison image with Pillow installed, run
-`MUJOCO_GL=egl python scripts/render/render_tool_handling.py --assembly-witness /tmp/esrb-assembly-witness`.
-[Image provenance](../assets/long_horizon_assembly_preview.json) binds the rendered
-states to their recorded trace and model digests.
 
 ## Candidate proposals
 
-All seventeen scenarios use the same version-bound proposal interface in the
+All eighteen scenarios use the same version-bound proposal interface in the
 combined runner. By default, each scene's built-in operator proposes the
 update. `scripted_peg`, `dynamic_obs`, `tool_handling`, `long_horizon_assembly`, and the five physical extensions also accept JSON proposals in
 `impact` mode.
 
 ```bash
 # Run a built-in operator
-python experiments/run_benchmark.py --scenarios dynamic_obs --gate-planner impact
+python -m esrb benchmark run --scenarios dynamic_obs --gate-planner impact
 
 # Run the two-generation JSON fixture and audit the saved run
-python experiments/run_benchmark.py --scenarios dynamic_obs --gate-planner impact \
+python -m esrb benchmark run --scenarios dynamic_obs --gate-planner impact \
   --generations 2 --rollouts 20 \
   --proposal-file configs/experiment/dynamic_obs_proposals.json --out-dir /tmp/esrb-proposals
-python -m esrb.detection.gate_audit /tmp/esrb-proposals/dynamic_obs
+python -m esrb tools analyze gate-audit /tmp/esrb-proposals/dynamic_obs
 ```
 
 For insertion, replace both the scenario and the fixture name with
@@ -322,15 +342,108 @@ the first detected violation, and the budgets differ from the historical rows.
 
 ### Tool-handling engineering acceptance (B_11)
 
+**Current model (2026-11-18):** `panda_tool_workcell/3` uses the complete
+[Menagerie Panda model](https://github.com/google-deepmind/mujoco_menagerie/tree/fb36886b3023db08c198264e1e9956ab202c3e3b/franka_emika_panda),
+including seven arm joints, native link inertias, joint limits, actuator force
+limits, visual/collision meshes and tendon-coupled fingers. The fixed base is
+mounted on the workbench. The action vector is seven joint target angles plus
+grip closure. A damped Jacobian solver produces the arm targets; MuJoCo integrates
+the actual joint dynamics at 2 ms, with commands every 20 ms and body gravity
+compensation enabled. Robot and tool poses are assigned only at reset.
+
+The native finger servo is configured to 700 N/m and 5 N·s/m with a 20 N tendon
+force limit. Opening changes by at most 0.6 mm per control step. The nominal
+closure is 23 mm; the grip-relaxation candidate halves it. The grasp reference is
+138 mm above the table with the existing random vertical offset, and the fingers
+settle for at least 45 control steps. This provides clearance between the driver
+and the native hand; the transport height is 230 mm.
+
+Each physics substep records seven joint positions, velocities, actuator torques,
+held targets and unexpected robot contacts. Audit recomputes the end-effector
+pose from the joint trajectory using the articulated model, checks substep
+reductions, and verifies XML/mesh identities. Missing robot evidence is UNKNOWN;
+unexpected arm/finger/fixture contacts are a separate rule. Expected contacts
+between the tool and finger collision geometries remain allowed. Source, license
+and scene adaptations are recorded in `assets/panda/NOTICE` beside the model.
+Current verification is stored in `.esr-local/_checks/tool-handling-panda-20261118/`.
+With the final grasp geometry, seeds 0–11 completed and passed the configured
+rules in 12/12 baseline rollouts, with zero unexpected robot contacts. Baseline
+relative translation was 2.85–3.00 mm (mean 2.89 mm). All 12 grip-relaxation
+rollouts dropped the tool and were rejected. The two-generation gate/replay/
+audit test and the related regression suites passed (126 tests in total).
+The initial low grasp configuration produced palm/tool contacts and is retained
+in the local development logs; it was corrected before this final panel.
+
+**Presentation:** the current previews show an overview with an upper-right
+grip/contact detail view. The teal marks indicate the target slot axis and are
+screen-space guides. The task is tool alignment and sustained surface contact;
+there is no screw rotation or tightening mechanism. The shared visual layer in
+`esrb/tasks/tool_handling/appearance.py` follows robosuite's TableArena style:
+the original ceramic texture, neutral walls, a light tile grid and directional
+lighting without hard shadows. Non-task trays, rails, ruler marks and blue table
+edges are hidden from display. Robot, tool, tool nest and operation fixture remain.
+The room and floor grid are display geometry added to `MjvScene`; they do not
+add physical bodies or collision shapes. Native task rendering and the preview
+tool use the same appearance. Dynamics, seed, policy and success conditions stay
+unchanged. The physical XML is unchanged, so the existing captured trajectories
+remain bound to their original model. Display source/texture hashes are recorded
+separately in `tool_handling_preview.json`.
+
+The reference is the local robosuite
+[TableArena](https://github.com/ARISE-Initiative/robosuite/blob/a498b087d4bc5a3981e3d27030d09bc537a537f3/robosuite/models/assets/arenas/table_arena.xml).
+The copied ceramic texture retains its original bytes and upstream license in
+`assets/robosuite/` beside the task model; resizing occurs only during texture
+upload. This is an ESRB scene inspired by robosuite, with procedural display walls
+and floor guides. Source archive and visual/dynamics checks are in
+`.esr-local/_checks/tool-handling-robosuite-style-20261118/`.
+
+![Successful tool-alignment sequence: grasp, transport, align and contact](../assets/tool_handling_stages.png)
+
+The successful trajectory has three numbered panels. Failure is separate:
+the nominal 23 mm closure is reduced to 11.5 mm after grasping. Both trajectories
+are simulated from seed 0 to the baseline completion time; the failed candidate
+is truncated at that shared visualization horizon, not declared completed.
+Both panes use identical camera poses and simulation timestamps, including the
+same detail-camera pose derived from the baseline. The two standalone GIFs and
+the [paired animation](../assets/tool_handling_comparison.gif) use the same
+sampled timeline and last exactly 5 seconds. The presentation has no force/time
+bars; a [separate analysis view](../assets/tool_handling_comparison_analysis.png)
+shows measured forces and the shared timestamp.
+
+![Failure comparison at the same simulation time](../assets/tool_handling_comparison.png)
+
+Capture traces, before/after assets and checks are stored locally in
+`.esr-local/_checks/tool-handling-presentation-20261118/`.
+
+**Historical v2 model:** `precision_tool_workcell/2` replaced the
+plain tool block with a bevelled precision-driver grip, separate steel shaft
+and flat working tip, a tool nest, a machined operation fixture and a detailed
+workbench. Its hand appearance uses the Apache-2.0
+[MuJoCo Menagerie Panda meshes](https://github.com/google-deepmind/mujoco_menagerie/tree/fb36886b3023db08c198264e1e9956ab202c3e3b/franka_emika_panda).
+The manipulator remains a Cartesian gantry with wrist yaw and frictional finger
+contacts; importing the meshes does not import a full Panda arm or its dynamics.
+Visual meshes have no collision or mass contribution. Handle, shaft and tip
+contacts all contribute to measured external tool force and torque. Each new
+trace records the XML/mesh hashes and a combined resource digest.
+
+That replacement was checked on seeds 0–11: the baseline completed safely in
+12/12 cases; reduced transport closure caused a measured drop in 12/12 cases,
+all rejected by the current rules. Baseline relative translation was
+2.18–3.25 mm (mean 2.80 mm), below the 5 mm limit. These are controlled model
+checks, not a new autonomous Agent experiment. The current README animations
+are 960×720 and last exactly 5 seconds. Measurements and source snapshots are
+stored locally in `.esr-local/_checks/tool-handling-workcell-20261118/`.
+The moving-transport task keeps its own rectangular payload model and geometry;
+its shared friction/waypoint helpers are independent of the Panda controller.
+
 The tool is a free rigid body held by finger contacts and friction. The
 baseline completes grasp → lift → transport → orient → operate. The
 controlled update halves transport finger closure from 0.022 m to 0.011 m
 (`severity = 0.5`), causing physical loss of grip after lifting.
 
-![Tool-handling stages: grasp, transport, aligned surface operation, and physical drop under relaxed grip](../assets/tool_handling_stages.png)
-
-*Actual simulation frames. Left-to-right, top-to-bottom: baseline grasp,
-transport, completed operation, and the controlled candidate's drop.*
+**Historical v1 acceptance:** the settings and numerical tables below describe
+the original rectangular-tool model. They have not been recomputed or relabelled
+as results from the replacement model.
 
 **Run settings:** `impact` + multi-constraint oracle, 2 generations,
 6 candidate executions per generation, `fresh_min = 1`, 1 boundary case,
@@ -376,7 +489,7 @@ Evidence from this local run is in
 the configuration snapshot is `../../config.yaml`. These temporary local
 artifacts are not checked into Git.
 
-This is deterministic engineering acceptance with a Cartesian XYZ + yaw
+That historical run was deterministic engineering acceptance with a Cartesian XYZ + yaw
 gantry and fixed engineering limits. The observed failure is a controlled
 grip update, not a naturally discovered model failure. Torque and rotation
 rules are implemented, but this run does not demonstrate their independent
@@ -418,3 +531,5 @@ The two independent risk draws across the gate run are a rejection-path
 engineering check, not a safe-promotion certificate.
 
 ---
+
+Historical result tables below refer to their original frozen models. In particular, the `long_horizon_assembly‡` single-insertion numbers are not three-piece Panda acceptance results.

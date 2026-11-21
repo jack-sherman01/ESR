@@ -1,0 +1,109 @@
+{
+  "status": "REPORT_PUBLISHED",
+  "model_calls": 0,
+  "physical_rollouts_started": 0,
+  "source_manifest": {
+    "reporting.py": "29a95d840d533ca408dbcbd564827502796b913f52bacabde41ed07260e0b0e6",
+    "postprocess.py": "625ce6f6f7b2528d4421b5fb94fc51e7691c7e2a7ab419d524945556abb463b5"
+  },
+  "executed_source_sha256": "c5278a6b9a68c71f6352b5b6f6448f62ec0aa769f31841f28b8efe6e676e64a3",
+  "original_report_archive": "/home/zhifeng/ESR/.esr-local/measurement-validation/controlled-20261120-r5/report-before-postrun-audit.tar.gz",
+  "original_report_archive_sha256": "8e435f1460fbecf1a40590f009f57a979050287ff959a4b2894fcc2b741bcf28",
+  "summary": {
+    "status": "FAIL",
+    "scene_count": 12,
+    "scenes_passed": 0,
+    "accounting": {
+      "calibration": 36,
+      "validation": 1104,
+      "gate": 305,
+      "replay": 24,
+      "diagnostic": 288,
+      "additional": 816,
+      "basic": 593
+    },
+    "basic_expected": 648,
+    "model_calls": 0,
+    "attempts": {
+      "calibration": {
+        "attempted": 36,
+        "started": 36,
+        "recorded": 36,
+        "blocked": 0,
+        "infrastructure_retries": 0
+      },
+      "validation": {
+        "attempted": 1104,
+        "started": 1104,
+        "recorded": 1044,
+        "blocked": 60,
+        "infrastructure_retries": 0
+      },
+      "gate": {
+        "attempted": 360,
+        "started": 305,
+        "recorded": 305,
+        "blocked": 55,
+        "infrastructure_retries": 0
+      },
+      "replay": {
+        "attempted": 24,
+        "started": 24,
+        "recorded": 24,
+        "blocked": 0,
+        "infrastructure_retries": 0
+      }
+    },
+    "warning": "legacy detection labels express controlled intent; consult independent event evidence and NOT_TRIGGERED counts",
+    "execution": {
+      "originally_frozen": "serial",
+      "gate": {
+        "mode": "scene-parallel; generations and episodes sequential within scene",
+        "workers": 8,
+        "scene_count": 12,
+        "invocation_wall_s": 1001.8833589013666,
+        "episode_wall_sum_s": 7681.160252505913,
+        "timing_scope": "Invocation wall excludes earlier cached work; episode sum includes reused results. Wall times include resource contention and are not comparable to historical serial hardware timings.",
+        "scenes": [
+          "tool_handling",
+          "long_horizon_assembly",
+          "moving_transport",
+          "moving_assembly",
+          "constrained_push",
+          "force_alignment",
+          "compliant_assembly",
+          "stack",
+          "pickplacecan",
+          "two-arm-handover",
+          "nut-assembly",
+          "wipe"
+        ]
+      },
+      "scheduling_revisions": [
+        {
+          "activated_utc": "2026-11-20T03:49:13.828401+00:00",
+          "authorization": "User requested parallel scenes with sequential generations",
+          "mode": "scene-parallel; generations and episodes sequential within scene",
+          "workers": 8,
+          "frozen_protocol_preserved": true,
+          "frozen_physical_source_preserved": true,
+          "physical_source_sha256": "c5278a6b9a68c71f6352b5b6f6448f62ec0aa769f31841f28b8efe6e676e64a3",
+          "completed_gate_results_before_handoff": 42,
+          "completed_gate_scenes": [
+            "tool_handling"
+          ],
+          "recovered_coordinator_receipts": [
+            "gate/long_horizon_assembly/baseline-seed1043-g1-parent"
+          ],
+          "physical_rollouts_restarted": 0,
+          "physical_rules_or_limits_changed": false,
+          "timing_comparability": "MIXED_SERIAL_AND_SCENE_PARALLEL; not a serial speed comparison. One handoff episode uses measured worker and analysis times without process startup.",
+          "scheduler_source_sha256": "8452f6213b06712d72f80d5e9d6985f4c4af7fa673ab3c821af81936807fc15f"
+        }
+      ]
+    },
+    "plot_interpreter": "/home/zhifeng/ESR/.esr-local/aspire/checkout/.venv-libero/bin/python"
+  },
+  "all_execution_stages_complete": true,
+  "scope": "Reporting audit only; metrics require paired actual initial/model identities and known primary measurements. No rule, limit, episode or gate decision was edited."
+}

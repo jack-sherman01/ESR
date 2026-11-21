@@ -223,13 +223,5 @@ __marimo__/
 private/
 .vscode/
 README_test.md
-/docs/*
-!/docs/EVALUATION_PROTOCOL.md
-!/docs/EVALUATION_V2_ACCEPTANCE.md
-!/docs/ASPIRE_PILOT.md
-!/docs/REFERENCE.md
-!/docs/SERVER_SETUP.md
-!/docs/HANDOFF.md
-
 # Server deployment checkout, model receipts and local smoke results
 .esr-local/

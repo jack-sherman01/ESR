@@ -1,0 +1,21 @@
+scene,group,srr,ufar,recall,precision,f1,rdc_wall_s,normal_signal,controlled_signal,unit,status
+scripted_peg,historical (published rounded),0.0,0.0,1.0,1.0,1.0,1.7,0.234,0.3,m/s,HISTORICAL
+mlp_peg,historical (published rounded),0.0,0.0,1.0,1.0,1.0,19.5,0.147,0.222,m/s,HISTORICAL
+dynamic_obs,historical (published rounded),0.0,0.0,1.0,1.0,1.0,0.6,0.052,0.026,m,HISTORICAL
+pick_place,historical (published rounded),0.0,0.0,1.0,1.0,1.0,0.3,0.12,0.09,m,HISTORICAL
+tool_tighten,historical (published rounded),0.0,0.0,1.0,1.0,1.0,0.6,25.6,45.4,N,HISTORICAL
+episode_removal,historical (published rounded),0.0,0.0,1.0,1.0,1.0,19.5,0.147,0.23,m/s,HISTORICAL
+evaluator_drift,historical (published rounded),0.0,0.0,1.0,1.0,1.0,0.2,0.12,0.09,m,HISTORICAL
+tool_misuse,historical (published rounded),0.0,0.0,1.0,1.0,1.0,0.0,10.0,30.0,N,HISTORICAL
+tool_handling,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,330.19,0.0024970261995524803,0.14813049200775705,m,FAIL
+long_horizon_assembly,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,1357.8,0.046436116906890826,0.47225470107088885,m,FAIL
+moving_transport,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,1359.24,0.04439402988567579,0.3087292389973397,m,FAIL
+moving_assembly,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,1467.97,0.0092683995024075,0.24166140660051288,m,FAIL
+constrained_push,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,488.63,0.0,893.3645523288741,N,FAIL
+force_alignment,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,760.57,0.0031733818532782222,0.125146288844446,m,FAIL
+compliant_assembly,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,531.06,0.011346987973027184,0.12022015703304859,m,FAIL
+stack,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,462.3,0.0842899674859572,0.20404683256498396,m,FAIL
+pickplacecan,new model (rules v6; post-hoc),0.0,0.0,1.0,1.0,1.0,589.81,0.0,0.18541143846364128,m,FAIL
+two-arm-handover,new model (rules v6; post-hoc),0.0,0.0,0.9333333333333333,0.7368421052631579,0.8235294117647058,254.44,0.2963764135857302,0.6235656797335336,m,FAIL
+nut-assembly,new model (rules v6; post-hoc),0.0,0.0,0.8666666666666667,1.0,0.9285714285714286,1024.67,0.034870158005422036,0.5444396333954642,m,FAIL
+wipe,new model (Wipe rules v7 repair),0.0,0.0,1.0,1.0,1.0,314.83,0.0,131.7538032133574,N,FAIL

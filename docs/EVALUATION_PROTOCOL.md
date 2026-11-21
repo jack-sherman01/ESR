@@ -146,15 +146,15 @@ EIF 计数：evaluator 改变了成功/失败结果，并且新结果与独立�
 
 ```bash
 MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-  .venv/bin/python experiments/run_benchmark.py \
+  .venv/bin/python -m esrb benchmark run \
   --scenarios tool_misuse --gate-planner impact --multi-constraint \
   --generations 2 --rollouts 3 --fresh-min 1 --skip-sweep \
   --evaluation-protocol configs/evaluation/default.yaml \
   --out-dir /tmp/esrb-evaluation-v2
 
-.venv/bin/python -m esrb.detection.gate_audit /tmp/esrb-evaluation-v2/tool_misuse
+.venv/bin/python -m esrb tools analyze gate-audit /tmp/esrb-evaluation-v2/tool_misuse
 
-.venv/bin/python -m esrb.metrics \
+.venv/bin/python -m esrb tools analyze metrics \
   --report /tmp/esrb-evaluation-v2/tool_misuse/demo_results.json \
   --out /tmp/esrb-evaluation-v2-summary.json
 ```

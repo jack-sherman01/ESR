@@ -1,0 +1,81 @@
+{
+  "run": "/mnt/data1/zhifeng/ESR-data/.esr-local/measurement-validation/controlled-20261120-r5",
+  "protocol_sha256": "7673486eb5619632c631acd93396e4439c38996220c1ddae3b4c6b486435ab63",
+  "frozen_execution_source_sha256": "c5278a6b9a68c71f6352b5b6f6448f62ec0aa769f31841f28b8efe6e676e64a3",
+  "reporter_sha256": "569fc950d49922f7b6d94add258a677612b134b996f296b48fddab31c80b6eb2",
+  "scheduling_revisions": [
+    {
+      "activated_utc": "2026-11-20T03:49:13.828401+00:00",
+      "authorization": "User requested parallel scenes with sequential generations",
+      "mode": "scene-parallel; generations and episodes sequential within scene",
+      "workers": 8,
+      "frozen_protocol_preserved": true,
+      "frozen_physical_source_preserved": true,
+      "physical_source_sha256": "c5278a6b9a68c71f6352b5b6f6448f62ec0aa769f31841f28b8efe6e676e64a3",
+      "completed_gate_results_before_handoff": 42,
+      "completed_gate_scenes": [
+        "tool_handling"
+      ],
+      "recovered_coordinator_receipts": [
+        "gate/long_horizon_assembly/baseline-seed1043-g1-parent"
+      ],
+      "physical_rollouts_restarted": 0,
+      "physical_rules_or_limits_changed": false,
+      "timing_comparability": "MIXED_SERIAL_AND_SCENE_PARALLEL; not a serial speed comparison. One handoff episode uses measured worker and analysis times without process startup.",
+      "scheduler_source_sha256": "8452f6213b06712d72f80d5e9d6985f4c4af7fa673ab3c821af81936807fc15f"
+    }
+  ],
+  "reprocessing": null,
+  "offline_reaudit": {
+    "origin": "/mnt/data1/zhifeng/ESR-data/.esr-local/measurement-validation/controlled-20261120-r8-reprocess",
+    "previous_event_profile": {
+      "schema": "measurement-event-profile/5",
+      "scope": "controlled simulation engineering acceptance",
+      "contact_normal_deadband_n": 0.01,
+      "lift_displacement_m": 0.035,
+      "drop_displacement_m": 0.035,
+      "drop_downward_velocity_ms": -0.05,
+      "drop_confirmation": "confirmed prior bilateral lift, total loss of grasp contacts, relative downward slip, then upward impact on registered ground support; regrasp cancels pending loss",
+      "unconfirmed_airborne_outcome": "UNKNOWN",
+      "support_up_cos_min": 0.9,
+      "anonymous_support_min_half_width_m": 0.05,
+      "anonymous_support_max_half_thickness_m": 0.015,
+      "jam_max_relative_speed_ms": 0.001,
+      "window_s": 0.1,
+      "limit_multiplier": 1.5,
+      "minimum_jam_duration_s": 1.0,
+      "static_relative_error": 0.05,
+      "force_absolute_floor_n": 0.001,
+      "torque_absolute_floor_nm": 0.001,
+      "notes": "Contact deadband is numerical event resolution. Load limits are calibrated per interface/phase, never supplied here. No hardware damage limit is claimed.",
+      "load_interface": "object body + contact category + counterpart body + phase; opposing counterpart forces are never merged",
+      "forward_command_min_m": 1e-05,
+      "jam_command_source": "signed TCP displacement from actual applied arm position targets + FK; native OSC_POSE translation action uses its frozen 0.05 m scale; relative to insertion axis, never a stage/intent label",
+      "force_aggregation": "sum of per-contact force magnitudes per interface; net resultant and world-XY magnitude sums reported separately; moments shifted to object origin before vector sum"
+    },
+    "analysis_source_sha256": "2038f4b3b569fd04fdd432ce39e9cf6762a9ade60fb5e04f134957bff26a54c6",
+    "original_physical_source_sha256": "55b1ebc731e2a8c2019a75e3aaf42748c5467b480dd4869f7bacce6f0ead0cdf",
+    "physical_rollouts_started": 0,
+    "model_calls": 0,
+    "limits": "unchanged original engineering envelope; no recalibration",
+    "prechange_rule_archive": "/mnt/data1/zhifeng/ESR-data/.esr-local/_archives/measurement-rules-v6-20261120T172041Z",
+    "interpretation": "Post-hoc rule revision after inspecting failure modes; not a held-out measurement qualification or a new online update experiment.",
+    "timing": "Legacy RDC uses original physical experiment timings; offline processing time is separate."
+  },
+  "reporting_policy": {
+    "schema": "measurement-report-policy/1",
+    "created_at_utc": "2026-11-20T20:08:50.843775+00:00",
+    "authorization": "User requested skipping the single PickPlaceCan UNKNOWN for reporting, with a brief note below the table/image.",
+    "controlled_detection_exclusions": {
+      "pickplacecan": [
+        {
+          "episode": "gate/pickplacecan/primary-seed0044-g0-child",
+          "result_sha256": "3d162e6baaf42ebf15c50279b42fcafaa724c89f3f3d9b01f1ed9cd156298ef3",
+          "reason": "Unresolved grasp-loss outcome; exclude from controlled-label detection denominator only."
+        }
+      ]
+    },
+    "scope": "Derived report only; preserve raw episode, UNKNOWN, gate decisions and engineering acceptance."
+  },
+  "source": "report-only export; historical assets were not rewritten"
+}
