@@ -12,10 +12,8 @@ from esrb.agent_api.policy_sources import JsonProposer
 from esrb.agent_api.profiles import BY_INSTANCE, DYNAMIC_OBS, SCRIPTED_PEG
 from esrb.detection.gate_audit import audit_gate
 from esrb.detection.risk_selection import RiskSensitiveSelector
-from experiments.run_benchmark import (
-    _build_dynamic_obs, _build_evaluator_drift, _build_pick_place, _build_scripted_peg,
-    _build_sensor_drift, _build_tool_misuse, _build_tool_tighten, run_loop,
-)
+from experiments.builders import _build_dynamic_obs, _build_evaluator_drift, _build_pick_place, _build_scripted_peg, _build_sensor_drift, _build_tool_misuse, _build_tool_tighten
+from esrb.runtime.benchmark import run_loop
 
 
 FIXTURE = Path(__file__).resolve().parents[2] / "configs/experiment/scripted_peg_proposals.json"

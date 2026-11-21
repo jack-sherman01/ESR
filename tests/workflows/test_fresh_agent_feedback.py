@@ -3,13 +3,12 @@ import importlib,json
 from pathlib import Path
 
 ROOT=Path(__file__).parents[2]
-def module(name):
- group='runners' if name=='run_fresh_agent_trials' else 'feedback'
- return importlib.import_module(f'scripts.{group}.{name}')
+def feedback_module():
+ return importlib.import_module('esrb.runtime.feedback')
 
 
 def test_standard_errors_exclude_host_diagnostics(tmp_path):
- exporter=module('watch_fresh_agent_api_errors')
+ exporter=feedback_module()
  source=tmp_path/'source';source.mkdir()
  for error in [
   {'code':'execution_failed','details':{'exception_type':'ValueError'},'message':'ESRB safety violation'},
@@ -21,7 +20,7 @@ def test_standard_errors_exclude_host_diagnostics(tmp_path):
 
 
 def test_standard_python_error_is_preserved(tmp_path):
- exporter=module('watch_fresh_agent_api_errors');source=tmp_path/'source';source.mkdir()
+ exporter=feedback_module();source=tmp_path/'source';source.mkdir()
  (source/'program-result.json').write_text(json.dumps({'error':{'code':'execution_failed','details':{'exception_type':'NameError'},'message':"program execution failed: NameError: name 'isinstance' is not defined"}}))
  assert exporter.extract(tmp_path)['python_error']['type']=='NameError'
  (source/'program-result.json').write_text(json.dumps({'error':{'code':'invalid_request','details':{},'message':'program rejected: private and dunder names are not allowed'}}))
@@ -29,7 +28,7 @@ def test_standard_python_error_is_preserved(tmp_path):
 
 
 def test_base_feedback_does_not_copy_native_or_gate_state(tmp_path):
- bridge=module('run_fresh_agent_trials')
+ bridge=feedback_module()
  execution=tmp_path/'execution';execution.mkdir();native=tmp_path/'native';(native/'source').mkdir(parents=True);(native/'trace/calls').mkdir(parents=True)
  (execution/'result.json').write_text(json.dumps({'native_run':str(native),'native_task_success':False,'program_ok':True,'control_steps':4,'safety':{'status':'VIOLATION','force':99},'parent_before':{'version':1}}))
  (native/'source/program-result.json').write_text(json.dumps({'calls':[{'tool':'move_to_pose','ok':False,'error_type':'ValueError','error_message':'ESRB safety violation','outputs_summary':{'ok':False,'steps_executed':4,'force':99}}]}))
@@ -40,7 +39,7 @@ def test_base_feedback_does_not_copy_native_or_gate_state(tmp_path):
 
 def test_public_error_supplement_blocks_host_stop_reasons(tmp_path,monkeypatch):
  monkeypatch.syspath_prepend(str(ROOT/'scripts'))
- exporter=module('watch_fresh_agent_api_errors_v2')
+ exporter=feedback_module()
  (tmp_path/'source').mkdir()
  (tmp_path/'source/program-result.json').write_text('{}')
  calls=tmp_path/'trace/calls';calls.mkdir(parents=True)

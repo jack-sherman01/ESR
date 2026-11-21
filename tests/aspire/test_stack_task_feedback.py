@@ -1,8 +1,7 @@
 import importlib.util
 from pathlib import Path
 
-spec=importlib.util.spec_from_file_location('stack_task_feedback',Path(__file__).parents[2]/'scripts/feedback/stack_task_feedback.py')
-module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+module = __import__('esrb.backends.aspire.feedback.stack', fromlist=['task_feedback'])
 
 
 def test_feedback_excludes_host_data_and_raw_error_text():

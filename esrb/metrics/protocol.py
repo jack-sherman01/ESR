@@ -73,7 +73,7 @@ def freeze_evaluation(protocol, *, task, oracle, scenario, run_id, generations,
         raise ValueError('reference distribution must match independent gate-risk distribution')
     root = Path(__file__).resolve().parents[2]
     files = sorted((root/'esrb').rglob('*.py')) + sorted((root/'esrb/tasks').rglob('*.xml'))
-    files.append(root/'experiments/run_benchmark.py')
+    files.extend(sorted((root/'experiments').rglob('*.py')))
     settings = {
         'protocol': protocol.model_dump(mode='json'), 'run_id': run_id, 'scenario': scenario,
         'generations': generations, 'oracle': oracle.protocol(),

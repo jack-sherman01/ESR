@@ -1,18 +1,28 @@
+from esrb.runtime.batch import BatchRunner
+from esrb.runtime.chain import ChainRunner
+from experiments.aspire.scenes import get_scene
+from esrb.runtime.io import read, save, digest
+from esrb.runtime.paths import project_root
+from esrb.runtime.submissions import program_identity
+
 """Only evidence bound to the actual candidate and fixed initial state promotes."""
 import json
 import sys
 from pathlib import Path
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from scripts.runners import run_aspire_wipe_batch as batch
-from scripts.gates.wipe_gate_state import prepare,commit,load_chain,digest
+batch = BatchRunner(get_scene('wipe'))
+state = BatchRunner(get_scene('wipe')).state
+prepare = state.prepare
+commit = state.commit
+load_chain = state.load_chain
+digest = state.digest
 
 
 def measured(root,version,status='PASS'):
     folder=root/'round_01'/f'version_{version:02d}'
     out=folder/'execution';out.mkdir()
     (out/'safety_physics.jsonl.gz').write_bytes(b'test witness bound by content hash')
-    batch.save(root/'round_01'/'initial_reference.json',{'initial_state_id':'fixed'})
-    batch.save(out/'result.json',{'status':'MEASURED','round':1,'version':version,'seed':716,
+    save(root/'round_01'/'initial_reference.json',{'initial_state_id':'fixed'})
+    save(out/'result.json',{'status':'MEASURED','round':1,'version':version,'seed':716,
         'initial_state_id':'fixed','program_ok':True,'native_task_success':True,
         'program_sha256':digest(folder/'program.py'),'protocol_sha256':digest(root/'protocol.json'),
         'terminal_native_success':True,'native_success_terminated':True,'settle_steps':0,'settle_success_steps':0,

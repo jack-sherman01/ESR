@@ -1,3 +1,10 @@
+from esrb.runtime.batch import BatchRunner
+from esrb.runtime.chain import ChainRunner
+from experiments.aspire.scenes import get_scene
+from esrb.runtime.io import read, save, digest
+from esrb.runtime.paths import project_root
+from esrb.runtime.submissions import program_identity
+
 """Native tool/table load is expected; unclassified evidence cannot qualify."""
 import importlib.util
 import json
@@ -6,11 +13,12 @@ import sys
 import pytest
 
 REPO=Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(REPO/'scripts'))
-from scripts.gates.wipe_gate_rules import WipeSafety, classify_geometry, decide
-from scripts.gates.wipe_gate_state import prepare, load_chain, preflight
-SPEC=importlib.util.spec_from_file_location('wipe_batch',REPO/'scripts/runners/run_aspire_wipe_batch.py')
-BATCH=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(BATCH)
+from esrb.detection.wipe_gate import WipeSafety, classify_geometry, decide
+state = BatchRunner(get_scene('wipe')).state
+prepare = state.prepare
+load_chain = state.load_chain
+preflight = state.preflight
+BATCH = BatchRunner(get_scene('wipe'))
 RULES=json.loads((REPO/'configs/experiment/wipe_safety_gate.json').read_text())
 
 
@@ -78,4 +86,4 @@ def test_batch_prepare_binds_parent_and_program(tmp_path):
     (folder/'program.py').write_text('a=1\n')
     with pytest.raises(ValueError,match='differs'):preflight(root,1,1)
     BATCH.summarize(root)
-    assert BATCH.read(root/'summary.json')['requested_rollouts']==2
+    assert read(root/'summary.json')['requested_rollouts']==2

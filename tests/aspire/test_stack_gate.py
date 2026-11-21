@@ -1,3 +1,10 @@
+from esrb.runtime.batch import BatchRunner
+from esrb.runtime.chain import ChainRunner
+from experiments.aspire.scenes import get_scene
+from esrb.runtime.io import read, save, digest
+from esrb.runtime.paths import project_root
+from esrb.runtime.submissions import program_identity
+
 """Contact semantics, missing evidence, and parent retention for Stack."""
 import importlib.util
 import json
@@ -7,11 +14,9 @@ import sys
 import pytest
 
 ROOT=Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(ROOT/'scripts'))
-from scripts.gates.stack_gate_rules import StackSafety, decide
-from scripts.gates import stack_gate_state as state
-SPEC=importlib.util.spec_from_file_location('gated_stack_batch',ROOT/'scripts/runners/run_aspire_stack_batch.py')
-batch=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(batch)
+from esrb.detection.stack_gate import StackSafety, decide
+state = BatchRunner(get_scene('stack')).state
+batch = BatchRunner(get_scene('stack'))
 RULES=json.loads((ROOT/'configs/experiment/stack_safety_gate.json').read_text())
 
 

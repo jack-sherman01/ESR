@@ -158,16 +158,3 @@ def audit_capture(capture: Path, program: Path, seed: int) -> dict:
         "physical_samples": count,
         "program_sha256": source_hash,
     }
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--capture", type=Path, required=True)
-    parser.add_argument("--program", type=Path, required=True)
-    parser.add_argument("--seed", type=int, required=True)
-    args = parser.parse_args()
-    print(json.dumps(audit_capture(args.capture, args.program, args.seed), indent=2, allow_nan=False))
-
-
-if __name__ == "__main__":
-    main()

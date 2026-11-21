@@ -8,8 +8,7 @@ import pytest
 
 pytest.importorskip("cap_harness", reason="Wipe API integration requires the optional ASPIRE checkout")
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from scripts.adapters.wipe_public_api import WipeCapApi
+from esrb.backends.aspire.wipe_public_api import WipeCapApi
 from cap_harness.api import CapApi
 from cap_harness.contracts import PlanResult,Trajectory,RobotState,Pose
 

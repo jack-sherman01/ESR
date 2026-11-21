@@ -7,7 +7,7 @@ from esrb.detection.gate_audit import audit_gate
 from esrb.detection.risk_sampling import risk_cases, risk_summary, sampling_protocol
 from esrb.tasks.agentic import StochasticForceTask
 from esrb.tasks.contact_rich import PegInsertionTask
-from experiments import run_benchmark
+from experiments import benchmark as run_benchmark
 
 
 def test_draw_schedule_is_reproducible_and_generation_specific():

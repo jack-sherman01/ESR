@@ -7,7 +7,7 @@ import pytest
 
 from esrb.benchmark.experiment_config import load_experiment_config
 from esrb.detection.gate_audit import audit_gate
-from experiments import run_benchmark
+from experiments import benchmark as run_benchmark
 
 
 CONFIGS = Path(__file__).resolve().parents[2] / "configs/experiment"

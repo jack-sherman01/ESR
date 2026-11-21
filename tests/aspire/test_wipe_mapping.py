@@ -2,8 +2,7 @@
 import sys
 from pathlib import Path
 import numpy as np
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from scripts.adapters.wipe_tool_mapping import provider_input_transform
+from esrb.backends.aspire.wipe_tool_mapping import provider_input_transform
 
 
 def test_calibrated_wiping_plane_roundtrip_at_varied_orientation():

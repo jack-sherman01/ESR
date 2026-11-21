@@ -1,3 +1,10 @@
+from esrb.runtime.batch import BatchRunner
+from esrb.runtime.chain import ChainRunner
+from experiments.aspire.scenes import get_scene
+from esrb.runtime.io import read, save, digest
+from esrb.runtime.paths import project_root
+from esrb.runtime.submissions import program_identity
+
 import json
 from pathlib import Path
 import sys
@@ -5,8 +12,8 @@ import sys
 import pytest
 
 ROOT = Path(__file__).parents[2]
-sys.path.insert(0, str(ROOT / 'scripts'))
-from scripts.gates.nut_gate_rules import NutSafety, classify_geometry
+from esrb.detection.nut_assembly_gate import NutSafety
+from esrb.backends.aspire.evidence import geom_group as classify_geometry
 
 
 def rules():
@@ -62,10 +69,10 @@ def test_nut_and_gripper_peg_geometries_remain_distinct():
 
 
 def test_nut_long_chain_has_fifty_versions_without_smoke_or_retest_requirement(tmp_path):
-    from scripts.runners import run_nut_long_chain as module
+    module = ChainRunner(get_scene('nut-assembly'))
     root, capsule = tmp_path / 'trial', tmp_path / 'capsule'
     module.init(root, capsule, seed=6719229)
-    protocol = module.read(root / 'protocol.json')
+    protocol = read(root / 'protocol.json')
     module.state.load_rules(root)
     assert protocol['versions_per_round'] == 50
     assert protocol['task'] == 'nut_assembly'
@@ -73,5 +80,5 @@ def test_nut_long_chain_has_fifty_versions_without_smoke_or_retest_requirement(t
     assert protocol['seeds'] == [6719229]
     assert protocol['independent_retest'] is False
     assert 'smoke_reference' not in protocol
-    assert 'scripts/runners/run_aspire_nut_batch.py' in protocol['safety_gate']['implementation_sha256']
-    assert module.read(root / 'worker_contract.json')['initial_program'] is None
+    assert 'esrb/backends/aspire/episodes/nut.py' in protocol['safety_gate']['implementation_sha256']
+    assert read(root / 'worker_contract.json')['initial_program'] is None

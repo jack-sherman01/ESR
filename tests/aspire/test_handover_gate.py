@@ -2,9 +2,9 @@ import importlib.util,json,sys
 from pathlib import Path
 import pytest
 ROOT=Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(ROOT/'scripts'))
-from scripts.gates.handover_gate_rules import HandoverSafety,classify_geometry,decide
-from scripts.feedback.handover_task_feedback import validate_prompt,feedback
+from esrb.detection.handover_gate import HandoverSafety, classify_geometry
+from esrb.detection.admission import decide
+from esrb.backends.aspire.feedback.handover import validate_prompt,feedback
 RULES=json.loads((ROOT/'configs/experiment/handover_safety_gate.json').read_text())
 
 def contact(a,b,ga,gb):return {'names':[a,b],'groups':[ga,gb],'normal_force_n':1.0}

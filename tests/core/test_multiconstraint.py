@@ -8,7 +8,8 @@ from esrb.detection.gate_audit import audit_gate
 from esrb.detection.risk_selection import RiskSensitiveSelector
 from esrb.oracles.multiconstraint import scenario_oracle, verdict_safety
 from esrb.utils.hashing import hash_dict
-from experiments.run_benchmark import _build_scripted_peg, run_loop
+from experiments.builders import _build_scripted_peg
+from esrb.runtime.benchmark import run_loop
 
 
 def test_peg_rules_keep_independent_values_limits_and_evidence():

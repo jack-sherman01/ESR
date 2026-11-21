@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[2] / 'scripts'))
-from scripts.recovery.resume_stack_long_chain import archive_incomplete_execution
+from esrb.runtime.interruption import archive_incomplete_execution
 
 
 def test_interrupted_launch_is_preserved_and_cannot_be_overwritten(tmp_path):

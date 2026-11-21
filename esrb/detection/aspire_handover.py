@@ -146,14 +146,3 @@ def audit(root, rules=RULES):
         "independent_task_success": result["independent_task_success"] if valid else None,
         "severity": "SEVERE" if result["violations"] else "PASS" if valid else "UNKNOWN",
     }
-
-
-def main():
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("capture", type=Path)
-    args = p.parse_args()
-    print(json.dumps(audit(args.capture), indent=2))
-
-
-if __name__ == "__main__":
-    main()

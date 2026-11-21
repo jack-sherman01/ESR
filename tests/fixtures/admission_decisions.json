@@ -1,0 +1,1069 @@
+[
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "VIOLATION",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "observed_safety_violation",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": true,
+      "task_success": true,
+      "safety_status": "VIOLATION",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "UNKNOWN",
+        "coverage_complete": false
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "unknown_safety_evidence",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": false,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "task_not_qualified",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": false,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": false,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "binding_or_integrity_error",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "stack",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 0,
+      "settle_success_steps": 0,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      },
+      "terminal_native_success": true,
+      "native_success_terminated": true,
+      "terminal_hold_status": "NATIVE_SUCCESS_TERMINATED_EXEMPT"
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "terminal_goal_not_maintained_or_missing_hold",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "VIOLATION",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "observed_safety_violation",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": true,
+      "task_success": true,
+      "safety_status": "VIOLATION",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "UNKNOWN",
+        "coverage_complete": false
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "unknown_safety_evidence",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": false,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "task_not_qualified",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": false,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": false,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "binding_or_integrity_error",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "pickplacecan",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 0,
+      "settle_success_steps": 0,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      },
+      "terminal_native_success": true,
+      "native_success_terminated": true,
+      "terminal_hold_status": "NATIVE_SUCCESS_TERMINATED_EXEMPT"
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "terminal_goal_not_maintained_or_missing_hold",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "VIOLATION",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "observed_safety_violation",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": true,
+      "task_success": true,
+      "safety_status": "VIOLATION",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "UNKNOWN",
+        "coverage_complete": false
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "unknown_safety_evidence",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": false,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "task_not_qualified",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": false,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": false,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "binding_or_integrity_error",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "two-arm-handover",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 0,
+      "settle_success_steps": 0,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      },
+      "terminal_native_success": true,
+      "native_success_terminated": true,
+      "terminal_hold_status": "NATIVE_SUCCESS_TERMINATED_EXEMPT"
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "terminal_goal_not_maintained_or_missing_hold",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "VIOLATION",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "observed_safety_violation",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": true,
+      "task_success": true,
+      "safety_status": "VIOLATION",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "UNKNOWN",
+        "coverage_complete": false
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "unknown_safety_evidence",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": false,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "task_not_qualified",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": false,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": false,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "binding_or_integrity_error",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "nut-assembly",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 0,
+      "settle_success_steps": 0,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      },
+      "terminal_native_success": true,
+      "native_success_terminated": true,
+      "terminal_hold_status": "NATIVE_SUCCESS_TERMINATED_EXEMPT"
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "terminal_goal_not_maintained_or_missing_hold",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "scope": "same-seed single-execution engineering gate; no independent retest"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "terminal_hold_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "terminal_hold_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "VIOLATION",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "observed_safety_violation",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": true,
+      "task_success": true,
+      "safety_status": "VIOLATION",
+      "terminal_hold_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "UNKNOWN",
+        "coverage_complete": false
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "unknown_safety_evidence",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "UNKNOWN",
+      "terminal_hold_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": false,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": true,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "task_not_qualified",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": false,
+      "safety_status": "PASS",
+      "terminal_hold_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 20,
+      "settle_success_steps": 20,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      }
+    },
+    "binding_ok": false,
+    "active": {
+      "version": 1
+    },
+    "expected": {
+      "accepted": false,
+      "decision": "REJECT",
+      "reason": "binding_or_integrity_error",
+      "parent_before": {
+        "version": 1
+      },
+      "retained_parent": true,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "terminal_hold_status": "UNKNOWN",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  },
+  {
+    "task": "wipe",
+    "result": {
+      "status": "MEASURED",
+      "program_ok": true,
+      "native_task_success": true,
+      "settle_steps": 0,
+      "settle_success_steps": 0,
+      "safety": {
+        "status": "PASS",
+        "coverage_complete": true
+      },
+      "terminal_native_success": true,
+      "native_success_terminated": true,
+      "terminal_hold_status": "NATIVE_SUCCESS_TERMINATED_EXEMPT"
+    },
+    "binding_ok": true,
+    "active": null,
+    "expected": {
+      "accepted": true,
+      "decision": "PROMOTE",
+      "reason": "accepted",
+      "parent_before": null,
+      "retained_parent": false,
+      "observed_safety_regression": false,
+      "task_success": true,
+      "safety_status": "PASS",
+      "terminal_hold_status": "NATIVE_SUCCESS_TERMINATED_EXEMPT",
+      "scope": "same-seed single-execution engineering gate; no independent retest; loads recorded without overload assessment"
+    }
+  }
+]

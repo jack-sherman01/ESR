@@ -191,7 +191,7 @@ def test_protocol_rejects_invalid_statistics(kwargs):
 
 def test_cli_emits_frozen_paired_reference_metrics_and_detects_evidence_tampering(tmp_path,monkeypatch):
     import sys
-    from experiments import run_benchmark
+    from experiments import benchmark as run_benchmark
     from esrb.detection.gate_audit import audit_gate
     protocol=tmp_path/'eval.yaml'
     protocol.write_text('reference_samples: 64\nmin_reference_samples: 32\n')
@@ -228,7 +228,8 @@ def test_cli_emits_frozen_paired_reference_metrics_and_detects_evidence_tamperin
 def test_reference_trials_do_not_change_gate_feedback_or_promotion():
     from esrb.detection.risk_selection import RiskSensitiveSelector
     from esrb.oracles.multiconstraint import scenario_oracle
-    from experiments.run_benchmark import _build_tool_misuse,run_loop
+    from experiments.builders import _build_tool_misuse
+    from esrb.runtime.benchmark import run_loop
     instance,policy=_build_tool_misuse(2,3,.5,42)
     instance=replace(instance,oracle=scenario_oracle('tool_misuse'))
     comparison=freeze_evaluation(EvaluationProtocol(reference_samples=1),task=instance.task,
@@ -249,7 +250,7 @@ def test_reference_trials_do_not_change_gate_feedback_or_promotion():
 
 def test_evaluation_budget_guard_fails_before_building_task(tmp_path,monkeypatch):
     import sys
-    from experiments import run_benchmark
+    from experiments import benchmark as run_benchmark
     protocol=tmp_path/'eval.yaml'
     protocol.write_text('reference_samples: 64\nmax_reference_rollouts: 2\n')
     monkeypatch.setattr(sys,'argv',['run_benchmark.py','--scenarios','tool_misuse',
@@ -285,7 +286,7 @@ def test_evaluator_callback_pair_keeps_physics_fixed_and_uses_task_truth():
 
 def test_reference_development_panels_and_metrics_are_audited(tmp_path,monkeypatch):
     import sys
-    from experiments import run_benchmark
+    from experiments import benchmark as run_benchmark
     from esrb.detection.gate_audit import audit_gate
     protocol=tmp_path/'eval.yaml'
     protocol.write_text('reference_samples: 2\ndevelopment_samples: 1\n')
@@ -311,8 +312,8 @@ def test_reference_development_panels_and_metrics_are_audited(tmp_path,monkeypat
 
 def test_offline_evaluation_reproduces_metrics_without_new_rollouts(tmp_path,monkeypatch):
     import sys
-    from experiments import run_benchmark
-    from esrb.metrics.__main__ import main
+    from experiments import benchmark as run_benchmark
+    from esrb.tools.analysis.metrics import main
     protocol=tmp_path/'eval.yaml'
     protocol.write_text('reference_samples: 2\ndevelopment_samples: 1\n')
     out=tmp_path/'run'
@@ -331,7 +332,7 @@ def test_offline_evaluation_reproduces_metrics_without_new_rollouts(tmp_path,mon
 @pytest.mark.parametrize('scenario',['scripted_peg','moving_assembly','force_alignment','compliant_assembly'])
 def test_native_tasks_use_the_same_reference_protocol_and_auditor(scenario,tmp_path,monkeypatch):
     import sys
-    from experiments import run_benchmark
+    from experiments import benchmark as run_benchmark
     protocol=tmp_path/'eval.yaml'
     protocol.write_text('reference_samples: 1\ndevelopment_samples: 1\n')
     out=tmp_path/'run'
@@ -370,7 +371,7 @@ def test_incompatible_tasks_or_protocols_cannot_be_pooled():
 
 def test_frozen_trials_reject_reused_directory_before_execution(tmp_path,monkeypatch):
     import sys
-    from experiments import run_benchmark
+    from experiments import benchmark as run_benchmark
     protocol=tmp_path/'eval.yaml'
     protocol.write_text('reference_samples: 1\ndevelopment_samples: 1\n')
     out=tmp_path/'run'
@@ -386,7 +387,7 @@ def test_frozen_trials_reject_reused_directory_before_execution(tmp_path,monkeyp
 def test_report_trials_restore_python_numpy_and_torch_random_streams():
     import random
     import numpy as np
-    import torch
+    torch = pytest.importorskip('torch', reason='random-stream isolation includes optional PyTorch')
     from esrb.metrics.reference import isolated_random_state,seed_trial
     from esrb.utils.hashing import hash_object
     def states():
@@ -404,7 +405,7 @@ def test_single_constraint_impact_binds_parent_and_candidate_execution(tmp_path,
     import sys
 
     from esrb.detection.gate_audit import audit_gate
-    from experiments import run_benchmark
+    from experiments import benchmark as run_benchmark
 
     out = tmp_path / "single-constraint"
     monkeypatch.setattr(sys, "argv", [

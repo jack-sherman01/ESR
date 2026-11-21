@@ -1,0 +1,7 @@
+"""TwoArmHandover experiment specification."""
+from esrb.runtime.spec import SceneSpec
+
+SCENE = SceneSpec(key='two-arm-handover', prefix='handover', task='two_arm_handover', environment='TwoArmHandover',
+    prompt='用双臂 Panda 把锤子从 primary 交给 secondary，尽量可靠且少用动作。', safety_module='esrb.detection.handover_gate',
+    chain_port=8130, chain_gpu=2,
+    protocol_defaults={'schema': 'esrb.handover_batch/1', 'task': 'two_arm_handover', 'environment': 'TwoArmHandover', 'stop_on_success': False, 'max_control_steps': 2000, 'control_frequency_hz': 20, 'camera_height': 192, 'camera_width': 192, 'video_stride': 4, 'renderer': 'EGL with per-round GPU assignment', 'controller': 'JOINT_POSITION', 'physics_timestep_s': 0.002, 'independent_retest': False, 'offline_physics_audit': False, 'telemetry': '20 Hz post-control state, object poses, sampled contacts; not all physics contacts', 'generator': 'fresh per-round agents with fork_turns=none, no starting program, task-only capsule', 'generator_initial_context_inherited': False, 'initial_program_provided': False, 'ik_service_url': 'http://127.0.0.1:8126', 'candidate_prompt': 'Complete handover and minimize control ticks; public API, own task feedback and supplied starting program only', 'perception': 'public calibrated RGB-D color/geometry', 'ik': 'local CPU PyRoki', 'planner': 'official joint interpolation', 'goal_observation': 'native task language plus static tabletop calibration only'}, input_module='esrb.backends.aspire.feedback.handover')

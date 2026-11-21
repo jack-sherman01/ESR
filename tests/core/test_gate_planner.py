@@ -7,10 +7,9 @@ from esrb.detection.change_impact import ChangeImpactGraph, ComponentType
 from esrb.detection.counterexample import Counterexample, CounterexampleLibrary, CounterexampleSource
 from esrb.detection.gate_planner import plan_gate
 from esrb.detection.risk_selection import RiskSensitiveSelector
-from experiments.run_benchmark import (
-    _build_evaluator_drift, _build_scripted_peg, _build_sensor_drift, _build_tool_misuse,
-    main, run_loop,
-)
+from experiments.builders import _build_evaluator_drift, _build_scripted_peg, _build_sensor_drift, _build_tool_misuse
+from experiments.benchmark import main
+from esrb.runtime.benchmark import run_loop
 
 
 def test_impact_selects_only_relevant_history_from_earlier_generations():

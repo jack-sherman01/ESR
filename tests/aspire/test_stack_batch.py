@@ -1,11 +1,16 @@
+from esrb.runtime.batch import BatchRunner
+from esrb.runtime.chain import ChainRunner
+from experiments.aspire.scenes import get_scene
+from esrb.runtime.io import read, save, digest
+from esrb.runtime.paths import project_root
+from esrb.runtime.submissions import program_identity
+
 """Batch bookkeeping must not turn missing measurements into success."""
 import importlib.util
 import json
 from pathlib import Path
 
-SPEC=importlib.util.spec_from_file_location('stack_batch',Path(__file__).resolve().parents[2]/'scripts/runners/run_aspire_stack_batch.py')
-MODULE=importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = BatchRunner(get_scene('stack'))
 
 
 def test_random_round_panel_is_distinct_and_requires_all_five_versions(tmp_path):
@@ -30,10 +35,10 @@ def test_success_does_not_hide_missing_versions_or_an_infrastructure_error(tmp_p
         for version in range(1,6):
             folder=root/f'round_{number:02d}'/f'version_{version:02d}'/'execution'
             folder.mkdir(parents=True)
-            MODULE.save(folder/'result.json',dict(round=number,version=version,seed=seed,status='MEASURED',
+            save(folder/'result.json',dict(round=number,version=version,seed=seed,status='MEASURED',
                         native_task_success=(version==1),initial_state_id=f'initial-{number}'))
     MODULE.summarize(root)
-    summary=MODULE.read(root/'summary.json')
+    summary=read(root/'summary.json')
     # Fifty task measurements without gate decisions cannot complete a gated chain.
     assert summary['status']=='IN_PROGRESS' and summary['measured_rollouts']==50
     assert summary['promotions']==0
@@ -41,12 +46,12 @@ def test_success_does_not_hide_missing_versions_or_an_infrastructure_error(tmp_p
     assert all(r['distinct_actual_initial_states']==1 for r in summary['rounds'])
     # Retain compatibility with the historical, explicitly ungated archive.
     del protocol['safety_gate']
-    MODULE.save(root/'protocol.json',protocol)
+    save(root/'protocol.json',protocol)
     MODULE.summarize(root)
-    assert MODULE.read(root/'summary.json')['status']=='COMPLETE'
-    MODULE.save(root/'round_10/version_05/execution/result.json',dict(round=10,version=5,seed=protocol['seeds'][9],status='INFRASTRUCTURE_ERROR'))
+    assert read(root/'summary.json')['status']=='COMPLETE'
+    save(root/'round_10/version_05/execution/result.json',dict(round=10,version=5,seed=protocol['seeds'][9],status='INFRASTRUCTURE_ERROR'))
     MODULE.summarize(root)
-    summary=MODULE.read(root/'summary.json')
+    summary=read(root/'summary.json')
     assert summary['status']=='IN_PROGRESS' and summary['measured_rollouts']==49
     assert summary['infrastructure_errors']==1
 
@@ -55,5 +60,5 @@ def test_small_engineering_panel_does_not_claim_fifty_requested_rollouts(tmp_pat
     root=tmp_path/'acceptance'
     MODULE.init(root,[974038773],versions=3)
     MODULE.summarize(root)
-    summary=MODULE.read(root/'summary.json')
+    summary=read(root/'summary.json')
     assert summary['requested_rollouts']==3 and summary['status']=='IN_PROGRESS'

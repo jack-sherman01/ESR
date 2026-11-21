@@ -7,7 +7,8 @@ import pytest
 from esrb.detection.gate_audit import audit_gate
 from esrb.detection.risk_selection import RiskSensitiveSelector
 from esrb.tasks.contact_rich import PegInsertionTask
-from experiments.run_benchmark import _build_scripted_peg, run_loop
+from experiments.builders import _build_scripted_peg
+from esrb.runtime.benchmark import run_loop
 
 
 def test_explicit_reset_restores_seeded_or_custom_xy():

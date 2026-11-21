@@ -1,5 +1,5 @@
 """Keep target, gripper and inactive-object contact evidence distinct."""
-from scripts.gates import simulation_capture as capture
+from esrb.backends.aspire import evidence as capture
 
 
 def test_peg_contact_identity_keeps_nut_and_finger_distinct():

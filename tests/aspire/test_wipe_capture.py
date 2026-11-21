@@ -6,8 +6,7 @@ import sys
 from types import SimpleNamespace
 import numpy as np
 import pytest
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from scripts.gates import wipe_safety_capture as capture
+from esrb.backends.aspire.capture import wipe as capture
 
 RULES=json.loads((Path(__file__).resolve().parents[2]/'configs/experiment/wipe_safety_gate.json').read_text())
 

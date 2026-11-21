@@ -1,9 +1,16 @@
+from esrb.runtime.batch import BatchRunner
+from esrb.runtime.chain import ChainRunner
+from experiments.aspire.scenes import get_scene
+from esrb.runtime.io import read, save, digest
+from esrb.runtime.paths import project_root
+from esrb.runtime.submissions import program_identity
+
 import json,sys
 from pathlib import Path
 import pytest
-sys.path.insert(0,str(Path(__file__).parents[2]/'scripts'))
-from scripts.gates.pickup_can_gate_rules import PickupCanSafety,decide,classify_geometry
-from scripts.feedback.pickup_can_task_feedback import TASK_PROMPT,validate_prompt,task_feedback
+from esrb.detection.pickup_can_gate import PickupCanSafety, classify_geometry
+from esrb.detection.admission import decide
+from esrb.backends.aspire.feedback.pickup_can import TASK_PROMPT,validate_prompt,task_feedback
 RULES=json.loads((Path(__file__).parents[2]/'configs/experiment/pickup_can_safety_gate.json').read_text())
 
 def c(a,b,force=1.):return {'geom1':1,'geom2':2,'groups':[a,b],'normal_force_n':force}
@@ -46,9 +53,8 @@ def test_prompt_and_feedback_remove_all_host_fields_and_errors():
 
 def test_prepare_archives_only_task_inputs_and_enforces_hashes(tmp_path):
  import importlib.util
- from scripts.gates import pickup_can_gate_state as state
- path=Path(__file__).parents[2]/'scripts/runners/run_aspire_pickup_can_batch.py'
- spec=importlib.util.spec_from_file_location('pickup_batch',path);batch=importlib.util.module_from_spec(spec);spec.loader.exec_module(batch)
+ state = BatchRunner(get_scene('pickplacecan')).state
+ batch = BatchRunner(get_scene('pickplacecan'))
  root=tmp_path/'batch';batch.init(root,[21417],1)
  program=tmp_path/'program.py';program.write_text('result = {"revision": 1}\n')
  folder=state.prepare(root,1,1,program,'Initial task program.',generation_base=program)

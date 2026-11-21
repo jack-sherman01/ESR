@@ -7,8 +7,7 @@ import numpy as np
 
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
-sys.path.insert(0, str(SCRIPTS))
-from scripts.runners.run_aspire_nut_episode import Capture
+from esrb.tools.diagnostics.nut_evidence import Capture
 
 
 def evaluator(nut=(0., 0., .81), open_fraction=1.):

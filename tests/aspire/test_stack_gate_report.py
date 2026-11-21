@@ -5,8 +5,7 @@ from pathlib import Path
 
 import pytest
 
-SPEC=importlib.util.spec_from_file_location('stack_gate_report',Path(__file__).resolve().parents[2]/'scripts/reports/report_aspire_stack_gate.py')
-REPORT=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(REPORT)
+REPORT = __import__('esrb.tools.reports.gate', fromlist=['export'])
 
 
 def write(path,value):

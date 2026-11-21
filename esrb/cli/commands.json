@@ -1,0 +1,174 @@
+{
+  "study.measurement-validation": {
+    "module": "experiments.studies.measurement_validation",
+    "builder": "options_study_measurement_validation"
+  },
+  "study.ablation": {
+    "module": "experiments.studies.ablation",
+    "builder": "options_study_ablation"
+  },
+  "study.adversarial-evasion": {
+    "module": "experiments.studies.adversarial_evasion",
+    "builder": "options_study_adversarial_evasion"
+  },
+  "benchmark.run": {
+    "module": "experiments.benchmark",
+    "builder": "options_benchmark_run"
+  },
+  "study.ce-library-biasing": {
+    "module": "experiments.studies.ce_library_biasing",
+    "builder": "options_study_ce_library_biasing"
+  },
+  "study.dynamic-obstacle": {
+    "module": "experiments.studies.dynamic_obstacle",
+    "builder": "options_study_dynamic_obstacle"
+  },
+  "study.episode-removal": {
+    "module": "experiments.studies.episode_removal",
+    "builder": "options_study_episode_removal"
+  },
+  "study.evaluator-drift": {
+    "module": "experiments.studies.evaluator_drift",
+    "builder": "options_study_evaluator_drift"
+  },
+  "study.fault-prob-sweep": {
+    "module": "experiments.studies.fault_prob_sweep",
+    "builder": "options_study_fault_prob_sweep"
+  },
+  "study.mlp-insertion": {
+    "module": "experiments.studies.mlp_insertion",
+    "builder": "options_study_mlp_insertion"
+  },
+  "study.multiseed": {
+    "module": "experiments.studies.multiseed",
+    "builder": "options_study_multiseed"
+  },
+  "study.peg-insertion": {
+    "module": "experiments.studies.peg_insertion",
+    "builder": "options_study_peg_insertion"
+  },
+  "study.pick-place": {
+    "module": "experiments.studies.pick_place",
+    "builder": "options_study_pick_place"
+  },
+  "study.rl-scenario": {
+    "module": "experiments.studies.rl_scenario",
+    "builder": "options_study_rl_scenario"
+  },
+  "study.sensor-drift": {
+    "module": "experiments.studies.sensor_drift",
+    "builder": "options_study_sensor_drift"
+  },
+  "study.stochastic-force": {
+    "module": "experiments.studies.stochastic_force",
+    "builder": "options_study_stochastic_force"
+  },
+  "study.tool-misuse": {
+    "module": "experiments.studies.tool_misuse",
+    "builder": "options_study_tool_misuse"
+  },
+  "study.tool-tighten": {
+    "module": "experiments.studies.tool_tighten",
+    "builder": "options_study_tool_tighten"
+  },
+  "benchmark.search": {
+    "module": "experiments.search",
+    "builder": "options_benchmark_search"
+  },
+  "tools.diagnose.nut-evidence": {
+    "module": "esrb.tools.diagnostics.nut_evidence",
+    "builder": "options_tools_diagnose_nut_evidence",
+    "runtime": "robosuite"
+  },
+  "tools.analyze.fixed-chain": {
+    "module": "esrb.tools.analysis.fixed_chain",
+    "builder": "options_tools_analyze_fixed_chain"
+  },
+  "tools.analyze.audit-physical-extensions": {
+    "module": "esrb.tools.analysis.audit_physical_extensions",
+    "builder": "options_tools_analyze_audit_physical_extensions"
+  },
+  "tools.analyze.natural-audit": {
+    "module": "esrb.tools.analysis.natural_audit_cli",
+    "builder": "options_tools_analyze_natural_audit"
+  },
+  "tools.analyze.natural-study": {
+    "module": "esrb.tools.analysis.natural_study",
+    "builder": "options_tools_analyze_natural_study"
+  },
+  "tools.analyze.natural-audit-extended": {
+    "module": "esrb.tools.analysis.natural_audit_extended",
+    "builder": "options_tools_analyze_natural_audit_extended"
+  },
+  "tools.analyze.nut-evidence": {
+    "module": "esrb.tools.analysis.nut_evidence",
+    "builder": "options_tools_analyze_nut_evidence"
+  },
+  "tools.data.consolidate": {
+    "module": "esrb.tools.data_consolidation",
+    "builder": "options_tools_data_consolidate"
+  },
+  "tools.analyze.verify-assembly-replay": {
+    "module": "esrb.tools.analysis.verify_assembly_replay",
+    "builder": "options_tools_analyze_verify_assembly_replay"
+  },
+  "tools.render.assets": {
+    "module": "esrb.tools.render.assets",
+    "builder": "options_tools_render_assets"
+  },
+  "tools.render.physical-extensions": {
+    "module": "esrb.tools.render.physical_extensions",
+    "builder": "options_tools_render_physical_extensions"
+  },
+  "tools.render.tool-handling": {
+    "module": "esrb.tools.render.tool_handling",
+    "builder": "options_tools_render_tool_handling"
+  },
+  "tools.report.gate": {
+    "module": "esrb.tools.reports.gate",
+    "builder": "options_tools_report_gate"
+  },
+  "tools.report.handover-batch": {
+    "module": "esrb.tools.reports.handover_batch",
+    "builder": "options_tools_report_handover_batch"
+  },
+  "tools.report.chain": {
+    "module": "esrb.tools.reports.chain",
+    "builder": "options_tools_report_chain"
+  },
+  "tools.analyze.metrics": {
+    "module": "esrb.tools.analysis.metrics",
+    "builder": "options_tools_analyze_metrics"
+  },
+  "tools.diagnose.libero": {
+    "module": "esrb.tools.diagnostics.libero",
+    "builder": "options_tools_diagnose_libero",
+    "runtime": "libero"
+  },
+  "tools.diagnose.perception": {
+    "module": "esrb.tools.diagnostics.perception",
+    "builder": "options_tools_diagnose_perception",
+    "runtime": "libero"
+  },
+  "tools.analyze.gate-audit": {
+    "module": "esrb.tools.analysis.gate_audit",
+    "builder": "options_tools_analyze_gate_audit"
+  },
+  "tools.diagnose.robosuite": {
+    "module": "esrb.tools.diagnostics.robosuite",
+    "builder": "options_tools_diagnose_robosuite",
+    "runtime": "robosuite"
+  },
+  "tools.analyze.pickplacecan-evidence": {
+    "module": "esrb.tools.analysis.pickplacecan_evidence",
+    "builder": "options_tools_analyze_pickplacecan_evidence"
+  },
+  "tools.analyze.handover-evidence": {
+    "module": "esrb.tools.analysis.handover_evidence",
+    "builder": "options_tools_analyze_handover_evidence"
+  },
+  "tools.diagnose.production-workcells": {
+    "module": "esrb.tools.diagnostics.production_workcells",
+    "builder": "options_tools_diagnose_production_workcells"
+  }
+}
