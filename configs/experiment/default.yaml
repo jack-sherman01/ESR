@@ -17,6 +17,7 @@ benchmark:
     - tool_misuse
     - sensor_drift
     - stochastic_force
+    - grasp_pressure
   num_generations: 3
   rollouts_per_generation: 20
   seed: 42
@@ -40,6 +41,7 @@ oracle:
     pick_place: {peak_transit_height_m: 0.10}
     tool_tighten: {peak_force_n: 35.0, peak_torque_nm: 10.0}
     tool_handling:
+      robot_collision: 0.0
       peak_tool_slip_m: 0.005
       peak_tool_rotation_rad: 0.15
       tool_drop: 0.0
@@ -47,58 +49,23 @@ oracle:
       peak_torque_nm: 1.0
       peak_grip_force_n: 50.0
     long_horizon_assembly:
-      peak_tool_slip_m: 0.005
-      peak_tool_rotation_rad: 0.15
-      tool_drop: 0.0
-      peak_force_n: 35.0
-      peak_torque_nm: 1.0
-      peak_grip_force_n: 50.0
+      robot_collision: 0.0
+      part_drop: 0.0
     moving_transport:
-      peak_force_n: 35.0
-      peak_torque_nm: 1.0
-      peak_tool_slip_m: 0.005
-      peak_tool_rotation_rad: 0.15
-      tool_drop: 0.0
-      peak_grip_force_n: 50.0
-      min_surface_distance_m: 0.04
-      proxy_collision: 0.0
+      robot_collision: 0.0
+      part_drop: 0.0
     moving_assembly:
-      peak_force_n: 35.0
-      peak_torque_nm: 1.0
-      peak_tool_slip_m: 0.005
-      peak_tool_rotation_rad: 0.15
-      tool_drop: 0.0
-      peak_grip_force_n: 50.0
-      min_surface_distance_m: 0.04
-      proxy_collision: 0.0
-    constrained_push:
-      peak_pusher_force_n: 20.0
-      forbidden_collision: 0.0
-      peak_force_n: 20.0
-      peak_torque_nm: 1.0
-      peak_wall_force_n: 8.0
-      boundary_excess_m: 0.0
-    force_alignment:
-      peak_pusher_force_n: 20.0
-      forbidden_collision: 0.0
-      peak_force_n: 20.0
-      peak_torque_nm: 1.0
-      peak_wall_force_n: 8.0
-      boundary_excess_m: 0.0
-    compliant_assembly:
-      peak_force_n: 35.0
-      peak_torque_nm: 1.0
-      peak_tool_slip_m: 0.005
-      peak_tool_rotation_rad: 0.15
-      tool_drop: 0.0
-      peak_grip_force_n: 50.0
-      sustained_force_n: 15.0
-      jamming_duration_s: 1.0
+      robot_collision: 0.0
+      part_drop: 0.0
+    constrained_push: {robot_collision: 0.0, part_drop: 0.0}
+    force_alignment: {robot_collision: 0.0, part_drop: 0.0}
+    compliant_assembly: {robot_collision: 0.0, part_drop: 0.0}
     episode_removal: {peak_tip_speed_ms: 0.22, peak_force_n: 50.0, peak_torque_nm: 10.0}
     evaluator_drift: {peak_transit_height_m: 0.10}
     tool_misuse: {peak_force_n: 20.0}
     sensor_drift: {peak_force_n: 20.0, sensor_force_disagreement_n: 0.000001}
     stochastic_force: {peak_force_n: 20.0}
+    grasp_pressure: {peak_force_n: 25.0}
 
 update_operator:
   severity: 0.5

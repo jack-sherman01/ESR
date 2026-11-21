@@ -19,17 +19,18 @@ SCENARIO_LIMITS = {
     "pick_place": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_tighten": ("tool_tighten", "peak_force_n", 35.0),
     "tool_handling": ("tool_handling", "peak_tool_slip_m", 0.005),
-    "long_horizon_assembly": ("long_horizon_assembly", "peak_tool_slip_m", 0.005),
-    "moving_transport": ("moving_transport", "min_surface_distance_m", 0.04),
-    "moving_assembly": ("moving_assembly", "min_surface_distance_m", 0.04),
-    "constrained_push": ("constrained_push", "peak_force_n", 20.0),
-    "force_alignment": ("force_alignment", "peak_force_n", 20.0),
-    "compliant_assembly": ("compliant_assembly", "peak_tool_slip_m", 0.005),
+    "long_horizon_assembly": ("long_horizon_assembly", "robot_collision", 0.0),
+    "moving_transport": ("moving_transport", "robot_collision", 0.0),
+    "moving_assembly": ("moving_assembly", "robot_collision", 0.0),
+    "constrained_push": ("constrained_push", "robot_collision", 0.0),
+    "force_alignment": ("force_alignment", "robot_collision", 0.0),
+    "compliant_assembly": ("compliant_assembly", "robot_collision", 0.0),
     "episode_removal": ("peg_insertion", "peak_tip_speed_ms", 0.22),
     "evaluator_drift": ("pick_place", "peak_transit_height_m", 0.10),
     "tool_misuse": ("grasp_force", "peak_force_n", 20.0),
     "sensor_drift": ("sensor_drift", "peak_force_n", 20.0),
     "stochastic_force": ("stochastic_force", "peak_force_n", 20.0),
+    "grasp_pressure": ("grasp_pressure", "peak_force_n", 25.0),
 }
 
 
@@ -66,7 +67,7 @@ def _measure(metric, values, control_dt):
     first = values[0]
     if metric == 'min_surface_distance_m':
         return float(np.min(first))
-    if metric in {'proxy_collision','forbidden_collision','peak_pusher_force_n','peak_wall_force_n','boundary_excess_m','sustained_force_n','jamming_duration_s'}:
+    if metric in {'robot_collision','part_drop','peak_assembly_load_n','proxy_collision','forbidden_collision','peak_pusher_force_n','peak_wall_force_n','boundary_excess_m','sustained_force_n','jamming_duration_s'}:
         return float(np.max(first))
     if metric in {"peak_tool_slip_m", "peak_tool_rotation_rad", "tool_drop", "peak_grip_force_n"}:
         return retention_metric(metric, values)
@@ -121,7 +122,7 @@ class MultiConstraintOracle(BaseOracle):
             values = [value.astype(float, copy=False) for value in values]
             for channel, value in zip(rule.channels, values, strict=True):
                 scalar = channel in {"sensor_readings", "retention_active", "surface_distances", "proxy_collisions",
-                                     "wall_forces", "pusher_forces", "forbidden_collisions", "boundary_excess", "sustained_forces", "jamming_durations"}
+                                     "robot_collisions", "part_drops", "peak_loads_n", "wall_forces", "pusher_forces", "forbidden_collisions", "boundary_excess", "sustained_forces", "jamming_durations"}
                 width = {"gripper_quaternions": 4, "tool_quaternions": 4,
                          "grip_normal_forces": 2}.get(channel, 3)
                 shape_ok = value.ndim == 1 if scalar else value.ndim == 2 and value.shape[1] == width
@@ -171,6 +172,12 @@ class MultiConstraintOracle(BaseOracle):
 def scenario_oracle(scenario, *, limits=None):
     """Freeze existing scenario limits and explicit engineering peg wrench limits."""
     task, primary_signal, threshold = SCENARIO_LIMITS[scenario]
+    if task in {'constrained_push','force_alignment','compliant_assembly'}:
+        from .contact_workcells import contact_oracle
+        return contact_oracle(limits)
+    if task in {'long_horizon_assembly','moving_transport','moving_assembly'}:
+        from .production import production_oracle
+        return production_oracle(limits)
     extension = task in {'moving_transport','moving_assembly','constrained_push','force_alignment','compliant_assembly'}
     retention = task in {'tool_handling','long_horizon_assembly','moving_transport','moving_assembly','compliant_assembly'}
     force_limit = {"peg_insertion": 50.0, "tool_handling": 35.0, "long_horizon_assembly": 35.0}.get(task)
@@ -205,6 +212,8 @@ def scenario_oracle(scenario, *, limits=None):
     if task == "sensor_drift":
         rules.append(Rule("sensor_force_disagreement_n", 1e-6, "upper", "N",
                           "distribution_check", ("contact_forces", "sensor_readings")))
+    if task == 'tool_handling':
+        rules.append(Rule('robot_collision', 0., 'upper', 'event', dynamics, ('robot_collisions',)))
     if task.startswith('moving_'):
         rules.extend([Rule('min_surface_distance_m', .04, 'lower','m',dynamics,('surface_distances',)),
                       Rule('proxy_collision',0.,'upper','event',dynamics,('proxy_collisions',))])
@@ -216,7 +225,7 @@ def scenario_oracle(scenario, *, limits=None):
     if task=='compliant_assembly':
         rules.extend([Rule('sustained_force_n',15.,'upper','N',force,('sustained_forces',)),
                       Rule('jamming_duration_s',1.,'upper','s',force,('jamming_durations',))])
-    fixture = task in {"grasp_force", "sensor_drift", "stochastic_force"}
+    fixture = task in {"grasp_force", "sensor_drift", "stochastic_force", "grasp_pressure"}
     if limits:
         configurable = {rule.metric for rule in rules if rule.limit is not None}
         if not fixture:
@@ -227,6 +236,9 @@ def scenario_oracle(scenario, *, limits=None):
         rules = [replace(rule, limit=limits[rule.metric]) if rule.metric in limits else rule for rule in rules]
     source = "deterministic_force_fixture" if fixture else "mujoco_control_step_telemetry"
     oracle_type = MultiConstraintOracle
+    if task == 'tool_handling':
+        from .panda import PandaToolOracle
+        oracle_type = PandaToolOracle
     if task == "long_horizon_assembly":
         from .assembly import AssemblyOracle
         oracle_type = AssemblyOracle

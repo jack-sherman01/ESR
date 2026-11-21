@@ -1,6 +1,4 @@
-# Each listed axis is sampled 60–85% of the distance from the nominal value
-# to the indicated physical bound. "edge" alternates between the two sides
-# over a panel. Unlisted axes remain nominal.
+# Bounded physical stress coordinates for current task models.
 pick_place:
   pick_x_m: low
   pick_y_m: edge
@@ -12,17 +10,14 @@ tool_handling:
   tool_yaw_rad: edge
   grasp_offset_m: edge
 constrained_push:
-  part_mass_kg: high
+  position_jitter_m: edge
+  yaw_jitter_rad: edge
   friction: high
-  part_y_m: edge
-  part_yaw_rad: edge
 moving_transport:
-  tool_mass_kg: high
+  position_jitter_m: edge
+  yaw_jitter_rad: edge
   friction: low
-  grasp_offset_m: edge
-  proxy_entry_s: high
-  proxy_radius_m: high
-  proxy_path_dx_m: edge
+  speed_scale: high
 dynamic_obs:
   arm_x_m: low
   arm_y_m: edge
@@ -32,28 +27,23 @@ scripted_peg:
   x_offset_m: edge
   y_offset_m: edge
 force_alignment:
-  part_mass_kg: high
+  position_jitter_m: edge
+  yaw_jitter_rad: edge
   friction: high
-  part_y_m: low
-  part_yaw_rad: low
 tool_tighten:
   x_offset_m: edge
   y_offset_m: edge
 compliant_assembly:
-  tool_mass_kg: high
-  friction: low
-  grasp_x_error_m: edge
-  socket_dx_m: low
-  socket_dy_m: low
+  position_jitter_m: edge
+  yaw_jitter_rad: edge
+  friction: high
 long_horizon_assembly:
-  tool_mass_kg: high
+  position_jitter_m: edge
+  yaw_jitter_rad: edge
   friction: low
-  tool_yaw_rad: edge
-  grasp_x_error_m: edge
+  speed_scale: high
 moving_assembly:
-  tool_mass_kg: high
+  position_jitter_m: edge
+  yaw_jitter_rad: edge
   friction: low
-  grasp_x_error_m: edge
-  proxy_entry_s: high
-  proxy_radius_m: high
-  proxy_path_dx_m: edge
+  speed_scale: high

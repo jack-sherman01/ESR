@@ -25,8 +25,11 @@ class ExtensionOperator(BaseUpdateOperator):
 
     def apply(self,policy,seed=0,severity=.5):
         child=copy.deepcopy(policy)
-        if self.scenario.startswith('moving_'):
-            child.wait_for_proxy=max(0.,child.wait_for_proxy-2*severity)
+        if self.scenario=='moving_transport':
+            child.velocity_compensation=max(0.,child.velocity_compensation-2*severity)
+            child.transport_closure=max(0.,child.transport_closure-.08*severity)
+        elif self.scenario=='moving_assembly':
+            child.fixture_lag_s+=8*severity
         elif self.scenario=='compliant_assembly':
             child.admittance_gain=max(0.,child.admittance_gain*(1-2*severity))
             child.insertion_step_m*=1+8*severity

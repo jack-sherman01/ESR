@@ -5,8 +5,8 @@ import numpy as np
 
 from esrb.oracles.multiconstraint import MultiConstraintOracle, MultiConstraintVerdict
 from esrb.oracles.tool_retention import relative_positions, relative_quaternions, validate_tool_measurements
-from esrb.tasks.long_horizon.assembly import (
-    DT, HOLD_TIME_S, HOLE_TOP_Z, LongHorizonAssemblyTask, POSITION_TOLERANCE_M,
+from esrb.tasks.extensions.single_insertion import (
+    DT, HOLD_TIME_S, HOLE_TOP_Z, SingleInsertionTask, POSITION_TOLERANCE_M,
     REQUIRED_DEPTH_M, RETENTION_STAGES, TILT_TOLERANCE_RAD, YAW_TOLERANCE_RAD,
     assembly_readback, stable_hold_times,
 )
@@ -18,7 +18,7 @@ def require(value, message):
         raise ValueError(message)
 
 
-def validate_assembly_measurements(trace, *, task_type=LongHorizonAssemblyTask):
+def validate_assembly_measurements(trace, *, task_type=SingleInsertionTask):
     """Recompute task predicates and stage boundaries from physical telemetry."""
     validate_tool_measurements(trace, retention_stages=RETENTION_STAGES)
     # An unshifted legacy socket cannot acquire a different target from trace metadata.

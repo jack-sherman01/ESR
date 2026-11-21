@@ -8,7 +8,6 @@ from esrb.oracles.assembly import AssemblyVerdict,validate_assembly_measurements
 from esrb.oracles.tool_retention import validate_tool_measurements
 from esrb.tasks.extensions.registry import EXTENSIONS
 from esrb.tasks.extensions.settings import configured_task
-from esrb.tasks.extensions.moving import proxy_position,surface_readback
 
 
 def require(condition,message):
@@ -22,6 +21,12 @@ def _same(actual,expected,label):
 
 
 def validate_extension(trace):
+    if trace.get('model','').startswith('panda-contact/'):
+        from esrb.oracles.contact_workcells import validate_contact
+        return validate_contact(trace)
+    if trace.get('model','').startswith('panda-production/'):
+        from esrb.oracles.production import validate_production
+        return validate_production(trace)
     name=trace.get('moving_model',trace.get('extension_model',trace.get('model',''))).split('/')[0]
     require(name in EXTENSIONS,'unregistered extension scene')
     task_type=configured_task(EXTENSIONS[name][0],trace.get('task_settings'))
@@ -34,36 +39,7 @@ def validate_extension(trace):
         n=len(trace['times_s'])
         require(n>0 and len(trace['stages'])==n,'missing stage clock')
         _same(trace['times_s'],np.arange(1,n+1)*.02,'control timebase mismatch')
-        if name.startswith('moving_'):
-            validate_tool_measurements(trace,retention_stages=trace.get('retention_stages'))
-            if name=='moving_assembly':
-                validate_assembly_measurements(trace,task_type=task_type)
-            require(trace['moving_model_digest']==task._scene_digest,'moving scene mismatch')
-            require(trace['moving_schema']==task._log['moving_schema'],'surface measurement schema mismatch')
-            samples=trace['moving_samples']
-            require(len(samples)==n*10,'missing physics-rate proxy evidence')
-            distances,collisions=[],[]
-            for i,sample in enumerate(samples):
-                require(sample['stage']==trace['stages'][i//10],'moving stage mismatch')
-                _same(sample['time_s'],(i+1)*.002,'moving clock mismatch')
-                _same(sample['proxy_position'],proxy_position(trace['reset_readback'],sample['time_s']),'proxy trajectory mismatch')
-                task._data.qpos[:]=sample['qpos']
-                task._data.qvel[:]=sample['qvel']
-                task._data.mocap_pos[0]=sample['proxy_position']
-                mujoco.mj_forward(task._model,task._data)
-                distance,part,points,contacts=surface_readback(task._model,task._data)
-                _same(sample['distance_m'],distance,'surface distance mismatch')
-                _same(sample['closest_points_world'],points,'closest surface points mismatch')
-                require(sample['closest_part']==part,'closest part mismatch')
-                require([r['part'] for r in contacts]==[r['part'] for r in sample['contacts']],'collision pair mismatch')
-                distances.append(distance)
-                collisions.append(bool(contacts))
-                if i%10==9:
-                    _same(task._data.xpos[task._tool],trace['tool_positions'][i//10],'moving object pose mismatch')
-                    _same(task._data.xpos[task._gripper],trace['ee_positions'][i//10],'moving robot pose mismatch')
-            _same(trace['surface_distances'],np.min(np.asarray(distances).reshape(n,10),axis=1),'surface reduction mismatch')
-            _same(trace['proxy_collisions'],np.any(np.asarray(collisions).reshape(n,10),axis=1),'collision reduction mismatch')
-        elif name in {'constrained_push','force_alignment'}:
+        if name in {'constrained_push','force_alignment'}:
             require(trace['model_digest']==task.model_digest and trace['reset_count']==1,'contact scene mismatch')
             require(trace['measurement_schema']==task._log['measurement_schema'],'contact schema mismatch')
             samples=np.asarray(trace['contact_samples'],dtype=float)
@@ -79,7 +55,7 @@ def validate_extension(trace):
             flags=[int(any(c['part']=='channel_endstop' and c['normal_force_n']>0 for c in row['contacts'])) for row in physics]
             _same(trace['forbidden_collisions'],np.asarray(flags).reshape(n,10).max(axis=1),'collision reduction mismatch')
             excess=[]
-            from esrb.tasks.tool_handling.tool_handling import yaw
+            from esrb.tasks.tool_handling.friction import yaw
             for i,row in enumerate(physics):
                 require(row['stage']==trace['stages'][i//10],'physical contact stage mismatch')
                 _same([row['time_s'],*row['force_world_n'],*row['torque_world_nm'],row['wall_force_n'],row['pusher_force_n']],

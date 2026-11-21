@@ -6,6 +6,7 @@ from math import isfinite
 
 from esrb.agent.base import BaseAgent
 from esrb.agent.mlp_policy import MLPInsertionPolicy
+from esrb.agent.rl_grasp_policy import RLGraspPolicy
 from esrb.update_operators.base import BaseUpdateOperator
 from esrb.utils.hashing import hash_object
 
@@ -61,6 +62,7 @@ class ControlledProfile:
             require(set(document) == set(self.nominal_task_config)
                     and all(type(value) in (int, float) and isfinite(value) for value in document.values())
                     and document.get("true_force", 0.0) >= 0
+                    and document.get("target_pressure_n", 0.0) >= 0
                     and 0 <= document.get("fault_prob", 0.0) <= 1, "invalid task configuration")
         elif role != "policy" or self.policy_type is not MLPInsertionPolicy:
             if role == "policy":
@@ -85,7 +87,7 @@ class ControlledProfile:
         state = dict(components.get("policy", {}))
         for role in self.fields_by_role:
             state.update(components[role])
-        if self.policy_type is MLPInsertionPolicy:
+        if self.policy_type in (MLPInsertionPolicy, RLGraspPolicy):
             # The receipt contains the state_dict, with large training state bound separately.
             return hash_object(state)
         policy = self.policy_type()

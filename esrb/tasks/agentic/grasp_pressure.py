@@ -18,6 +18,7 @@ from __future__ import annotations
 import numpy as np
 
 from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
+from esrb.tasks.reset_domain import validate_disturbance
 
 _MAX_STEPS: int   = 20
 _MAX_DELTA: float = 2.0    # max pressure change per step (N)
@@ -29,6 +30,13 @@ class GraspPressureTask(BaseTask):
     """Pure-Python pressure-control task for RL policy training."""
 
     name = "grasp_pressure"
+    reset_bounds = {"initial_pressure_n": (0.0, 2.0)}
+    reset_reference = {"initial_pressure_n": 0.0}
+
+    @classmethod
+    def disturbance_for_seed(cls, seed):
+        # Fresh trials share the nominal start; directed cases may vary it.
+        return dict(cls.reset_reference)
 
     def __init__(self, target_pressure_n: float = 15.0) -> None:
         self._target     = float(target_pressure_n)
@@ -51,13 +59,19 @@ class GraspPressureTask(BaseTask):
     def configure(self, target_pressure_n: float) -> None:
         self._target = float(target_pressure_n)
 
-    def reset(self, seed: int = 0) -> TaskObservation:
-        self._pressure  = 0.0
+    def reset(self, seed: int = 0, *, disturbance=None) -> TaskObservation:
+        point = validate_disturbance(
+            self.reset_bounds, self.disturbance_for_seed(seed) if disturbance is None else disturbance,
+        )
+        self._pressure  = point["initial_pressure_n"]
         self._step      = 0
         self._episode_log = {
             "contact_forces": [],
             "target_pressure_n": self._target,
         }
+        if disturbance is not None:
+            self._episode_log["reset_readback"] = point
+            self._episode_log["applied_task_config"] = {"target_pressure_n": self._target}
         return self._observe()
 
     def step(self, action: np.ndarray) -> tuple[TaskObservation, float, bool, dict]:

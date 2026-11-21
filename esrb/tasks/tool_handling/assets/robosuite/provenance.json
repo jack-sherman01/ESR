@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/ARISE-Initiative/robosuite",
+  "commit": "a498b087d4bc5a3981e3d27030d09bc537a537f3",
+  "license": "MIT; full upstream notice retained in LICENSE",
+  "reference_arena": "https://github.com/ARISE-Initiative/robosuite/blob/a498b087d4bc5a3981e3d27030d09bc537a537f3/robosuite/models/assets/arenas/table_arena.xml",
+  "assets": [
+    {
+      "file": "ceramic.png",
+      "upstream_path": "robosuite/models/assets/textures/ceramic.png",
+      "sha256": "beef464a2aa9143ba6a25a44adcbfd1f1aff16c5969edbf08019b61025388402"
+    }
+  ],
+  "adaptation": "Original ceramic texture; resized only during upload to the existing display texture. Procedural walls and floor tile guides are visual-only, inspired by TableArena; the physics task is ESRB ToolHandling, not a robosuite environment."
+}

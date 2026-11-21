@@ -1,262 +1,166 @@
-"""Friction-held free-body tool manipulation with measured stage transitions."""
-
+"""Full articulated Panda, joint-space actions and a freely held precision driver."""
 from pathlib import Path
-
 import mujoco
 import numpy as np
-
-from esrb.tasks.base import BaseTask, TaskObservation, TaskResult
-from esrb.tasks.reset_domain import validate_disturbance
-from esrb.utils.hashing import hash_artifact
-
-_XML = Path(__file__).parent / "assets" / "tool_handling.xml"
-DT = 0.020
-STAGES = ("grasp", "lift", "transport", "orient", "operate", "done")
+from esrb.tasks.base import TaskObservation
+from esrb.tasks.tool_handling.friction import FrictionToolTask, yaw
+from esrb.tasks.robots.panda import orientation_error, PandaRobot, HOME
 
 
-def yaw(quaternion):
-    w, x, y, z = quaternion
-    return float(np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)))
-
-
-class ToolHandlingTask(BaseTask):
-    """A Cartesian gripper with wrist yaw carries a free tool using pad friction."""
-
-    name = "tool_handling"
-    MODEL_XML = _XML
-    STAGES = STAGES
-    MAX_STEPS = 600
-    reset_reference = {
-        "tool_mass_kg": 0.08, "friction": 0.9,
-        "tool_x_m": -0.10, "tool_y_m": 0.0, "tool_yaw_rad": 0.0,
-        "grasp_offset_m": 0.0,
-    }
-    reset_bounds = {
-        "tool_mass_kg": (0.06, 0.10), "friction": (0.65, 1.0),
-        "tool_x_m": (-0.103, -0.097), "tool_y_m": (-0.003, 0.003),
-        "tool_yaw_rad": (-0.06, 0.06), "grasp_offset_m": (-0.008, 0.008),
-    }
-    boundary_fields = ("friction", "tool_mass_kg", "grasp_offset_m")
+class ToolHandlingTask(FrictionToolTask):
+    name = 'tool_handling'
+    MODEL_XML = Path(__file__).parent/'assets/tool_handling.xml'
+    MODEL_SCHEMA = 'panda_tool_workcell/3'
+    GRASP_HEIGHT = .138  # Keep the top of the driver below the native Panda palm.
 
     def __init__(self):
-        self._model = self._make_model()
-        self._data = mujoco.MjData(self._model)
-        self._tool = self._model.body("tool").id
-        self._gripper = self._model.body("gripper").id
-        self._handle = self._model.geom("tool_handle").id
-        self._pads = [self._model.geom(name).id for name in ("left_pad", "right_pad")]
-        self._surface = self._model.geom("work_surface").id
-        self._tool_q = self._model.jnt_qposadr[self._model.joint("tool_free").id]
-        self._original_inertia = self._model.body_inertia[self._tool].copy()
-        self._renderer = None
-
-    def _make_model(self):
-        return mujoco.MjModel.from_xml_path(str(self.MODEL_XML))
-
-    def _before_substep(self):
-        """Extension hook for externally prescribed obstacle motion."""
-
-    def _after_substep(self):
-        """Extension hook for physics-rate evidence, without resetting state."""
+        super().__init__()
+        self._panda = PandaRobot(self._model, self._data)
+        self._arm_joints = self._panda.joints
+        self._arm_q, self._arm_v = self._panda.q, self._panda.v
+        self._joint_limits = self._panda.limits
+        self._home = HOME.copy()
+        self._site = self._panda.site
+        self._pad_groups = self._panda.pad_groups
+        self._pads = sorted(self._panda.pads)
+        self._robot_geoms = self._panda.geoms
+        self._physics = []
+        self._target_data = self._panda.command_data
 
     @property
     def action_space(self):
-        return {"shape": (5,), "low": np.array([-0.2, -0.15, 0.07, -1.5, 0.0]),
-                "high": np.array([0.2, 0.15, 0.35, 1.5, 0.025])}
+        return {'shape': (8,), 'low': np.r_[self._joint_limits[:, 0], 0.],
+                'high': np.r_[self._joint_limits[:, 1], .025]}
 
     @property
     def observation_space(self):
-        return {"shape": (10,), "dtype": np.float64}
+        return {'shape': (24,), 'dtype': np.float64}
 
-    @classmethod
-    def disturbance_for_seed(cls, seed):
-        rng = np.random.default_rng(seed)
-        return {field: float(rng.uniform(*bounds)) for field, bounds in cls.reset_bounds.items()}
+    def _reset_robot(self):
+        q = self._home.copy()
+        target = self._pick
+        angle = self._initial_yaw
+        rotation = np.array([[np.cos(angle), -np.sin(angle), 0.],
+                             [np.sin(angle), np.cos(angle), 0.], [0., 0., 1.]])
+        self._data.qpos[7:9] = .025
+        for iteration in range(300):
+            self._data.qpos[self._arm_q] = q
+            mujoco.mj_kinematics(self._model, self._data)
+            mujoco.mj_comPos(self._model, self._data)
+            position_error = target - self._data.site_xpos[self._site]
+            angular_error = orientation_error(self._data.site_xmat[self._site].reshape(3, 3), rotation)
+            if np.linalg.norm(position_error) < 2e-5 and np.linalg.norm(angular_error) < 2e-4:
+                break
+            jp, jr = np.zeros((3, self._model.nv)), np.zeros((3, self._model.nv))
+            mujoco.mj_jacSite(self._model, self._data, jp, jr, self._site)
+            j = np.vstack((jp[:, self._arm_v], .25*jr[:, self._arm_v]))
+            error = np.r_[position_error, .25*angular_error]
+            dq = j.T @ np.linalg.solve(j @ j.T + .0001*np.eye(6), error)
+            q = np.clip(q + np.clip(dq, -.12, .12), self._joint_limits[:, 0]+.03, self._joint_limits[:, 1]-.03)
+        else:
+            raise RuntimeError(f'Panda initial IK failed: position={np.linalg.norm(position_error):.6f} m, '
+                               f'orientation={np.linalg.norm(angular_error):.6f}, q={q.tolist()}')
+        self._data.qpos[self._arm_q] = q
+        self._data.ctrl[:] = np.r_[q, .025/.04*255]
+        self._reset_arm_q = q.copy()
+        self._reset_ik = {'iterations': iteration+1, 'position_error_m': float(np.linalg.norm(position_error)),
+                          'orientation_error_rad': float(np.linalg.norm(angular_error))}
 
     def reset(self, seed=0, *, disturbance=None):
-        point = self.disturbance_for_seed(seed) if disturbance is None else validate_disturbance(
-            self.reset_bounds, disturbance,
-        )
-        self._model.body_mass[self._tool] = point["tool_mass_kg"]
-        self._model.body_inertia[self._tool] = self._original_inertia * point["tool_mass_kg"] / 0.08
-        for geom in [self._handle, *self._pads]:
-            self._model.geom_friction[geom, 0] = point["friction"]
-        mujoco.mj_setConst(self._model, self._data)
-        mujoco.mj_resetData(self._model, self._data)
-        self._pick = np.array([point["tool_x_m"], point["tool_y_m"], 0.115 + point["grasp_offset_m"]])
-        self._initial_yaw = point["tool_yaw_rad"]
-        self._data.qpos[:6] = [*self._pick, self._initial_yaw, 0, 0]
-        q = self._tool_q
-        self._data.qpos[q:q + 3] = [point["tool_x_m"], point["tool_y_m"], 0.095]
-        self._data.qpos[q + 3:q + 7] = [np.cos(self._initial_yaw / 2), 0, 0, np.sin(self._initial_yaw / 2)]
-        self._data.ctrl[:] = [*self._pick, self._initial_yaw, 0, 0]
-        mujoco.mj_forward(self._model, self._data)
-        self._steps = 0
-        self._stage = 0
-        self._stage_ticks = 0
-        self._hold = 0
-        self._surface_force = 0.0
-        self._grasp_reference = None
-        self._drop_active = False
-        self._log = {field: [] for field in (
-            "ee_positions", "gripper_quaternions", "tool_positions", "tool_quaternions",
-            "tool_tip_positions", "grip_normal_forces", "surface_forces", "contact_forces",
-            "retention_active", "contact_samples",
-            "relative_positions", "relative_quaternions",
-            "contact_torques", "stages", "times_s", "commands", "contacts",
-        )}
-        self._log.update(
-            reset_readback=point, model="friction_tool_handling/1", dt_s=DT,
-            stage_events=[{"stage": "grasp", "step": 0}], success=False,
-            measurement_frame="world", wrench_origin="tool_center",
-            model_digest=hash_artifact(self.MODEL_XML), drop_events=[],
-        )
+        super().reset(seed, disturbance=disturbance)
+        for field in ['arm_joint_positions', 'arm_joint_velocities', 'arm_joint_torques',
+                      'robot_physics', 'robot_collisions']:
+            self._log[field] = []
+        self._log.update(robot='Franka Emika Panda', action_schema='panda-joint-targets-and-grip/1',
+                         arm_joint_names=[f'joint{i}' for i in range(1, 8)],
+                         arm_joint_limits=self._joint_limits.tolist(),
+                         initial_arm_joints=self._reset_arm_q.tolist(), initial_ik=self._reset_ik,
+                         gripper_servo={'opening_m_per_finger': '.025 - closure_m', 'kp_n_m': 700.,
+                                        'tendon_force_limit_n': 20., 'opening_step_m': .0006},
+                         gravity_compensation=True, unexpected_contact_min_force_n=.01)
+        self._log.update(grasp_height_m=self.GRASP_HEIGHT, lift_height_m=.23,
+                         grasp_settle_control_steps=45)
         return self._observe()
 
     def _observe(self):
-        return TaskObservation(
-            np.array([*self._data.xpos[self._gripper], yaw(self._data.xquat[self._gripper]),
-                      *self._data.xpos[self._tool], yaw(self._data.xquat[self._tool]),
-                      self._stage, self._surface_force]),
-            {"stage": self.STAGES[self._stage], "pick": self._pick.tolist(),
-             "initial_yaw": self._initial_yaw, "target_yaw": 0.7, "target_xy": [0.10, 0.0],
-             "actuator_targets": self._data.ctrl[:4].tolist()},
-        )
+        base = super()._observe()
+        jp, jr = np.zeros((3, self._model.nv)), np.zeros((3, self._model.nv))
+        self._target_data.qpos[:] = self._data.qpos
+        self._target_data.qpos[self._arm_q] = self._data.ctrl[:7]
+        mujoco.mj_kinematics(self._model, self._target_data)
+        mujoco.mj_comPos(self._model, self._target_data)
+        mujoco.mj_jacSite(self._model, self._target_data, jp, jr, self._site)
+        q = self._data.qpos[self._arm_q]
+        return TaskObservation(np.r_[base.state, q, self._data.qvel[self._arm_v]],
+                               {**base.info, 'lift_height': .23, 'arm_joint_positions': q.tolist(),
+                                'arm_home': self._reset_arm_q.tolist(), 'arm_joint_limits': self._joint_limits.tolist(),
+                                'grip_position': self._data.site_xpos[self._site].tolist(),
+                                'grip_rotation': self._data.site_xmat[self._site].reshape(3, 3).tolist(),
+                                'arm_joint_targets': self._data.ctrl[:7].tolist(),
+                                'target_grip_position': self._target_data.site_xpos[self._site].tolist(),
+                                'target_grip_rotation': self._target_data.site_xmat[self._site].reshape(3, 3).tolist(),
+                                'target_grip_jacobian': np.vstack((jp[:, self._arm_v], jr[:, self._arm_v])).tolist(),
+                                'actuator_targets': [*self._target_data.xpos[self._gripper],
+                                                     yaw(self._target_data.xquat[self._gripper])]})
 
-    def _contacts(self):
-        force, torque = np.zeros(3), np.zeros(3)
-        grip, surface = np.zeros(2), 0.0
-        records = []
-        for index in range(self._data.ncon):
-            contact = self._data.contact[index]
-            pair = {contact.geom1, contact.geom2}
-            if self._handle not in pair:
-                continue
-            wrench = np.zeros(6)
-            mujoco.mj_contactForce(self._model, self._data, index, wrench)
-            world_force = contact.frame.reshape(3, 3).T @ wrench[:3]
-            world_torque = contact.frame.reshape(3, 3).T @ wrench[3:]
-            # MuJoCo reports the force acting on geom2.
-            sign = 1.0 if contact.geom2 == self._handle else -1.0
-            if not pair.intersection(self._pads):
-                force += sign * world_force
-                torque += sign * (world_torque + np.cross(contact.pos - self._data.xpos[self._tool], world_force))
-            for pad_index, pad in enumerate(self._pads):
-                if pad in pair:
-                    grip[pad_index] += wrench[0]
-            if self._surface in pair:
-                surface += wrench[0]
-            records.append({
-                "geom1": self._model.geom(contact.geom1).name,
-                "geom2": self._model.geom(contact.geom2).name,
-                "position_world": contact.pos.tolist(), "normal_force_n": float(wrench[0]),
-                "force_on_tool_world": (sign * world_force).tolist(),
-                "torque_on_tool_world": (sign * world_torque).tolist(),
-            })
-        return force, torque, grip, float(surface), records
-
-    def step(self, action):
-        action = np.asarray(action, dtype=float)
-        if action.shape != (5,) or not np.isfinite(action).all():
-            raise ValueError("tool action must contain five finite actuator targets")
-        action = np.clip(action, self.action_space["low"], self.action_space["high"])
-        self._data.ctrl[:] = [*action[:4], action[4], action[4]]
-        peaks = None
-        contact_samples = []
-        for _ in range(10):
-            self._before_substep()
-            mujoco.mj_step(self._model, self._data)
-            mujoco.mj_forward(self._model, self._data)
-            self._after_substep()
-            values = self._contacts()
-            contact_samples.append([float(self._data.time), *values[0], *values[1], *values[2], values[3]])
-            if peaks is None:
-                peaks = values
-            else:
-                force = values[0] if np.linalg.norm(values[0]) > np.linalg.norm(peaks[0]) else peaks[0]
-                torque = values[1] if np.linalg.norm(values[1]) > np.linalg.norm(peaks[1]) else peaks[1]
-                peaks = (force, torque, np.maximum(values[2], peaks[2]),
-                         max(values[3], peaks[3]), values[4] if np.linalg.norm(values[0]) >= np.linalg.norm(peaks[0]) else peaks[4])
-        self._surface_force = peaks[3]
-        self._steps += 1
-        self._stage_ticks += 1
-        self._log["ee_positions"].append(self._data.xpos[self._gripper].tolist())
-        self._log["gripper_quaternions"].append(self._data.xquat[self._gripper].tolist())
-        self._log["tool_positions"].append(self._data.xpos[self._tool].tolist())
-        self._log["tool_quaternions"].append(self._data.xquat[self._tool].tolist())
-        tip = self._data.site_xpos[self._model.site("tool_tip").id]
-        self._log["tool_tip_positions"].append(tip.tolist())
-        self._log["grip_normal_forces"].append(peaks[2].tolist())
-        self._log["surface_forces"].append(peaks[3])
-        self._log["contact_forces"].append(peaks[0].tolist())
-        self._log["contact_torques"].append(peaks[1].tolist())
-        relative = self._data.xmat[self._gripper].reshape(3, 3).T @ (
-            self._data.xpos[self._tool] - self._data.xpos[self._gripper]
-        )
-        inverse, relative_quaternion = np.zeros(4), np.zeros(4)
-        mujoco.mju_negQuat(inverse, self._data.xquat[self._gripper])
-        mujoco.mju_mulQuat(relative_quaternion, inverse, self._data.xquat[self._tool])
-        self._log["relative_positions"].append(relative.tolist())
-        self._log["relative_quaternions"].append(relative_quaternion.tolist())
-        if self._retention_required():
-            if self._grasp_reference is None:
-                self._grasp_reference = relative.copy()
-            dropped = np.min(peaks[2]) < 0.05 and np.linalg.norm(relative - self._grasp_reference) > 0.035
-            if dropped and not self._drop_active:
-                self._log["drop_events"].append({
-                    "step": self._steps, "time_s": float(self._data.time), "stage": self.STAGES[self._stage],
-                })
-            self._drop_active = bool(dropped)
-        self._log["retention_active"].append(int(self._retention_required()))
-        self._log["contact_samples"].append(contact_samples)
-        self._log["stages"].append(self.STAGES[self._stage])
-        self._log["times_s"].append(float(self._data.time))
-        self._log["commands"].append(action.tolist())
-        self._log["contacts"].append(peaks[4])
-        self._advance(peaks[2], tip)
-        done = self._stage == len(self.STAGES) - 1 or self._steps >= self.MAX_STEPS
-        self._log["success"] = self._stage == len(self.STAGES) - 1
-        return self._observe(), float(self._stage) / (len(self.STAGES) - 1), done, dict(self._log)
-
-    def _retention_required(self):
-        return self._stage >= 1
+    def _apply_action(self, action):
+        opening = np.clip(.025-action[7], 0., .04)
+        previous = self._data.ctrl[7]/255*.04
+        opening = previous + np.clip(opening-previous, -.0006, .0006)
+        self._data.ctrl[:] = np.r_[action[:7], opening/.04*255]
 
     def _advance(self, grip, tip):
-        tool = self._data.xpos[self._tool]
-        gripper = self._data.xpos[self._gripper]
-        if self._stage == 0:
-            reached = self._stage_ticks >= 25 and np.min(grip) > 0.3
-        elif self._stage == 1:
-            reached = gripper[2] > 0.195 and tool[2] > 0.145
-        elif self._stage == 2:
-            reached = np.linalg.norm(tool[:2] - [0.10, 0.0]) < 0.004
-        elif self._stage == 3:
-            reached = abs(yaw(self._data.xquat[self._tool]) - 0.7) < 0.04
-        else:
-            aligned = abs(yaw(self._data.xquat[self._tool]) - 0.7) < 0.08
-            reached = aligned and np.linalg.norm(tip[:2] - [0.10, 0.0]) < 0.01 and self._surface_force >= 2.0
-            self._hold = self._hold + 1 if reached else 0
-            reached = self._hold >= 10
-        if reached:
-            self._stage += 1
-            self._stage_ticks = 0
-            self._log["stage_events"].append({"stage": self.STAGES[self._stage], "step": self._steps})
+        # The native fingers need time to finish their bounded closing motion.
+        if self._stage == 0 and self._stage_ticks < 45:
+            return
+        super()._advance(grip, tip)
 
-    @staticmethod
-    def evaluate(episode_data):
-        completed = max(0, len(episode_data.get("stage_events", [])) - 1)
-        passed = completed == 5 and episode_data.get("success", False)
-        return TaskResult(float(completed) / 5, passed, episode_data,
-                          {"stage_events": episode_data.get("stage_events", []),
-                           "termination": "completed" if passed else "stage_timeout"})
+    def _after_substep(self):
+        contacts = []
+        for index, contact in enumerate(self._data.contact):
+            pair = {contact.geom1, contact.geom2}
+            robot = pair.intersection(self._robot_geoms)
+            if not robot or (pair.intersection(self._tool_geoms) and robot.intersection(self._pads)):
+                continue
+            if contact.dist > 0:
+                continue
+            force = np.zeros(6)
+            mujoco.mj_contactForce(self._model, self._data, index, force)
+            if force[0] > .01:
+                contacts.append({'geom1': self._model.geom(contact.geom1).name,
+                                 'geom2': self._model.geom(contact.geom2).name,
+                                 'normal_force_n': float(force[0]), 'time_s': float(self._data.time)})
+        self._physics.append({'time_s': float(self._data.time), 'qpos': self._data.qpos[self._arm_q].tolist(),
+                              'qvel': self._data.qvel[self._arm_v].tolist(),
+                              'actuator_torque_nm': self._data.qfrc_actuator[self._arm_v].tolist(),
+                              'joint_targets': self._data.ctrl[:7].tolist(), 'contacts': contacts})
+
+    def step(self, action):
+        self._physics = []
+        observation, reward, done, _ = super().step(action)
+        self._log['robot_physics'].append(self._physics)
+        self._log['arm_joint_positions'].append(self._data.qpos[self._arm_q].tolist())
+        self._log['arm_joint_velocities'].append(self._data.qvel[self._arm_v].tolist())
+        self._log['arm_joint_torques'].append(self._data.qfrc_actuator[self._arm_v].tolist())
+        self._log['robot_collisions'].append(int(any(row['contacts'] for row in self._physics)))
+        return observation, reward, done, dict(self._log)
 
     def render_frame(self, width=640, height=480):
+        from esrb.tasks.tool_handling.appearance import apply_appearance
         if self._renderer is None:
-            self._renderer = mujoco.Renderer(self._model, height=height, width=width)
-        self._renderer.update_scene(self._data, camera="overview")
-        return self._renderer.render()
+            apply_appearance(self._model)
+        camera = self._model.camera('overview').id
+        position, target = np.array([1.05, -1.10, .85]), np.array([.10, -.16, .28])
+        backward = position-target
+        backward /= np.linalg.norm(backward)
+        right = np.cross([0., 0., 1.], backward)
+        right /= np.linalg.norm(right)
+        self._model.cam_pos[camera] = position
+        mujoco.mju_mat2Quat(self._model.cam_quat[camera],
+                           np.column_stack((right, np.cross(backward, right), backward)).ravel())
+        mujoco.mj_camlight(self._model, self._data)
+        return super().render_frame(width, height)
 
-    def close(self):
-        if self._renderer is not None:
-            self._renderer.close()
-            self._renderer = None
+    def _decorate_render_scene(self, scene):
+        from esrb.tasks.tool_handling.appearance import decorate_scene
+        decorate_scene(scene)

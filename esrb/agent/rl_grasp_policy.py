@@ -1,13 +1,12 @@
 """
-RLGraspPolicy — goal-conditioned pressure-control policy trained by REINFORCE.
+RLGraspPolicy — goal-conditioned pressure-control policy trained by behavioral cloning.
 
 Architecture: 2-input MLP (current_pressure, target_pressure) → Gaussian
-action (pressure_delta).  Trained with REINFORCE + entropy bonus using the
-GraspPressureTask environment.
+action (pressure_delta). Trained with MSE against a bang-bang teacher using
+the GraspPressureTask environment.
 
-This is ESRB's first RL-trained policy (Fix 6): all prior policies are
-hand-coded rule-based controllers.  The policy is intentionally small
-(16 hidden units) for fast training (~1 s on CPU for 1000 episodes).
+The policy is intentionally small (16 hidden units) for inexpensive CPU
+training. The historical class name is retained for saved experiments.
 """
 from __future__ import annotations
 
@@ -30,7 +29,7 @@ from .base import BaseAgent
 
 class RLGraspPolicy(BaseAgent):
     """
-    Goal-conditioned Gaussian MLP policy trained by REINFORCE.
+    Goal-conditioned Gaussian MLP policy trained by behavioral cloning.
 
     Call RLGraspPolicy.train(task, n_episodes) to fit the policy on the
     GraspPressureTask.  After training, call act() for inference.
@@ -38,7 +37,7 @@ class RLGraspPolicy(BaseAgent):
 
     name = "rl_grasp"
 
-    def __init__(self, hidden: int = 16, seed: int = 0) -> None:
+    def __init__(self, hidden: int = 16, seed: int = 0, deterministic: bool = False) -> None:
         if not _TORCH_AVAILABLE:
             raise ImportError("torch is required for RLGraspPolicy")
         torch.manual_seed(seed)
@@ -49,10 +48,13 @@ class RLGraspPolicy(BaseAgent):
         )
         self._log_std = nn.Parameter(torch.zeros(1))
         self._trained  = False
+        self.deterministic = deterministic
 
     # ── Inference ─────────────────────────────────────────────────────────────
 
     def act(self, observation: TaskObservation) -> np.ndarray:
+        if self.deterministic:
+            return self.act_deterministic(observation)
         state = torch.tensor(observation.state, dtype=torch.float32)
         with torch.no_grad():
             mean = self._net(state)
@@ -74,6 +76,7 @@ class RLGraspPolicy(BaseAgent):
             "net": {k: v.tolist() for k, v in self._net.state_dict().items()},
             "log_std": self._log_std.data.tolist(),
             "trained": self._trained,
+            "deterministic": self.deterministic,
         }
 
     def load_state_dict(self, state: dict) -> None:
@@ -81,6 +84,7 @@ class RLGraspPolicy(BaseAgent):
         self._net.load_state_dict(sd)
         self._log_std.data = torch.tensor(state["log_std"])
         self._trained = state.get("trained", False)
+        self.deterministic = state.get("deterministic", False)
 
     # ── Training ──────────────────────────────────────────────────────────────
 

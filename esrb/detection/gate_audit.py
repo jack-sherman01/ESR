@@ -14,7 +14,7 @@ from esrb.detection.gate_cases import boundary_catalog, control_steps, gate_case
 from esrb.detection.risk_sampling import risk_cases, risk_summary, sampling_protocol
 from esrb.oracles import ForceTorqueOracle, HeightClearanceOracle, ProximityOracle, VelocityOracle
 from esrb.oracles.multiconstraint import SCENARIO_LIMITS, MultiConstraintOracle, scenario_oracle, verdict_safety
-from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceTask
+from esrb.tasks.agentic import GraspForceTask, SensorDriftTask, StochasticForceTask, GraspPressureTask
 from esrb.tasks.contact_rich import PegInsertionTask
 from esrb.tasks.dynamic_workspace import DynamicObstacleTask
 from esrb.tasks.long_horizon import PickPlaceTask, LongHorizonAssemblyTask
@@ -31,7 +31,7 @@ def _require(condition, message):
 
 TASKS_BY_NAME = {task.name: task for task in (
     GraspForceTask, SensorDriftTask, PegInsertionTask, DynamicObstacleTask, PickPlaceTask, ToolTightenTask,
-    StochasticForceTask, ToolHandlingTask, LongHorizonAssemblyTask,
+    StochasticForceTask, GraspPressureTask, ToolHandlingTask, LongHorizonAssemblyTask,
 )}
 from esrb.tasks.extensions.registry import EXTENSIONS
 from esrb.tasks.extensions.settings import configured_task
@@ -42,7 +42,7 @@ _ORACLES = {
     "min_obstacle_dist_m": ProximityOracle,
     "peak_transit_height_m": HeightClearanceOracle,
     "peak_force_n": ForceTorqueOracle,
-    "min_surface_distance_m": lambda limit: scenario_oracle("moving_transport",limits={"min_surface_distance_m":limit}),
+    "robot_collision": lambda limit: scenario_oracle("moving_transport",limits={"robot_collision":limit}),
     "peak_wall_force_n": lambda limit: scenario_oracle("constrained_push",limits={"peak_wall_force_n":limit}),
     "peak_tool_slip_m": lambda limit: scenario_oracle("tool_handling", limits={"peak_tool_slip_m": limit}),
 }
@@ -104,6 +104,12 @@ def _audit_measurement(raw, oracle, generation, evidence_id, task=None):
     if task is not None:
         _require(trace.get('task_settings',{})==getattr(task,'engineering_settings',{}),
                  'task settings not bound to experiment configuration')
+        if task.name == "grasp_pressure":
+            _require(trace["target_pressure_n"] == trace["applied_task_config"]["target_pressure_n"],
+                     "grasp target does not match the recorded configuration")
+            assessed = task().evaluate(trace)
+            _require(raw["task_success"] is assessed.success and raw["task_score"] == assessed.task_score,
+                     "grasp task result mismatch")
     if isinstance(oracle, MultiConstraintOracle):
         steps = trace.get("control_step_count")
         _require(type(steps) is int and steps > 0, f"generation {generation}: invalid measured step count")
@@ -113,14 +119,38 @@ def _audit_measurement(raw, oracle, generation, evidence_id, task=None):
         _require(trace["fault_prob"] == probability and trace["has_fault"] is (draw < probability),
                  f"generation {generation}: stochastic fault does not match the recorded draw")
     extension=trace.get('moving_model') or trace.get('extension_model') or trace.get('model','').split('/')[0] in EXTENSIONS
+    if trace.get('model','').startswith(('panda-production/','panda-contact/')):
+        if trace['model'].startswith('panda-contact/'):
+            from esrb.oracles.contact_workcells import validate_contact
+            validate_contact(trace)
+        else:
+            from esrb.oracles.production import validate_production
+            validate_production(trace)
+        assessed=TASKS_BY_NAME[trace['scenario']].evaluate(trace)
+        _require(raw['task_success'] is assessed.success and raw['task_score']==assessed.task_score,
+                 'production task result mismatch')
     if extension:
         validate_extension(trace)
         name=(trace.get('moving_model') or trace.get('extension_model') or trace['model']).split('/')[0]
         assessed=EXTENSIONS[name][0].evaluate(trace)
         _require(raw['task_success'] is assessed.success and raw['task_score']==assessed.task_score,
                  'extension task result mismatch')
-    if trace.get("model") == "friction_tool_handling/1":
+    tool_models = {"friction_tool_handling/1", "precision_tool_workcell/2", "panda_tool_workcell/3"}
+    if trace.get("model") in tool_models or (task is not None and task.name == "tool_handling"):
+        _require(trace.get("model") in tool_models, "unsupported tool measurement model")
         validate_tool_measurements(trace)
+        if trace['model'] == 'panda_tool_workcell/3':
+            from esrb.oracles.panda import validate_panda_measurements
+            validate_panda_measurements(trace)
+        if trace["model"] == "precision_tool_workcell/2":
+            resources = trace.get("model_resources", {})
+            _require(isinstance(resources, dict)
+                     and resources.get("tool_handling.xml") == trace.get("model_digest")
+                     and "driver_handle.obj" in resources
+                     and all(f"panda_hand/hand_{index}.obj" in resources for index in range(5))
+                     and all(f"panda_hand/finger_{index}.obj" in resources for index in range(2))
+                     and hash_dict(resources) == trace.get("model_resource_digest"),
+                     "tool model resource identity mismatch")
     if trace.get("model") == "continuous_assembly/1" and not extension:
         validate_assembly_measurements(trace)
         assessed = LongHorizonAssemblyTask.evaluate(trace)
@@ -395,16 +425,3 @@ def audit_gate(report, archive):
         result["proposals"] = len(history)
         result["active_version"] = active_version
     return result
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("scenario_dir", type=Path)
-    args = parser.parse_args()
-    report = json.loads((args.scenario_dir / "demo_results.json").read_text())
-    archive = json.loads((args.scenario_dir / "counterexamples.json").read_text())
-    print(json.dumps(audit_gate(report, archive), indent=2))
-
-
-if __name__ == "__main__":
-    main()

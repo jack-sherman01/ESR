@@ -1,0 +1,8 @@
+{
+  "revision": "c0fbff22ba40060f05a917a80817f3f5c20731e7",
+  "files": {
+    "LICENSE": "c61872e27a1c33a016491dfd9145211deb46230ec4e94338e022df23ea81b9b5",
+    "mimicgen/envs/robosuite/three_piece_assembly.py": "40bd5a4956bbdde5c194b5ff87309d98172a12ada7eb548cb206e86fcf418eba",
+    "mimicgen/models/robosuite/objects/composite/box_pattern_object.py": "e491dd29c6d81b1ad6c625995561c582a387e7c5b4865b896c34c28d35028715"
+  }
+}

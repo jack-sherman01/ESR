@@ -1,0 +1,22 @@
+{
+  "scope": "ESRB original MuJoCo scenes inspired by open source task designs; no ManiSkill runtime, assets or code copied",
+  "accessed_on": "2026-11-19",
+  "robot": {
+    "source": "https://github.com/google-deepmind/mujoco_menagerie/tree/fb36886b3023db08c198264e1e9956ab202c3e3b/franka_emika_panda",
+    "reuse": "existing shared Panda binding and vendored Apache-2.0 model"
+  },
+  "tasks": {
+    "constrained_push": {
+      "reference": "https://github.com/mani-skill/ManiSkill/blob/main/mani_skill/envs/tasks/tabletop/push_cube.py",
+      "borrowed_concept": "contact-only object pushing to a target; ESR adds machined pallet, guide rails, tapered docking section and stable withdrawal verification"
+    },
+    "force_alignment": {
+      "reference": "https://github.com/mani-skill/ManiSkill/blob/main/mani_skill/envs/tasks/tabletop/assembling_kits.py",
+      "borrowed_concept": "matching workpiece pose to a fixture; ESR uses a lead-in guide, contact-triggered lateral correction, datum alignment and release verification"
+    },
+    "compliant_assembly": {
+      "reference": "https://github.com/mani-skill/ManiSkill/blob/main/mani_skill/envs/tasks/tabletop/peg_insertion_side.py",
+      "borrowed_concept": "horizontal insertion and mating-frame position/rotation checks; ESR adds keyed shaft, grasp hub, support cradle and contact admittance"
+    }
+  }
+}

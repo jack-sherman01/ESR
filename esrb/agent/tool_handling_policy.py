@@ -1,48 +1,19 @@
-"""Deterministic actuator-target policy for the friction-held tool task."""
-
+"""Panda joint-target policy using measured end-effector Jacobians."""
 import numpy as np
+from esrb.agent.tool_waypoint_policy import ToolWaypointPolicy
+from esrb.tasks.robots.panda import orientation_error, joint_target, yaw_rotation
 
-from esrb.tasks.base import TaskObservation
-from .base import BaseAgent
 
-
-class ToolHandlingPolicy(BaseAgent):
-    name = "tool_handling"
+class ToolHandlingPolicy(ToolWaypointPolicy):
+    """Convert task waypoints to seven joint targets; the eighth action closes the hand."""
+    name = 'tool_handling'
 
     def __init__(self):
-        self.max_speed = 0.0015
-        self.angular_step = 0.025
-        self.grasp_closure = 0.022
-        self.transport_closure = 0.022
+        super().__init__()
+        self.grasp_closure = .023
+        self.transport_closure = .023
 
-    def act(self, observation: TaskObservation):
-        state, info = observation.state, observation.info
-        stage = info["stage"]
-        target = np.array(info["pick"])
-        angle = info["initial_yaw"]
-        closure = self.grasp_closure
-        if stage in {"lift", "transport", "orient", "operate", "done"}:
-            target[2] = 0.20
-        if stage in {"transport", "orient", "operate", "done"}:
-            target[:2] = info["target_xy"]
-            closure = self.transport_closure
-        if stage in {"orient", "operate", "done"}:
-            angle = info["target_yaw"]
-        if stage in {"operate", "done"}:
-            target[2] = 0.126 + info["pick"][2] - 0.115
-        previous = np.asarray(info["actuator_targets"])
-        position = previous[:3] + np.clip(target - previous[:3], -self.max_speed, self.max_speed)
-        yaw_target = previous[3] + np.clip(angle - previous[3], -self.angular_step, self.angular_step)
-        return np.array([*position, yaw_target, closure])
-
-    def update(self, episode_data):
-        pass
-
-    def state_dict(self):
-        return {name: getattr(self, name) for name in (
-            "max_speed", "angular_step", "grasp_closure", "transport_closure",
-        )}
-
-    def load_state_dict(self, state):
-        for name in self.state_dict():
-            setattr(self, name, state[name])
+    def act(self, observation):
+        target = super().act(observation)
+        info = observation.info
+        return joint_target(info, target[:3], yaw_rotation(target[3]), target[4])

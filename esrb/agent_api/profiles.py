@@ -7,6 +7,7 @@ from esrb.agent.pick_place_policy import PickPlacePolicy
 from esrb.agent.scripted_policy import ScriptedInsertionPolicy
 from esrb.agent.sensor_drift_policy import SensorDriftPolicy
 from esrb.agent.stochastic_force_policy import StochasticForcePolicy
+from esrb.agent.rl_grasp_policy import RLGraspPolicy
 from esrb.agent.tool_tighten_policy import ToolTightenPolicy
 from esrb.agent.tool_handling_policy import ToolHandlingPolicy
 from esrb.agent.assembly_policy import AssemblyPolicy
@@ -26,12 +27,12 @@ DYNAMIC_OBS = ParameterPolicy(
 )
 TOOL_HANDLING = ParameterPolicy(
     "tool handling", ToolHandlingPolicy,
-    Consumer("policy", "esrb.tool-handling.policy/1", "tool-handling-parameters/1"),
+    Consumer("policy", "esrb.tool-handling.policy/2", "panda-tool-handling-parameters/1"),
     "tool_handling_json",
 )
 ASSEMBLY = ParameterPolicy(
     "long horizon assembly", AssemblyPolicy,
-    Consumer("policy", "esrb.assembly.policy/1", "assembly-parameters/1"),
+    Consumer("policy", "esrb.assembly.policy/2", "panda-three-piece-parameters/1"),
     "long_horizon_assembly_json",
 )
 _MLP = ControlledProfile(MLPInsertionPolicy, ("policy", "memory"))
@@ -59,11 +60,16 @@ BY_INSTANCE = {
         StochasticForcePolicy, ("data",), nominal_task_config={"fault_prob": 0.0},
         task_config_metadata={"fault_prob": "fault_prob"},
     ),
+    "grasp_pressure_target_shift": ControlledProfile(
+        RLGraspPolicy, ("data",), nominal_task_config={"target_pressure_n": 15.0},
+        task_config_metadata={"target_pressure_n": "candidate_target_n"},
+    ),
 }
 BY_SCENARIO = {"scripted_peg": SCRIPTED_PEG, "dynamic_obs": DYNAMIC_OBS, "tool_handling": TOOL_HANDLING, "long_horizon_assembly": ASSEMBLY}
 
 from esrb.tasks.extensions.registry import EXTENSIONS
 for _name, (_task, _policy) in EXTENSIONS.items():
-    _profile=ParameterPolicy(_name,_policy,Consumer("policy",f"esrb.{_name}.policy/1",f"{_name}-parameters/1"),_name+"_json")
+    _revision=2
+    _profile=ParameterPolicy(_name,_policy,Consumer("policy",f"esrb.{_name}.policy/{_revision}",f"{_name}-parameters/{_revision}"),_name+"_json")
     BY_SCENARIO[_name]=_profile
     BY_INSTANCE[_name+"_controlled_update"]=_profile

@@ -1,0 +1,21 @@
+ESRB Panda production workcells
+
+ThreePieceAssembly occupancy patterns and unit sizes are adapted from:
+https://github.com/NVlabs/mimicgen
+revision c0fbff22ba40060f05a917a80817f3f5c20731e7
+Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES.
+See MIMICGEN_LICENSE and mimicgen_provenance.json for the full license and original source hashes.
+
+ESRB changes: exact merging of occupied collision cells, base grasp tab,
+lightweight engineering masses, outward-facing chamfered display meshes,
+physical nesting fixtures, conveyor transport and moving-pallet assembly.
+These environments are ESRB extensions, not upstream benchmark results.
+
+The shared full Panda is derived from the existing Menagerie vendor package,
+revision fb36886b3023db08c198264e1e9956ab202c3e3b.
+The original Apache-2.0 license and per-file provenance are retained at
+../../tool_handling/assets/panda/LICENSE and provenance.json.
+
+Conveyor tracking architecture reference only (no vendored code):
+https://github.com/esung52/Mujoco-UR5E-Robot-Picking
+The physical belt uses the MuJoCo native surfacevel API.
