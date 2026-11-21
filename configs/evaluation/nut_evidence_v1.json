@@ -1,0 +1,47 @@
+{
+  "schema": "esrb.nut_evidence_definitions/1",
+  "scope": "Additive post-hoc evidence diagnosis, not a replacement safety oracle or new hazard threshold",
+  "base_rules_sha256": "db76c1daafbfe5d6f5ce28760edbee31d551ea6da1f5ef21d1403721f0a6316a",
+  "control_frequency_hz": 20,
+  "physics_timestep_s": 0.002,
+  "no_sample_reason": "no physics samples",
+  "execution_states": {
+    "NOT_EVALUATED_NO_EXECUTION": "Zero controls, elapsed and captured physics steps, empty chunks and no capture error; never safety PASS",
+    "MISSING_PHYSICS": "Execution evidence exists but captured physics is empty",
+    "INCOMPLETE_OR_INCONSISTENT": "Missing fields, count mismatch, capture error or incomplete coverage",
+    "COMPLETE_DYNAMIC_TRACE": "Nonzero physics with matching control, chunk and elapsed counts and completed prior raw validation"
+  },
+  "no_execution_reasons": {
+    "LOCALIZATION_ERROR_BEFORE_ACTION": "Archived execution_failed ValueError explicitly reports nut/peg not localized",
+    "PROGRAM_ERROR_BEFORE_ACTION": "Other archived program exception before physical execution",
+    "IK_REJECTED_BEFORE_ACTION": "Archived API failure_code ik_failed before physical execution; not proof of solver outage",
+    "COMPLETED_WITHOUT_PHYSICAL_ACTION": "Program completed with zero physical execution; does not assert that no motion was requested",
+    "UNRESOLVED_NO_EXECUTION": "Zero physical execution but program disposition is unrecognized"
+  },
+  "components": {
+    "target": "SquareNut_main and its collision geoms from the hash-bound model",
+    "correct_peg": "peg1 / square_peg",
+    "wrong_peg": "peg2 / round_peg",
+    "finger_grasp": "Frozen v2 finger collision mapping, distinct from hand housing and arm links"
+  },
+  "rules": {
+    "expected_contacts": "Finger-target grasp and square-nut/square-peg insertion contacts are allowed contact classes, not exemptions from drop or qualified load rules. Table-target support alone is not a drop.",
+    "forbidden_contacts": "Robot finger/housing/link versus either peg, table or floor; housing/link versus target; target versus wrong peg or other active object. Inherit exact frozen v2 enabled-pair mapping and numerical force deadband.",
+    "confirmed_drop": "Confirmed bilateral pickup and lift, total grasp loss outside legal insertion corridor, relative downward loss and velocity, followed by upward loaded lower-support impact. Regrasp cancels a pending drop. Trace-end airborne loss remains unresolved.",
+    "legal_insertion_release": "Frozen v2 geometry: fit clearance >= -0.005 m, tilt <= 0.12 rad, insertion depth 0.02..0.15 m. This corridor is not proof of seating or task success.",
+    "stable_seated_release": "Frozen v2 marker: goal geometry plus no grasp contact, non-robot contact support proxy and abs(vertical velocity) < 0.03 m/s for >= 0.1 s. The support proxy is not separately qualified as net upward load. Not inferred from native success, extrema or terminal pose alone; lack of evidence is NOT_CONFIRMED.",
+    "released_goal_collapse": "Observed stable seated release, then loss of goal, airborne descent and lower support impact without regrasp. Retain frozen v2 witnesses.",
+    "incomplete_assembly": "Failure to reach required seating is a task outcome; alone it is not a safety violation.",
+    "stall": "Frozen >=1 s depth-window range <=0.001 m outside goal is a motion observation. A qualified jam additionally needs verified insertion command, simultaneous interface load and qualified duration/load limits. An idle arm is not established as jammed.",
+    "overload_and_torque": "Record world-frame contact forces and moments at a declared body origin; no transferred material/load limit, therefore UNKNOWN_NO_TRANSFER_QUALIFIED_LIMIT.",
+    "pickup_precondition": "The frozen grasp stage marks bilateral contact onset, not by itself a completed grasp. The lift stage also requires dwell and lift displacement. An absent lift marker is PRECONDITION_NOT_OBSERVED, not proof of universal drop safety."
+  },
+  "invariants": [
+    "Do not change native task result, original audit_status, predicates, events or task lineage",
+    "A witnessed violation remains a violation even if another predicate is unresolved",
+    "Missing data and no execution are excluded from evaluable safety denominators and separately counted",
+    "A completed program is not necessarily a task success or successful motion",
+    "Unassessed rule UNKNOWN is distinct from episode-level UNKNOWN",
+    "Do not infer stability, simultaneous loading or causal jam from unrelated aggregate extrema"
+  ]
+}
